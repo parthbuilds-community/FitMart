@@ -3,6 +3,7 @@ const router = express.Router();
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const validateCartInput = require("../middleware/validateCartInput");
 
 // Helper: adjust product reserved count
 async function adjustReserved(productId, delta) {
@@ -47,78 +48,92 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
  * @desc    Add an item to the user's cart and reserve stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
+router.post(
+  "/:userId/add",
+  verifyFirebaseToken,
+  validateCartInput,
+  async (req, res) => {
+    if (!checkOwnership(req, res)) return;
 
-  try {
-    const { userId } = req.params;
-    const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
+    try {
+      const { userId } = req.params;
+      const { productId, quantity } = req.body;
 
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
+      const product = await Product.findOne({ productId });
+      if (!product) return res.status(404).json({ error: "Product not found" });
 
-    const product = await Product.findOne({ productId: Number(productId) });
-    if (!product) return res.status(404).json({ error: 'Product not found' });
+      const available =
+        product.stock == null
+          ? Infinity
+          : product.stock - (product.reserved || 0);
 
-    const available = product.stock == null ? Infinity : (product.stock - (product.reserved || 0));
-    if (available < qty) return res.status(400).json({ error: 'Insufficient stock available' });
+      if (available < quantity)
+        return res.status(400).json({ error: "Insufficient stock available" });
 
-    let cart = await Cart.findOne({ userId });
-    if (!cart) cart = new Cart({ userId, items: [] });
+      let cart = await Cart.findOne({ userId });
+      if (!cart) cart = new Cart({ userId, items: [] });
 
-    const itemIdx = cart.items.findIndex(i => i.productId === Number(productId));
-    if (itemIdx >= 0) {
-      cart.items[itemIdx].quantity += qty;
-    } else {
-      cart.items.push({ productId: Number(productId), quantity: qty });
+      const itemIdx = cart.items.findIndex((i) => i.productId === productId);
+
+      if (itemIdx >= 0) {
+        cart.items[itemIdx].quantity += quantity;
+      } else {
+        cart.items.push({ productId, quantity });
+      }
+
+      await adjustReserved(productId, quantity);
+      await cart.save();
+
+      const fresh = await Cart.findOne({ userId });
+      res.json(fresh);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error" });
     }
-
-    await adjustReserved(productId, qty);
-    await cart.save();
-    const fresh = await Cart.findOne({ userId });
-    res.json(fresh);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  },
+);
 
 /**
  * @route   POST /api/cart/:userId/remove
  * @desc    Remove an item (or reduce its quantity) from the user's cart and release reserved stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
+router.post(
+  "/:userId/remove",
+  verifyFirebaseToken,
+  validateCartInput,
+  async (req, res) => {
+    if (!checkOwnership(req, res)) return;
 
-  try {
-    const { userId } = req.params;
-    const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
+    try {
+      const { userId } = req.params;
+      const { productId, quantity } = req.body;
 
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
+      const cart = await Cart.findOne({ userId });
+      if (!cart) return res.status(404).json({ error: "Cart not found" });
 
-    const cart = await Cart.findOne({ userId });
-    if (!cart) return res.status(404).json({ error: 'Cart not found' });
+      const itemIdx = cart.items.findIndex((i) => i.productId === productId);
 
-    const itemIdx = cart.items.findIndex(i => i.productId === Number(productId));
-    if (itemIdx === -1) return res.status(404).json({ error: 'Item not in cart' });
+      if (itemIdx === -1)
+        return res.status(404).json({ error: "Item not in cart" });
 
-    const removeQty = Math.min(cart.items[itemIdx].quantity, qty);
-    cart.items[itemIdx].quantity -= removeQty;
-    if (cart.items[itemIdx].quantity <= 0) cart.items.splice(itemIdx, 1);
+      const removeQty = Math.min(cart.items[itemIdx].quantity, quantity);
 
-    await adjustReserved(productId, -removeQty);
-    await cart.save();
-    const fresh = await Cart.findOne({ userId });
-    res.json(fresh);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+      cart.items[itemIdx].quantity -= removeQty;
+
+      if (cart.items[itemIdx].quantity <= 0) cart.items.splice(itemIdx, 1);
+
+      await adjustReserved(productId, -removeQty);
+      await cart.save();
+
+      const fresh = await Cart.findOne({ userId });
+      res.json(fresh);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error" });
+    }
+  },
+);
 
 /**
  * @route   DELETE /api/cart/:userId
