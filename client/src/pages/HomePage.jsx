@@ -14,7 +14,7 @@ import BMICalculator from "../components/BMICalculator";
 import CalorieCalculator from "../components/CalorieCalculator";
 import NearbyFitnessCenters from "../components/NearbyFitnessCenters";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 
 const CATEGORIES = [
   { name: "All", value: "all" },

@@ -5,7 +5,7 @@ import { auth } from "../auth/firebase";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 function useRazorpayScript() {

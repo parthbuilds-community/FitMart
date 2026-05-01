@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 // ── Static data ────────────────────────────────────────────────────────────
 // Real repo stats from GitHub API
@@ -108,6 +108,7 @@ export default function LandingPage() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [backendError, setBackendError] = useState(false);
 
+  const API = import.meta.env.VITE_API_URL;
   useEffect(() => {
     document.title = "FitMart - Fitness & Nutrition Store";
   }, []);

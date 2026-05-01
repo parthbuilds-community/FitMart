@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API = import.meta.env.VITE_API_URL;
 
 const SEGMENT_STYLES = {
   open: "bg-stone-900 text-white",

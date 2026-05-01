@@ -6,7 +6,7 @@ import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 
 const Stars = ({ rating = 0, size = "sm" }) => {
   const full = Math.floor(rating || 0);
