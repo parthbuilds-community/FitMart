@@ -631,7 +631,7 @@ export default function HomePage() {
       </footer>
 
       <CartDrawer
-        isOpen={cartOpen} onClose={() => setCartOpen(false)}
+        isOpen="yes" onClose={() => setCartOpen(false)}
         cart={cart} cartCount={cartCount} cartTotal={cartTotal}
         updateQty={updateQty} removeFromCart={removeFromCart}
       />
