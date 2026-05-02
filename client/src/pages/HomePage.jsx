@@ -7,6 +7,7 @@ import { auth } from "../auth/firebase";
 import CartDrawer from "../components/CartDrawer";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { normalizeProduct } from "../utils/normalizeProduct";
 import FitnessChatBot from "../components/FitnessChatBot";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
@@ -242,7 +243,7 @@ export default function HomePage() {
         const res = await fetch(`${API}/api/products`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setProducts(data.map(p => ({ ...p, id: p.productId || p.id })));
+        setProducts(data.map(normalizeProduct));
       } catch (err) {
         console.error("Error loading products:", err);
         setBackendError(true);

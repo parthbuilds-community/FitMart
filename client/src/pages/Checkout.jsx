@@ -5,6 +5,7 @@ import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { normalizeProduct } from "../utils/normalizeProduct";
 import Navbar from "../components/Navbar";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -59,7 +60,7 @@ export default function Checkout() {
 
         if (!cart.items?.length) { setItems([]); setLoading(false); return; }
 
-        const productMap = Object.fromEntries(products.map(p => [p.productId, p]));
+        const productMap = Object.fromEntries(products.map(p => { const n = normalizeProduct(p); return [n.productId, n]; }));
         const enriched = cart.items
           .map(item => ({ ...item, product: productMap[item.productId] }))
           .filter(item => item.product);
