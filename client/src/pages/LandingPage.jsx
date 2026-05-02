@@ -225,7 +225,7 @@ export default function LandingPage() {
                 onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
                 className="bg-stone-900 text-white text-sm px-8 py-3.5 rounded-full
                            hover:bg-stone-700 transition-colors w-full sm:w-auto text-center
-                           min-h-[48px] active:scale-[0.98]"
+                           min-h-12 active:scale-[0.98]"
               >
                 Start Shopping
               </button>
@@ -238,13 +238,13 @@ export default function LandingPage() {
                 className="gh-star-btn flex items-center justify-center gap-2 text-sm px-6 py-3.5
                 rounded-full border border-stone-200 text-stone-600
                 hover:bg-stone-900 hover:text-white hover:border-stone-900
-                transition-all w-full sm:w-auto min-h-[48px] active:scale-[0.98]"
+                transition-all w-full sm:w-auto min-h-12 active:scale-[0.98]"
               >
                 <GithubIcon />
                 <StarIcon className="w-3.5 h-3.5" />
                 <span>Star on GitHub</span>
                 <span className="bg-stone-100 text-stone-700 text-xs px-2 py-0.5 rounded-full
-                                   font-medium min-w-[28px] text-center group-hover:bg-stone-800">
+                                   font-medium min-w-7 text-center group-hover:bg-stone-800">
                   105
                 </span>
               </a>
@@ -319,7 +319,7 @@ export default function LandingPage() {
                 </div>
                 <button
                   className={`mt-6 sm:mt-8 self-start text-xs border px-5 py-2.5 rounded-full
-                                transition-colors ${c.btn} min-h-[40px] active:scale-[0.97]`}
+                                transition-colors ${c.btn} min-h-10 active:scale-[0.97]`}
                   onClick={e => {
                     e.stopPropagation();
                     navigate("/home", { state: { category: c.filter } });
@@ -409,7 +409,7 @@ export default function LandingPage() {
                 <p className="text-sm text-stone-600 leading-relaxed mb-5 sm:mb-6">{program.desc}</p>
                 <button className="text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                      rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                     transition-all min-h-[40px] active:scale-[0.97]">
+                                     transition-all min-h-10 active:scale-[0.97]">
                   Learn More →
                 </button>
               </div>
@@ -544,13 +544,13 @@ export default function LandingPage() {
                   {plan.perks.map((p, j) => (
                     <li key={j} className={`text-sm flex items-start gap-2
                                               ${plan.highlight ? "text-stone-300" : "text-stone-600"}`}>
-                      <span className="mt-0.5 text-stone-400 flex-shrink-0">─</span>{p}
+                      <span className="mt-0.5 text-stone-400 shrink-0">─</span>{p}
                     </li>
                   ))}
                 </ul>
                 <button
                   onClick={e => { e.stopPropagation(); navigate(auth.currentUser ? "/home" : "/auth"); }}
-                  className={`text-sm py-3 rounded-full transition-colors min-h-[44px]
+                  className={`text-sm py-3 rounded-full transition-colors min-h-11
                                 ${plan.highlight
                       ? "bg-white text-stone-900 hover:bg-stone-100"
                       : "border border-stone-300 text-stone-700 hover:bg-stone-50"
@@ -578,7 +578,7 @@ export default function LandingPage() {
             <button
               onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
               className="bg-white text-stone-900 text-sm px-8 sm:px-10 py-4 rounded-full
-                           hover:bg-stone-100 transition-colors min-h-[48px] w-full sm:w-auto
+                           hover:bg-stone-100 transition-colors min-h-12 w-full sm:w-auto
                            active:scale-[0.98]"
             >
               Create your account →
@@ -590,7 +590,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 text-sm px-8 py-4 rounded-full
               border border-stone-700 text-stone-400 hover:border-stone-500
-              hover:text-stone-200 transition-all min-h-[48px] w-full sm:w-auto
+              hover:text-stone-200 transition-all min-h-12 w-full sm:w-auto
               active:scale-[0.98]"
             >
               <GithubIcon />
@@ -647,7 +647,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
             target="_blank"
             rel="noopener noreferrer"
             className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full
-                          border transition-all min-h-[34px]
+                          border transition-all min-h-8.5
                           ${isOpaque
                 ? "border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900"
                 : "border-white/30 text-white/80 hover:bg-white/10"
@@ -666,7 +666,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
           <button
             onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
             className={`text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full transition-colors
-                           min-h-[36px] active:scale-[0.97]
+                           min-h-9 active:scale-[0.97]
                            ${isOpaque
                 ? "bg-stone-900 text-white hover:bg-stone-700"
                 : "bg-white text-stone-900 hover:bg-stone-100"
@@ -719,8 +719,8 @@ function LandingFooter({ aboutRef }) {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 group"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-pink-500
-                                  to-orange-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 via-pink-500
+                                  to-orange-400 flex items-center justify-center shrink-0">
                   <InstagramIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>

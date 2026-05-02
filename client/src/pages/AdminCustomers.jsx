@@ -14,7 +14,7 @@ const SEGMENT_STYLES = {
 };
 
 const CustomerAvatar = ({ name, photoURL, size = 8 }) => (
-  <div className={`w-${size} h-${size} rounded-full overflow-hidden flex-shrink-0
+  <div className={`w-${size} h-${size} rounded-full overflow-hidden shrink-0
                    bg-stone-200 flex items-center justify-center`}>
     {photoURL ? (
       <img src={photoURL} alt={name || "avatar"}
@@ -60,7 +60,7 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
       onMouseDown={(e) => e.preventDefault()}
       className="select-none flex items-center gap-3 py-3.5 cursor-pointer active:bg-stone-50 transition-colors"
     >
-      <span className="text-xs text-stone-300 w-5 flex-shrink-0 text-center">{index + 1}</span>
+      <span className="text-xs text-stone-300 w-5 shrink-0 text-center">{index + 1}</span>
 
       <CustomerAvatar name={c.customerName} photoURL={c.customerPhoto} size={8} />
 
@@ -71,7 +71,7 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
           ) : (
             <p className="text-xs text-stone-400 font-mono">{c.userId?.slice(0, 12)}…</p>
           )}
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium capitalize flex-shrink-0
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium capitalize shrink-0
                           ${SEGMENT_STYLES[c.segment]}`}>
             {c.segment}
           </span>
@@ -81,14 +81,14 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
         )}
       </div>
 
-      <div className="text-right flex-shrink-0">
+      <div className="text-right shrink-0">
         <p style={{ fontFamily: "'DM Serif Display', serif" }} className="text-base text-stone-900">
           {fmt(c.totalSpend)}
         </p>
         <p className="text-[10px] text-stone-400 mt-0.5">{c.orderCount} order{c.orderCount !== 1 ? "s" : ""}</p>
       </div>
     </div>
-    
+
     {/* Mobile reminder action row */}
     <div className="px-4 py-2 bg-stone-50 border-t border-stone-100">
       {reminderSent[c.userId] ? (
@@ -102,9 +102,9 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
           title={!c.eligibleForReminder ? `Customer must be inactive for 30+ days (currently ${c.daysSinceLastOrder} days)` : "Send reminder email to inactive customer"}
           className={`w-full px-3 py-1.5 text-xs font-medium rounded-lg transition-all
                       ${c.eligibleForReminder
-                  ? "bg-stone-900 text-white hover:bg-stone-800 cursor-pointer"
-                  : "bg-stone-200 text-stone-400 cursor-default opacity-60"
-                }`}
+              ? "bg-stone-900 text-white hover:bg-stone-800 cursor-pointer"
+              : "bg-stone-200 text-stone-400 cursor-default opacity-60"
+            }`}
         >
           {isSending === c.userId ? "Sending..." : "Send Reminder"}
         </button>
@@ -144,7 +144,7 @@ export default function AdminCustomers() {
   const handleSendReminder = async (e, customerId) => {
     e.stopPropagation();
     setSendingReminderId(customerId);
-    
+
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE}/customers/${customerId}/send-reminder`, {
@@ -152,25 +152,25 @@ export default function AdminCustomers() {
         headers,
         credentials: "include",
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         setReminderError(prev => ({ ...prev, [customerId]: data.error || "Failed to send" }));
         setSendingReminderId(null);
         return;
       }
-      
+
       setReminderSent(prev => ({ ...prev, [customerId]: true }));
       setReminderError(prev => ({ ...prev, [customerId]: null }));
-      
+
       // Update customer data to show latest reminder sent time
-      setCustomers(prev => prev.map(c => 
-        c.userId === customerId 
+      setCustomers(prev => prev.map(c =>
+        c.userId === customerId
           ? { ...c, lastReminderEmailSentAt: new Date().toISOString() }
           : c
       ));
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setReminderSent(prev => ({ ...prev, [customerId]: false }));

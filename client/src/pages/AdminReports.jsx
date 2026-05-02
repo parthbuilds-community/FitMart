@@ -60,7 +60,7 @@ const ProductMobileCard = ({ p, index, productMap }) => {
   return (
     <div className="flex items-center gap-3 py-3.5 border-b border-stone-100 last:border-0">
       <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs
-                      font-medium flex-shrink-0
+                      font-medium shrink-0
                       ${index === 0 ? "bg-stone-900 text-white" : "border border-stone-200 text-stone-400"}`}>
         {index + 1}
       </span>
@@ -68,7 +68,7 @@ const ProductMobileCard = ({ p, index, productMap }) => {
         <p className="text-sm text-stone-700 font-medium truncate">{name}</p>
         <p className="text-xs text-stone-400 mt-0.5">{p.totalQuantitySold} units sold</p>
       </div>
-      <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-900 flex-shrink-0">
+      <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-900 shrink-0">
         {fmt(p.totalRevenue)}
       </span>
     </div>
@@ -325,7 +325,7 @@ export default function AdminReports() {
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
                             <span className={`w-7 h-7 rounded-full flex items-center justify-center
-                                              text-xs font-medium flex-shrink-0
+                                              text-xs font-medium shrink-0
                                               ${index === 0 ? "bg-stone-900 text-white" : "border border-stone-200 text-stone-400"}`}>
                               {index + 1}
                             </span>

@@ -24,7 +24,7 @@ const StrategyCard = ({ strategy }) => (
 
     {/* How it helps e-commerce */}
     <div className="mb-4 pb-4 border-b border-stone-100">
-      <p className="text-xs tracking-[0.1em] uppercase text-stone-400 mb-2">
+      <p className="text-xs tracking-widest uppercase text-stone-400 mb-2">
         For FitMart
       </p>
       <p className="text-sm text-stone-700">{strategy.ecommerceBenefit}</p>
@@ -32,7 +32,7 @@ const StrategyCard = ({ strategy }) => (
 
     {/* Key Benefits */}
     <div>
-      <p className="text-xs tracking-[0.1em] uppercase text-stone-400 mb-3">
+      <p className="text-xs tracking-widest uppercase text-stone-400 mb-3">
         Key Benefits
       </p>
       <ul className="space-y-2">
@@ -42,7 +42,7 @@ const StrategyCard = ({ strategy }) => (
             className="flex items-start gap-2.5 text-sm text-stone-700"
           >
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full
-                            bg-stone-100 text-stone-600 flex-shrink-0 mt-0.5">
+                            bg-stone-100 text-stone-600 shrink-0 mt-0.5">
               {/* No emoji, just a checkmark */}
             </span>
             <span>{benefit}</span>
@@ -207,7 +207,7 @@ export default function AdminMarketing() {
 
         {/* Footer note */}
         <div className="mt-8 sm:mt-10 text-center">
-          <p className="text-xs text-stone-400 tracking-[0.1em]">
+          <p className="text-xs text-stone-400 tracking-widest">
             These strategies form the backbone of FitMart's growth initiatives
           </p>
         </div>

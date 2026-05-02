@@ -18,6 +18,7 @@
     "firebase-admin": "^13.7.0",
     "helmet": "^8.1.0",
     "mongoose": "^7.0.0",
+    "nodemailer": "^8.0.6",
     "razorpay": "^2.9.6"
   },
   "devDependencies": {

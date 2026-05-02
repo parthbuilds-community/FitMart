@@ -48,10 +48,10 @@ const KPICard = ({ label, value, sub, icon }) => (
     </p>
     <div className="flex items-end justify-between">
       <p style={{ fontFamily: "'DM Serif Display', serif" }}
-        className="text-2xl sm:text-3xl md:text-4xl text-stone-900 leading-none break-words min-w-0">
+        className="text-2xl sm:text-3xl md:text-4xl text-stone-900 leading-none wrap-break-word min-w-0">
         {value}
       </p>
-      <div className="text-xl sm:text-2xl opacity-40 mb-0.5 flex-shrink-0 ml-2">
+      <div className="text-xl sm:text-2xl opacity-40 mb-0.5 shrink-0 ml-2">
         {typeof icon === 'string' ? <span>{icon}</span> : icon}
       </div>
     </div>
@@ -84,7 +84,7 @@ const Empty = () => (
 );
 
 const CustomerAvatar = ({ name, photoURL }) => (
-  <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0
+  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0
                   bg-stone-200 flex items-center justify-center">
     {photoURL ? (
       <img src={photoURL} alt={name || "avatar"}
@@ -104,7 +104,7 @@ const OrderMobileCard = ({ order }) => (
     <div className="flex items-center justify-between mb-1.5">
       <div className="flex items-center gap-2">
         <CustomerAvatar name={order.customerName} photoURL={order.customerPhoto} />
-        <span className="text-xs font-medium text-stone-700 truncate max-w-[100px]">
+        <span className="text-xs font-medium text-stone-700 truncate max-w-25">
           {order.customerName && order.customerName !== "—"
             ? order.customerName
             : order.userId?.slice(0, 10) + "…"}

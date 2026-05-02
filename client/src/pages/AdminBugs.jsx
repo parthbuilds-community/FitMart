@@ -11,7 +11,7 @@ const SEGMENT_STYLES = {
 };
 
 const BugAvatar = ({ title }) => (
-  <div className={`w-8 h-8 rounded-full overflow-hidden flex-shrink-0
+  <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0
                    bg-stone-200 flex items-center justify-center`}>
     <span className="text-xs font-medium text-stone-600">
       {(title?.[0] || "!").toUpperCase()}
@@ -51,7 +51,7 @@ const BugMobileCard = ({ bug, index, onClick, onStatusClick }) => (
     className="select-none flex items-start gap-3 py-3.5 border-b border-stone-100 last:border-0
                cursor-pointer active:bg-stone-50 transition-colors"
   >
-    <span className="text-xs text-stone-300 w-5 flex-shrink-0 text-center">{index + 1}</span>
+    <span className="text-xs text-stone-300 w-5 shrink-0 text-center">{index + 1}</span>
 
     <BugAvatar title={bug.title} />
 
@@ -60,7 +60,7 @@ const BugMobileCard = ({ bug, index, onClick, onStatusClick }) => (
         <p className="text-sm font-medium text-stone-700 truncate">{bug.title}</p>
         <button
           onClick={(e) => { e.stopPropagation(); onStatusClick && onStatusClick(bug); }}
-          className={`px-2 py-0.5 rounded-full text-[10px] font-medium capitalize flex-shrink-0 focus:outline-none
+          className={`px-2 py-0.5 rounded-full text-[10px] font-medium capitalize shrink-0 focus:outline-none
                      ${SEGMENT_STYLES[bug.status] || 'bg-stone-100 text-stone-600'}`}
         >
           {bug.status}
@@ -71,7 +71,7 @@ const BugMobileCard = ({ bug, index, onClick, onStatusClick }) => (
       <p className="text-[10px] text-stone-400 mt-1">{bug.reporterName || bug.reporterEmail || '—'}</p>
     </div>
 
-    <div className="text-right flex-shrink-0">
+    <div className="text-right shrink-0">
       <p className="text-[10px] text-stone-400">{bug.pageUrl ? 'Has URL' : 'No URL'}</p>
     </div>
   </div>
@@ -421,7 +421,7 @@ export default function AdminBugs() {
                     </td>
                     <td className="px-6 py-5 text-center">
                       {bug.pageUrl ? (
-                        <span className="text-xs text-stone-400 truncate max-w-[150px] block">
+                        <span className="text-xs text-stone-400 truncate max-w-37.5 block">
                           {bug.pageUrl.split('/').pop() || 'page'}
                         </span>
                       ) : (

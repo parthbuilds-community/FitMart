@@ -177,7 +177,7 @@ export default function FitnessChatBot() {
                     /* Mobile: full screen minus FAB area */
                     bottom-20 right-3 left-3 rounded-2xl
                     /* sm+: floating panel anchored to bottom-right */
-                    sm:bottom-24 sm:right-5 sm:left-auto sm:w-[360px]
+                    sm:bottom-24 sm:right-5 sm:left-auto sm:w-90
                     ${open ? "open" : "closed"}`}
         style={{
           fontFamily: "'DM Sans', sans-serif",
@@ -208,7 +208,7 @@ export default function FitnessChatBot() {
             <button
               onClick={() => setOpen(false)}
               className="text-stone-400 hover:text-white transition-colors text-2xl
-                         leading-none min-w-[36px] min-h-[36px] flex items-center
+                         leading-none min-w-9 min-h-9 flex items-center
                          justify-center rounded-full hover:bg-white/10"
               aria-label="Close chat"
             >
@@ -293,7 +293,7 @@ export default function FitnessChatBot() {
             className="w-10 h-10 sm:w-9 sm:h-9 bg-stone-900 text-white rounded-full
                        flex items-center justify-center hover:bg-stone-700 transition-colors
                        disabled:opacity-30 disabled:cursor-not-allowed shrink-0
-                       active:scale-95 min-w-[40px]"
+                       active:scale-95 min-w-10"
             aria-label="Send message"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"

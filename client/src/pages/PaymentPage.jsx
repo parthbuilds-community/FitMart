@@ -216,13 +216,13 @@ export default function PaymentPage() {
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-10 h-10 object-cover rounded-lg bg-stone-100 flex-shrink-0"
+                  className="w-10 h-10 object-cover rounded-lg bg-stone-100 shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-stone-900 truncate">{product.name}</p>
                   <p className="text-xs text-stone-400">Qty {quantity}</p>
                 </div>
-                <p className="text-sm text-stone-900 flex-shrink-0">
+                <p className="text-sm text-stone-900 shrink-0">
                   {fmt(product.price * quantity)}
                 </p>
               </div>
@@ -270,7 +270,7 @@ export default function PaymentPage() {
           className="w-full bg-stone-900 text-white text-sm px-8 py-4 rounded-full
                      hover:bg-stone-700 transition-colors disabled:opacity-50
                      disabled:cursor-not-allowed flex items-center justify-center gap-2
-                     min-h-[52px] active:scale-[0.98]"
+                     min-h-13 active:scale-[0.98]"
         >
           {paying ? (
             <>
@@ -300,7 +300,7 @@ export default function PaymentPage() {
             className="w-full border border-stone-300 text-stone-600 text-sm px-8 py-4
                        rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
                        transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                       flex items-center justify-center gap-2 min-h-[52px] active:scale-[0.98]"
+                       flex items-center justify-center gap-2 min-h-13 active:scale-[0.98]"
           >
             {bypassing ? (
               <>
@@ -320,7 +320,7 @@ export default function PaymentPage() {
           onClick={() => navigate("/checkout")}
           className="w-full mt-4 border border-stone-200 text-stone-400 text-sm
                      px-8 py-3.5 rounded-full hover:bg-stone-100 transition-colors
-                     min-h-[48px] active:scale-[0.98]"
+                     min-h-12 active:scale-[0.98]"
         >
           ← Back to cart
         </button>

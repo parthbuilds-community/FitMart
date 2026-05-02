@@ -22,7 +22,7 @@ export default function FitnessCenterDetail({ center }) {
   if (!center) return null;
 
   return (
-    <div className="bg-white border border-stone-200 rounded-2xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-lg transition-all duration-300">
+    <div className="bg-white rounded-2xl p-6 flex flex-col md:flex-row gap-6">
       <div className="w-full md:w-1/3 rounded-xl overflow-hidden bg-stone-100 flex items-center justify-center">
         {center.imageUrl ? (
           <img src={center.imageUrl} alt={center.name} className="w-full h-48 object-cover" onError={e => e.currentTarget.style.display = 'none'} />

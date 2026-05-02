@@ -41,9 +41,9 @@ const TermsAndConditions = () => {
         .delay-3 { transition-delay: 300ms; }
       `}</style>
 
-      <Navbar 
-        variant="home" 
-        menuOpen={menuOpen} 
+      <Navbar
+        variant="home"
+        menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         onSignOut={handleSignOut}
       />
@@ -76,7 +76,7 @@ const TermsAndConditions = () => {
         {/* Quick Navigation */}
         <div className="mb-12 sm:mb-16 fade-up delay-2">
           <div className="bg-white border border-stone-200 rounded-xl p-6 sm:p-8">
-            <p className="text-xs tracking-[0.1em] uppercase text-stone-400 font-semibold mb-4">Quick Links</p>
+            <p className="text-xs tracking-widest uppercase text-stone-400 font-semibold mb-4">Quick Links</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 "Acceptance of Terms",

@@ -182,7 +182,7 @@ export default function Checkout() {
               <button
                 onClick={handleProceed}
                 className="w-full bg-white text-stone-900 text-sm px-8 py-3.5 rounded-full
-                           hover:bg-stone-100 transition-colors font-medium min-h-[48px]"
+                           hover:bg-stone-100 transition-colors font-medium min-h-12"
               >
                 Proceed to Payment →
               </button>
@@ -202,7 +202,7 @@ export default function Checkout() {
                 {/* Product image — smaller on mobile */}
                 <img
                   src={product.image} alt={product.name}
-                  className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl flex-shrink-0 bg-stone-100"
+                  className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl shrink-0 bg-stone-100"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-stone-400 mb-1">
@@ -234,7 +234,7 @@ export default function Checkout() {
                 </div>
 
                 {/* Desktop-only right-aligned price */}
-                <div className="text-right flex-shrink-0 hidden sm:block">
+                <div className="text-right shrink-0 hidden sm:block">
                   <p className="text-xs text-stone-400 mb-1">Qty {quantity}</p>
                   <p
                     style={{ fontFamily: "'DM Serif Display', serif" }}
@@ -255,7 +255,7 @@ export default function Checkout() {
             {discountEligible && (
               <div className="bg-stone-100 border border-stone-200 rounded-2xl px-4 sm:px-6 py-4
                               flex items-center gap-3 sm:gap-4">
-                <span className="text-stone-900 text-lg flex-shrink-0">✓</span>
+                <span className="text-stone-900 text-lg shrink-0">✓</span>
                 <div>
                   <p className="text-sm font-medium text-stone-900">Welcome discount applied</p>
                   <p className="text-xs text-stone-500 mt-0.5">
@@ -292,7 +292,7 @@ function Spinner() {
 function ErrorMsg({ msg }) {
   return (
     <div className="max-w-md mx-auto mt-16 sm:mt-24 bg-red-50 border border-red-100
-                    rounded-2xl p-6 sm:p-8 text-center mx-4 sm:mx-auto">
+                    rounded-2xl p-6 sm:p-8 text-center sm:mx-auto">
       <p className="text-red-600 text-sm">{msg}</p>
     </div>
   );
@@ -306,7 +306,7 @@ function EmptyCart({ navigate }) {
       <button
         onClick={() => navigate("/home")}
         className="bg-stone-900 text-white text-sm px-8 py-3 rounded-full
-                   hover:bg-stone-700 transition-colors min-h-[44px]"
+                   hover:bg-stone-700 transition-colors min-h-11"
       >
         Continue Shopping
       </button>

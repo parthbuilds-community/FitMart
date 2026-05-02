@@ -21,7 +21,7 @@ const STATUS_STYLES = {
 
 // ── Mirrors Navbar.jsx avatar pattern ─────────────────────────────────────
 const CustomerAvatar = ({ name, photoURL, size = "16" }) => (
-  <div className={`w-${size} h-${size} rounded-full overflow-hidden flex-shrink-0
+  <div className={`w-${size} h-${size} rounded-full overflow-hidden shrink-0
                    bg-stone-200 flex items-center justify-center`}>
     {photoURL ? (
       <img
@@ -72,7 +72,7 @@ const MobileOrderCard = ({ order, expanded, onToggle, onDownload, productMap }) 
         </div>
       </div>
 
-      <div className="text-right flex-shrink-0">
+      <div className="text-right shrink-0">
         <p style={{ fontFamily: "'DM Serif Display', serif" }}
           className="text-lg text-stone-900 leading-none mb-1">
           {fmt(order.total)}
@@ -84,7 +84,7 @@ const MobileOrderCard = ({ order, expanded, onToggle, onDownload, productMap }) 
         </p>
       </div>
 
-      <span className="text-stone-300 text-sm flex-shrink-0 mt-0.5">
+      <span className="text-stone-300 text-sm shrink-0 mt-0.5">
         {expanded ? "▾" : "▸"}
       </span>
     </button>
@@ -103,7 +103,7 @@ const MobileOrderCard = ({ order, expanded, onToggle, onDownload, productMap }) 
                 {brand && <p className="text-[10px] text-stone-400 mt-0.5">{brand}</p>}
                 <p className="text-[10px] text-stone-400 mt-0.5">₹{item.price} each</p>
               </div>
-              <div className="text-right flex-shrink-0">
+              <div className="text-right shrink-0">
                 <p className="text-xs text-stone-400">×{item.quantity}</p>
                 <p className="text-xs font-medium text-stone-600 mt-0.5">{fmt(item.price * item.quantity)}</p>
               </div>
@@ -294,7 +294,7 @@ export default function AdminCustomerDetail() {
 
           {loading ? (
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-stone-100 animate-pulse flex-shrink-0" />
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-stone-100 animate-pulse shrink-0" />
               <div className="space-y-2 flex-1 min-w-0">
                 <div className="h-6 md:h-7 w-40 md:w-48 bg-stone-100 rounded-full animate-pulse" />
                 <div className="h-3 w-28 md:w-32 bg-stone-100 rounded-full animate-pulse" />
@@ -303,7 +303,7 @@ export default function AdminCustomerDetail() {
           ) : (
             <div className="flex items-center gap-4 md:gap-5">
               {/* Avatar — slightly smaller on mobile */}
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden flex-shrink-0
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden shrink-0
                               bg-stone-200 flex items-center justify-center">
                 {customerPhoto ? (
                   <img
@@ -325,12 +325,12 @@ export default function AdminCustomerDetail() {
                 <div className="flex items-start md:items-center gap-2 md:gap-3 flex-wrap mb-1">
                   <h1
                     style={{ fontFamily: "'DM Serif Display', serif" }}
-                    className="text-2xl sm:text-3xl md:text-4xl text-stone-900 leading-tight break-words"
+                    className="text-2xl sm:text-3xl md:text-4xl text-stone-900 leading-tight wrap-break-word"
                   >
                     {customerName && customerName !== "—" ? customerName : userId}
                   </h1>
                   {segment && (
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize flex-shrink-0
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize shrink-0
                                       ${SEGMENT_STYLES[segment]}`}>
                       {segment}
                     </span>
@@ -358,7 +358,7 @@ export default function AdminCustomerDetail() {
                   Engagement
                 </p>
                 <p className="text-sm md:text-base text-stone-600 mb-4">
-                  {eligibleForReminder 
+                  {eligibleForReminder
                     ? `Customer inactive for ${daysSinceLastOrder} days`
                     : `Last order ${daysSinceLastOrder} days ago (< 30 days inactive)`}
                 </p>
@@ -384,11 +384,10 @@ export default function AdminCustomerDetail() {
                     onClick={handleSendReminder}
                     disabled={!eligibleForReminder || sendingReminder || loading}
                     title={!eligibleForReminder ? `Customer must be inactive for 30+ days (currently ${daysSinceLastOrder} days)` : "Send reminder email to customer"}
-                    className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${
-                      eligibleForReminder 
-                        ? "bg-stone-900 text-white hover:bg-stone-800 active:scale-95 cursor-pointer" 
-                        : "bg-stone-100 text-stone-400 cursor-default opacity-60"
-                    }`}
+                    className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${eligibleForReminder
+                      ? "bg-stone-900 text-white hover:bg-stone-800 active:scale-95 cursor-pointer"
+                      : "bg-stone-100 text-stone-400 cursor-default opacity-60"
+                      }`}
                   >
                     {sendingReminder ? "Sending..." : "Send Reminder"}
                   </button>
@@ -430,11 +429,11 @@ export default function AdminCustomerDetail() {
                   <div className="h-7 md:h-9 w-16 md:w-20 bg-stone-100 rounded-xl animate-pulse" />
                 ) : (
                   <p style={{ fontFamily: "'DM Serif Display', serif" }}
-                    className="text-2xl md:text-3xl lg:text-4xl text-stone-900 leading-none break-words min-w-0">
+                    className="text-2xl md:text-3xl lg:text-4xl text-stone-900 leading-none wrap-break-word min-w-0">
                     {value}
                   </p>
                 )}
-                <span className="text-base md:text-xl text-stone-200 mb-0.5 flex-shrink-0">{icon}</span>
+                <span className="text-base md:text-xl text-stone-200 mb-0.5 shrink-0">{icon}</span>
               </div>
             </div>
           ))}

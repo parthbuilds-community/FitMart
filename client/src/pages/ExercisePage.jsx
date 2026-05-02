@@ -51,7 +51,7 @@ export default function ExercisePage() {
       }
 
       const data = await response.json();
-      
+
       // Client-side debug logging
       if (data && data.length > 0) {
         const firstEx = data[0];
@@ -64,7 +64,7 @@ export default function ExercisePage() {
         }
         console.log("");
       }
-      
+
       setExercises(data || []);
     } catch (err) {
       setError(err.message || "Failed to load exercises. Please try again.");
@@ -138,10 +138,10 @@ export default function ExercisePage() {
 
         {/* Exercises Grid */}
         {loading && (
-          <section className="min-h-[400px] border-2 border-dashed border-stone-200 rounded-3xl flex items-center justify-center bg-white/50">
+          <section className="min-h-100 border-2 border-dashed border-stone-200 rounded-3xl flex items-center justify-center bg-white/50">
             <div className="text-center p-8">
               <div className="inline-block w-12 h-12 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin mb-4"></div>
-              <p className="text-stone-400 text-sm font-medium uppercase tracking-[0.1em]">
+              <p className="text-stone-400 text-sm font-medium uppercase tracking-widest">
                 Loading exercises...
               </p>
             </div>
@@ -149,10 +149,10 @@ export default function ExercisePage() {
         )}
 
         {error && (
-          <section className="min-h-[400px] border-2 border-dashed border-stone-300 rounded-3xl flex items-center justify-center bg-stone-50">
+          <section className="min-h-100 border-2 border-dashed border-stone-300 rounded-3xl flex items-center justify-center bg-stone-50">
             <div className="text-center p-8">
               <p className="text-3xl mb-4">⚠️</p>
-              <p className="text-stone-700 text-sm font-medium uppercase tracking-[0.1em]">
+              <p className="text-stone-700 text-sm font-medium uppercase tracking-widest">
                 {error}
               </p>
               <button
@@ -166,10 +166,10 @@ export default function ExercisePage() {
         )}
 
         {!loading && !error && exercises.length === 0 && (
-          <section className="min-h-[400px] border-2 border-dashed border-stone-200 rounded-3xl flex items-center justify-center bg-white/50">
+          <section className="min-h-100 border-2 border-dashed border-stone-200 rounded-3xl flex items-center justify-center bg-white/50">
             <div className="text-center p-8">
               <p className="text-3xl mb-4">∅</p>
-              <p className="text-stone-400 text-sm font-medium uppercase tracking-[0.1em]">
+              <p className="text-stone-400 text-sm font-medium uppercase tracking-widest">
                 No exercises found
               </p>
               <p className="text-stone-300 text-xs mt-2">Try selecting a different category.</p>
@@ -206,12 +206,12 @@ export default function ExercisePage() {
                 </div>
 
                 {/* Exercise Details */}
-                <div className="p-5 md:p-6 flex flex-col flex-grow">
+                <div className="p-5 md:p-6 flex flex-col grow">
                   <h3 className="font-['DM_Serif_Display'] text-lg md:text-xl text-stone-900 mb-2 capitalize line-clamp-2">
                     {exercise.name}
                   </h3>
 
-                  <div className="space-y-2 mb-5 text-xs text-stone-500 flex-grow">
+                  <div className="space-y-2 mb-5 text-xs text-stone-500 grow">
                     {exercise.target && (
                       <p>
                         <span className="uppercase tracking-wide">Target:</span>{" "}

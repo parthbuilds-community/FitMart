@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessCenterDetail from "./FitnessCenterDetail";
 
@@ -49,6 +50,7 @@ export default function NearbyFitnessCenters({ visible = true }) {
   }, [filter]);
 
   return (
+    <>
     <section className={`fade-in d1 ${visible ? "show" : ""}`}>
       <div className="mb-4 sm:mb-6 flex items-center justify-between">
         <div>
@@ -90,7 +92,7 @@ export default function NearbyFitnessCenters({ visible = true }) {
               )}
 
               <div className="flex gap-3">
-                <div className="w-20 h-20 bg-stone-100 rounded-xl overflow-hidden flex-shrink-0">
+                <div className="w-20 h-20 bg-stone-100 rounded-xl overflow-hidden shrink-0">
                   <img src={c.imageUrl} alt={c.name} className="w-full h-full object-cover" onError={e => e.currentTarget.style.display = 'none'} />
                 </div>
                 <div className="flex-1">
@@ -113,33 +115,36 @@ export default function NearbyFitnessCenters({ visible = true }) {
           ))
         )}
       </div>
-      {/* Modal */}
-      {modalOpen && selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setModalOpen(false)}
-            aria-hidden
-          />
-
-          <div className="relative w-full max-w-3xl mx-auto">
-            <div className="p-4">
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="absolute -top-2 -right-2 bg-white rounded-full p-2 border border-stone-200 shadow-sm text-stone-600"
-                aria-label="Close"
-              >
-                ×
-              </button>
-              <div className="bg-white rounded-2xl p-6">
-                <FitnessCenterDetail center={selected} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
     </section>
+
+    {/* Modal — moved outside <section> via React Portal to escape the
+        CSS transform stacking context created by the fade-in animation.
+        This ensures the backdrop covers the full viewport. */}
+    {modalOpen && selected && createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10">
+        {/* Fix 1: backdrop is now fixed (not absolute) — covers full viewport */}
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+          onClick={() => setModalOpen(false)}
+          aria-hidden
+        />
+
+        {/* Fix 2: close button is now inside the modal card */}
+        <div className="relative z-10 w-full max-w-3xl mx-auto">
+          <button
+            type="button"
+            onClick={() => setModalOpen(false)}
+            className="absolute -top-3 -right-3 z-20 bg-white rounded-full p-2 border border-stone-200 shadow-md text-stone-600 hover:bg-stone-50 transition-colors"
+            aria-label="Close"
+          >
+            ×
+          </button>
+          {/* Fix 3: removed redundant white box wrapper — FitnessCenterDetail renders its own */}
+          <FitnessCenterDetail center={selected} />
+        </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }

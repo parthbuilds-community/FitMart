@@ -50,7 +50,7 @@ const InventoryMobileCard = ({ p, onEdit }) => {
   return (
     <div className="bg-white border border-stone-100 rounded-2xl p-4 flex gap-3">
       {p.image && (
-        <div className="w-12 h-12 rounded-xl bg-stone-100 overflow-hidden flex-shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-stone-100 overflow-hidden shrink-0">
           <img src={p.image} alt={p.name}
             className="w-full h-full object-cover"
             onError={e => { e.currentTarget.style.display = "none"; }} />
@@ -66,7 +66,7 @@ const InventoryMobileCard = ({ p, onEdit }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full
-                            font-medium flex-shrink-0 ${style}`}>
+                            font-medium shrink-0 ${style}`}>
               {label}
             </span>
             <button onClick={() => onEdit(p)} className="p-1 rounded-md hover:bg-stone-100">
@@ -284,7 +284,7 @@ export default function AdminInventory() {
               { key: "unlimited", label: `Not Available (${stats.unlimited})` },
             ].map(({ key, label }) => (
               <button key={key} onClick={() => setFilter(key)}
-                className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap flex-shrink-0
+                className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap shrink-0
                             ${filter === key
                     ? "bg-stone-900 text-white"
                     : "border border-stone-200 text-stone-600 hover:bg-stone-100"
@@ -367,7 +367,7 @@ export default function AdminInventory() {
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           {p.image && (
-                            <div className="w-9 h-9 rounded-xl bg-stone-100 overflow-hidden flex-shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-stone-100 overflow-hidden shrink-0">
                               <img src={p.image} alt={p.name}
                                 className="w-full h-full object-cover"
                                 onError={e => { e.currentTarget.style.display = "none"; }} />

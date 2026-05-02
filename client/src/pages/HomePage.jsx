@@ -188,7 +188,7 @@ function ProductCard({ product, onAdd, cartItems = [], updateQty }) {
             ) : (
               <button
                 onClick={handleAdd}
-                className={`relative z-10 flex-shrink-0 w-full sm:w-auto mt-2 sm:mt-0 text-center text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2
+                className={`relative z-10 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 text-center text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2
                             rounded-full transition-all duration-200 whitespace-nowrap
                             ${added
                     ? "bg-stone-900 text-white"
@@ -464,7 +464,7 @@ export default function HomePage() {
                              scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap`}>
               {CATEGORIES.map(c => (
                 <button key={c.value} onClick={() => { setActiveCategory(c.value); setShowAll(false); }}
-                  className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap flex-shrink-0
+                  className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap shrink-0
                               ${activeCategory === c.value
                       ? "bg-stone-900 text-white"
                       : "bg-white border border-stone-200 text-stone-600 hover:bg-stone-50"
@@ -520,7 +520,7 @@ export default function HomePage() {
                 <button onClick={() => navigate(plan.route)}
                   className="text-xs py-2.5 rounded-full transition-all mt-1 border border-stone-300
                              text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900
-                             min-h-[40px]">
+                             min-h-10">
                   View Plan →
                 </button>
               </div>
@@ -604,7 +604,7 @@ export default function HomePage() {
                 </div>
                 <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                   transition-all self-start min-h-[40px]">
+                                   transition-all self-start min-h-10">
                   {p.cta}
                 </button>
               </div>
@@ -622,7 +622,7 @@ export default function HomePage() {
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
               <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-[36px] px-1">
+                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
                 {l}
               </button>
             ))}
