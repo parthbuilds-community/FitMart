@@ -62,6 +62,25 @@ export default function Authentication() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  // Poll for email verification if waiting on pending-verification screen
+  useEffect(() => {
+    let pollInterval = null;
+    if (mode === "pending-verification" && auth.currentUser) {
+      pollInterval = setInterval(async () => {
+        try {
+          await auth.currentUser.reload();
+          if (auth.currentUser.emailVerified) {
+            clearInterval(pollInterval);
+            navigate(auth.currentUser.uid === ADMIN_UID ? "/admin/dashboard" : "/home");
+          }
+        } catch (err) {
+          console.error("Failed to reload user:", err);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(pollInterval);
+  }, [mode, navigate]);
+
   const handleChange = (e) => {
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
     setError("");
