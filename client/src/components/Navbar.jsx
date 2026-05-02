@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
@@ -208,3 +209,22 @@ export default function Navbar({
     </nav>
   );
 }
+
+Navbar.propTypes = {
+  /** "landing" or "shop" — controls positioning, colors, and nav links */
+  variant: PropTypes.oneOf(["landing", "shop"]),
+  /** Whether the navbar background is opaque (used on landing scroll) */
+  navOpaque: PropTypes.bool,
+  /** Callback fired when the search icon is clicked */
+  onSearchToggle: PropTypes.func,
+  /** Number of items currently in the cart */
+  cartCount: PropTypes.number,
+  /** Callback fired when the cart icon is clicked */
+  onCartOpen: PropTypes.func,
+  /** Whether the user dropdown menu is open (controlled mode) */
+  menuOpen: PropTypes.bool,
+  /** Setter for menuOpen (controlled mode) */
+  setMenuOpen: PropTypes.func,
+  /** Callback fired on sign-out */
+  onSignOut: PropTypes.func,
+};
