@@ -1,9 +1,5 @@
-export const normalizeProduct = (p) => {
-  const normalizedId = p.productId ?? p.id;
-
-  return {
-    ...p,
-    id: normalizedId,
-    productId: normalizedId,
-  };
-};
+export const normalizeProduct = (p) => ({
+  ...p,
+  id: p.productId ?? p.id,
+  productId: p.productId ?? p.id,
+});
