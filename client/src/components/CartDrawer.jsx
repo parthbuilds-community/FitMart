@@ -1,5 +1,6 @@
 // src/components/CartDrawer.jsx
 import { useEffect } from "react";
+import PropTypes from "prop-types";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
 
@@ -226,5 +227,31 @@ function CartDrawer({
     </>
   );
 }
+
+CartDrawer.propTypes = {
+  /** Whether the cart drawer is visible */
+  isOpen: PropTypes.bool.isRequired,
+  /** Callback to close the drawer */
+  onClose: PropTypes.func.isRequired,
+  /** Array of cart item objects */
+  cart: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      name: PropTypes.string.isRequired,
+      price: PropTypes.number.isRequired,
+      qty: PropTypes.number.isRequired,
+      image: PropTypes.string,
+      brand: PropTypes.string,
+    })
+  ).isRequired,
+  /** Total number of items in the cart */
+  cartCount: PropTypes.number.isRequired,
+  /** Cart subtotal amount */
+  cartTotal: PropTypes.number.isRequired,
+  /** Callback to update an item's quantity: (itemId, delta) */
+  updateQty: PropTypes.func.isRequired,
+  /** Callback to remove an item from the cart: (itemId) */
+  removeFromCart: PropTypes.func.isRequired,
+};
 
 export default CartDrawer;
