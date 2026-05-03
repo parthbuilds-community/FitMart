@@ -100,9 +100,21 @@ git remote -v
 
 ### Step 4: Set Up the Project Locally
 
-Follow the [Quick Start guide in README.md](README.md#-quick-start) to get both the client and server running locally.
+Follow the [Quick Start guide in README.md](../README.md#-quick-start) to get both the client and server running locally.
+
+You will need accounts or API keys for the following services:
+
+| Service | Required? | Purpose |
+|---|---|---|
+| MongoDB Atlas (or local) | ✅ Required | Primary database |
+| Firebase | ✅ Required | Authentication |
+| Razorpay | ⚠️ Optional | Payment processing |
+| Google Gemini API | ⚠️ Optional | AI chatbot |
+| RapidAPI (ExerciseDB) | ⚠️ Optional | Exercise library |
+| SMTP provider | ⚠️ Optional | Transactional emails |
 
 > ✅ Make sure the app runs on your machine **before** making any changes.
+> Optional services fail gracefully — you don't need all of them to run the app locally.
 
 ---
 
@@ -141,6 +153,16 @@ Browse the [Issues tab](https://github.com/parthnarkar/FitMart/issues) and look 
 
 This prevents two people from working on the same thing. The maintainer will assign it to you.
 
+### Good First Contributions
+
+If you're not sure where to start, here are some concrete areas that always benefit from attention:
+
+- Replacing any hardcoded `http://localhost:5000` API URLs with `import.meta.env.VITE_API_URL`
+- Improving responsiveness of existing pages on mobile viewports
+- Adding JSDoc comments to utility functions in `client/src/utils/`
+- Writing more thorough input validation on form components
+- Improving accessibility (ARIA labels, keyboard navigation)
+
 ### Want to Work on Something Not Listed?
 
 Open a new issue first and describe what you'd like to do. Wait for a maintainer to respond before starting large changes — this avoids wasted effort.
@@ -161,6 +183,7 @@ git checkout -b fix/cart-reservation-bug
 git checkout -b feat/product-search
 git checkout -b docs/improve-contributing-guide
 git checkout -b refactor/api-url-standardize
+git checkout -b feat/workout-sync
 ```
 
 | Prefix | Use For |
@@ -185,13 +208,17 @@ git checkout -b refactor/api-url-standardize
 
 3. Test your changes locally — make sure everything still works.
 
-4. Stage and commit your changes (see commit format below):
+4. If you've added a new route to the server, verify it appears correctly in the API Reference section of the README, and update it if not.
+
+5. If you've added a new page or component, verify the [Project Structure](#-project-structure-reference) in the README accurately reflects it.
+
+6. Stage and commit your changes (see commit format below):
    ```bash
    git add .
    git commit -m "feat: add product search functionality"
    ```
 
-5. Push to your fork:
+7. Push to your fork:
    ```bash
    git push origin feat/your-feature-name
    ```
@@ -219,6 +246,8 @@ feat(cart): add quantity update button on cart page
 fix(auth): resolve Google sign-in redirect loop
 docs(readme): add environment variable instructions
 refactor(client): replace hardcoded API URLs with VITE_API_URL
+feat(exercises): add exercise browser with ExerciseDB integration
+fix(chatbot): add Gemini fallback responses for API unavailability
 chore: update dependencies
 ```
 
@@ -255,6 +284,7 @@ Use the same convention as commits:
 ```
 feat(product): add product filter by category
 fix(payment): handle failed payment edge case
+docs(contributing): update env variable table
 ```
 
 ### PR Description Template
@@ -280,6 +310,7 @@ Before / After screenshots if you changed any UI.
 - [ ] I've tested my changes locally
 - [ ] I've linked the related issue
 - [ ] I haven't introduced any new secrets or API keys
+- [ ] I've updated README.md if I added a new route, page, component, or env variable
 ```
 
 ---
@@ -306,20 +337,52 @@ After you open a PR:
 FitMart/
 ├── client/                   # React + Vite Frontend
 │   ├── src/
-│   │   ├── components/       # Reusable UI components
+│   │   ├── components/       # Reusable UI components (uses Framer Motion for animations)
+│   │   ├── auth/             # Firebase auth setup & hooks
 │   │   ├── pages/            # Route-level page components
-│   │   ├── auth/             # Firebase auth setup & helpers
-│   │   └── utilities/        # Helper/utility functions
+│   │   └── utils/            # Helper/utility functions
 │   └── .env.local            # ⚠️ Not committed — create manually
 │
 ├── server/                   # Node.js + Express Backend
-│   ├── models/               # Mongoose schemas (Product, Cart, Order)
-│   ├── routes/               # Route handlers (products, cart, orders, payment)
-│   ├── seed.js               # DB seeding script
+│   ├── middleware/           # Express middleware (logger, auth verification)
+│   ├── models/               # Mongoose schemas
+│   ├── routes/               # Route handlers
+│   ├── services/             # Business logic services (email, etc.)
 │   ├── db.js                 # MongoDB connection
-│   ├── index.js              # Server entry point
-│   └── .env                  # ⚠️ Not committed — create manually
+│   ├── firebaseAdmin.js      # Firebase Admin SDK setup
+│   ├── index.js              # Server entry point (middleware, routes, error handler)
+│   ├── seed.js               # Product DB seed script
+│   └── seedFitnessCenters.js # Fitness center DB seed script
+│
+└── docs/
+    ├── CONTRIBUTING.md                 # This file
+    ├── FIRST_PURCHASE_EMAIL_SETUP.md   # Email feature setup guide
+    └── SECURITY.md                     # Responsible disclosure policy
 ```
+
+### Key Conventions to Know
+
+**Adding a new backend route:**
+1. Create your route file in `server/routes/your-feature.js`
+2. Register it in `server/index.js` with `app.use('/api/your-feature', require('./routes/your-feature'))`
+3. Create the corresponding Mongoose model in `server/models/YourModel.js` if needed
+4. Update the API Reference table in `README.md`
+
+**Adding a new frontend page:**
+1. Create your component in `client/src/pages/YourPage.jsx`
+2. Import it in `client/src/App.jsx` and add the `<Route>` entry
+3. Update the Pages & Routes table in `README.md`
+4. If your page needs auth guarding, wrap it in `<AdminRoute>` or `<NonAdminRoute>`
+
+**Adding a new environment variable:**
+1. Add it to `server/.env` or `client/.env` locally
+2. Document it in the Environment Variables section of `README.md`
+3. Add a `.env.example` entry if one exists for that directory
+
+**Adding a new service (email, third-party API, etc.):**
+1. Create it in `server/services/your-service.js`
+2. Fail gracefully when env variables are missing — never crash the server
+3. Document the required env variables in `README.md` and `docs/FIRST_PURCHASE_EMAIL_SETUP.md` (or a new doc) if the setup is non-trivial
 
 ---
 
@@ -333,26 +396,54 @@ FitMart/
 - Keep components small and single-purpose
 - Name component files with **PascalCase** (e.g., `ProductCard.jsx`)
 - Name utility files with **camelCase** (e.g., `formatPrice.js`)
+- Use the `normalizeProduct` utility from `client/src/utils/normalizeProduct.js` when working with product data from the API to safely handle both `id` and `productId` fields
 
 ### CSS / Tailwind
 
 - Use **Tailwind utility classes** wherever possible
+- Stick to the `stone-*` color palette only — no blue, green, or purple (see the Design System in `client/DesignSystem.md`)
 - Keep custom CSS to a minimum
 - Ensure UI is responsive and works on mobile
+- Use `rounded-full` for buttons, `rounded-2xl` for cards, and `rounded-lg` for inputs
+- Always precede major section headings with the eyebrow label pattern: `text-xs tracking-[0.2em] uppercase text-stone-400`
+- Use `DM Serif Display` for headings and `DM Sans` for body/UI text
 
 ### Backend (Node/Express)
 
 - Keep route files focused on a single resource
-- Put business logic in separate helper functions, not directly in routes
-- Always validate input and handle errors properly
-- Never log or expose sensitive values (API keys, passwords)
+- Put business logic and reusable logic in `server/services/` — not directly in routes
+- Always validate input (required fields, types) and return clear error messages
+- Always handle errors with try/catch and return a clean JSON error response
+- Use the `verifyFirebaseToken` middleware from `server/middleware/verifyFirebaseToken.js` for any endpoint that requires a logged-in user
+- Never log or expose sensitive values (API keys, passwords) — the request logger already redacts `password`, `token`, `secret`, and `apiKey` keys
+- New services that depend on env variables must fail gracefully (log a warning, return null, and allow the rest of the app to function) — do not call `process.exit()`
+
+### Animations (Framer Motion)
+
+- Use **Framer Motion** for all UI animations — page transitions, modal entrances, hover effects
+- Keep animations quick (150-300ms) and subtle — no distracting or overly complex movements
+- Prefer `motion` components over CSS transitions for interactive elements
+- Use `AnimatePresence` for exit animations on unmounting components
+- Example pattern:
+  ```jsx
+  import { motion, AnimatePresence } from 'framer-motion';
+  
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.2 }}
+  >
+  ```
 
 ### General
 
-- **No hardcoded URLs** — use `VITE_API_URL` or env variables
+- **No hardcoded URLs** — use `import.meta.env.VITE_API_URL` on the client and environment variables on the server
 - **No committed secrets** — `.env` files are gitignored for a reason
 - Delete commented-out code before submitting a PR
 - Write clear variable and function names — code should read like English
+- When touching `UserProfile`, remember it tracks `email`, `firstPurchaseEmailSentAt`, and `lastReminderEmailSentAt` for the email services — don't overwrite these fields unintentionally
+- **Animations** — Use **[Framer Motion](https://www.framer.com/motion/)** for all animations and transitions (page entrances, modals, hover effects, etc.). Keep animations subtle and performant — avoid over-animating.
 
 ---
 
@@ -363,6 +454,7 @@ Stuck? Don't worry — everyone was a beginner once.
 - 💬 **Comment on the issue** you're working on with your question
 - 🐛 **Open a new issue** with the `question` label
 - 📖 **Re-read the README** — the setup steps cover most common problems
+- 🔐 **For security issues**, follow the responsible disclosure process in [`docs/SECURITY.md`](SECURITY.md) — do not open a public issue
 
 > There are no dumb questions. Ask away! 🙌
 

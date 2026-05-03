@@ -27,7 +27,7 @@ export default function WelcomeBanner({ onDismiss }) {
     >
       {/* Left: message */}
       <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0">
-        <span className="text-stone-400 flex-shrink-0 text-sm sm:text-base mt-0.5 sm:mt-0">
+        <span className="text-stone-400 shrink-0 text-sm sm:text-base mt-0.5 sm:mt-0">
           ✓
         </span>
         {/* Stack on very small screens, inline on sm+ */}
@@ -55,8 +55,8 @@ export default function WelcomeBanner({ onDismiss }) {
       <button
         onClick={dismiss}
         aria-label="Dismiss welcome banner"
-        className="flex-shrink-0 text-stone-500 hover:text-white transition-colors
-                   text-xl leading-none min-w-[36px] min-h-[36px] flex items-center
+        className="shrink-0 text-stone-500 hover:text-white transition-colors
+                   text-xl leading-none min-w-9 min-h-9 flex items-center
                    justify-center rounded-full hover:bg-white/10 active:scale-95"
       >
         ×

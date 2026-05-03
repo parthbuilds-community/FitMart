@@ -104,7 +104,7 @@ export default function WeightLossPlans() {
                 onClick={() => navigate("/home")}
                 className="text-xs tracking-[0.15em] uppercase text-stone-400
                            hover:text-stone-200 transition-colors inline-flex items-center
-                           gap-2 self-start sm:self-auto min-h-[44px]"
+                           gap-2 self-start sm:self-auto min-h-11"
               >
                 ← Back to Home
               </button>
@@ -163,14 +163,14 @@ export default function WeightLossPlans() {
                 <ul className="space-y-2">
                   {plan.features.map((f, j) => (
                     <li key={j} className="text-xs flex items-center gap-2 text-stone-500">
-                      <span className="text-stone-900 flex-shrink-0">✓</span> {f}
+                      <span className="text-stone-900 shrink-0">✓</span> {f}
                     </li>
                   ))}
                 </ul>
 
                 <button className="text-sm py-3 rounded-full transition-all mt-2 border
                                    border-stone-300 text-stone-700 hover:bg-stone-900
-                                   hover:text-white hover:border-stone-900 min-h-[44px]
+                                   hover:text-white hover:border-stone-900 min-h-11
                                    active:scale-[0.98]">
                   Start Plan →
                 </button>
@@ -229,7 +229,7 @@ export default function WeightLossPlans() {
             {["Privacy", "Terms", "Support"].map(l => (
               <button key={l}
                 className="text-xs text-stone-400 hover:text-stone-600 transition-colors
-                           min-h-[44px] flex items-center">
+                           min-h-11 flex items-center">
                 {l}
               </button>
             ))}

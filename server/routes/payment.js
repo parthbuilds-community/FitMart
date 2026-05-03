@@ -9,6 +9,7 @@ const router = express.Router();
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -103,6 +104,13 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
     await Order.findByIdAndUpdate(orderResponse.data._id, {
       paymentId: razorpay_payment_id,
       status: "paid"
+    });
+
+    // STEP 4: Send first-purchase email (non-blocking)
+    // Email sending should not fail the payment flow
+    sendFirstPurchaseEmail(userId, orderResponse.data).catch((err) => {
+      console.error("First-purchase email service error:", err.message);
+      // Don't throw — email failure should not break payment success
     });
 
     res.json({ success: true, order: orderResponse.data });
@@ -200,6 +208,13 @@ router.post("/demo-success", async (req, res) => {
 
     // Clear cart (purchasing finalizes reservation)
     await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
+
+    // Send first-purchase email (non-blocking)
+    // Email sending should not fail the payment flow
+    sendFirstPurchaseEmail(userId, order).catch((err) => {
+      console.error("First-purchase email service error:", err.message);
+      // Don't throw — email failure should not break payment success
+    });
 
     res.json({ success: true, paymentId: fakePaymentId, order });
   } catch (err) {

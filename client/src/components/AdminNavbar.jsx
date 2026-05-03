@@ -27,7 +27,7 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
 
         {/* ── Brand ── */}
         <div
-          className="flex items-center gap-2 sm:gap-4 cursor-pointer flex-shrink-0"
+          className="flex items-center gap-2 sm:gap-4 cursor-pointer shrink-0"
           onClick={() => navigate("/admin/dashboard")}
         >
           <span
@@ -58,7 +58,7 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
                   key={key}
                   onClick={() => setRange(key)}
                   className={`text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-all
-                              cursor-pointer flex-shrink-0 min-h-[34px]
+                              cursor-pointer shrink-0 min-h-8.5
                               ${range === key
                       ? "bg-stone-900 text-white"
                       : "border border-stone-200 text-stone-600 hover:bg-stone-100"
@@ -74,7 +74,7 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
               className="border border-stone-200 text-stone-600 text-xs px-3 sm:px-5
                          py-2 rounded-full hover:bg-stone-900 hover:text-white
                          hover:border-stone-900 transition-all cursor-pointer
-                         min-h-[36px] flex-shrink-0"
+                         min-h-9 shrink-0"
             >
               <span className="hidden sm:inline">← Go to Dashboard</span>
               <span className="sm:hidden">← Dashboard</span>
@@ -83,14 +83,14 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
 
           {/* ── Profile dropdown ── */}
           {!authLoading && (
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setMenuOpen?.((p) => !p)}
                 className="flex items-center gap-2 border border-stone-200 rounded-full
                            px-2 sm:px-2.5 py-1.5 hover:bg-stone-50 transition-colors
-                           ml-0.5 sm:ml-1 cursor-pointer min-h-[36px]"
+                           ml-0.5 sm:ml-1 cursor-pointer min-h-9"
               >
-                <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0
+                <div className="w-6 h-6 rounded-full overflow-hidden shrink-0
                                 bg-stone-200 flex items-center justify-center">
                   {user?.photoURL ? (
                     <img
@@ -127,7 +127,7 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
                       <button
                         onClick={handleSignOut}
                         className="w-full text-left text-xs text-stone-500 hover:bg-stone-50
-                                   px-4 py-2.5 transition-colors cursor-pointer min-h-[36px]"
+                                   px-4 py-2.5 transition-colors cursor-pointer min-h-9"
                       >
                         Sign Out
                       </button>

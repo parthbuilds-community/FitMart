@@ -9,6 +9,7 @@ import Payment from "./pages/PaymentPage";
 import ProductConfirmation from "./pages/ProductConfirmation";
 import NotFound from "./pages/NotFound";
 import AdminInventory from "./pages/AdminInventory";
+import Profile from "./pages/Profile";
 import AdminRoute from "./components/AdminRoute";
 import WeightLossPlans from "./pages/WeightLossPlans";
 import MuscleBuildingPlans from "./pages/MuscleBuildingPlans";
@@ -17,7 +18,12 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminReports from "./pages/AdminReports";
 import AdminCustomers from "./pages/AdminCustomers";
 import AdminCustomerDetail from "./pages/AdminCustomerDetail";
+import AdminMarketing from "./pages/AdminMarketing";
+import AdminBugs from "./pages/AdminBugs";
 import NonAdminRoute from "./components/NonAdminRoute";
+import WorkoutNotes from "./pages/NotesPage";
+import WorkoutTracker from "./pages/TrackerPage";
+import ExercisePage from "./pages/ExercisePage";
 
 export default function App() {
   return (
@@ -29,11 +35,15 @@ export default function App() {
         <Route path="/home" element={<NonAdminRoute><HomePage /></NonAdminRoute>} />
         <Route path="/product/:productId" element={<NonAdminRoute><ProductPage /></NonAdminRoute>} />
         <Route path="/checkout" element={<NonAdminRoute><Checkout /></NonAdminRoute>} />
+        <Route path="/profile" element={<NonAdminRoute><Profile /></NonAdminRoute>} />
         <Route path="/payment" element={<NonAdminRoute><Payment /></NonAdminRoute>} />
         <Route path="/payment-confirmation" element={<NonAdminRoute><ProductConfirmation /></NonAdminRoute>} />
         <Route path="/plans/weight-loss" element={<WeightLossPlans />} />
         <Route path="/plans/muscle-building" element={<MuscleBuildingPlans />} />
         <Route path="/plans/mobility-recovery" element={<MobilityRecoveryPlans />} />
+        <Route path="/tracker" element={<NonAdminRoute><WorkoutTracker /></NonAdminRoute>} />
+        <Route path="/notes" element={<NonAdminRoute><WorkoutNotes /></NonAdminRoute>} />
+        <Route path="/exercises" element={<NonAdminRoute><ExercisePage /></NonAdminRoute>} />
 
         {/* Admin routes (guarded) */}
         <Route
@@ -49,6 +59,22 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminReports />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/marketing"
+          element={
+            <AdminRoute>
+              <AdminMarketing />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/bugs"
+          element={
+            <AdminRoute>
+              <AdminBugs />
             </AdminRoute>
           }
         />

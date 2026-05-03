@@ -255,7 +255,7 @@ export default function ProductPage() {
         <p className="text-stone-500 text-sm mb-6">{error}</p>
         <button onClick={() => navigate("/home")}
           className="bg-stone-900 text-white text-sm px-8 py-3 rounded-full
-                     hover:bg-stone-700 transition-colors min-h-[44px]">
+                     hover:bg-stone-700 transition-colors min-h-11">
           Back to Store
         </button>
       </div>
@@ -295,16 +295,16 @@ export default function ProductPage() {
                           flex items-center gap-1.5 sm:gap-2 text-xs text-stone-400 overflow-x-auto
                           whitespace-nowrap scrollbar-none">
             <button onClick={() => navigate("/")}
-              className="hover:text-stone-700 transition-colors flex-shrink-0">Home</button>
-            <span className="flex-shrink-0">→</span>
+              className="hover:text-stone-700 transition-colors shrink-0">Home</button>
+            <span className="shrink-0">→</span>
             <button onClick={() => navigate("/home")}
-              className="hover:text-stone-700 transition-colors flex-shrink-0">Shop</button>
-            <span className="flex-shrink-0">→</span>
+              className="hover:text-stone-700 transition-colors shrink-0">Shop</button>
+            <span className="shrink-0">→</span>
             <button onClick={() => navigate("/home")}
-              className="hover:text-stone-700 transition-colors flex-shrink-0">
+              className="hover:text-stone-700 transition-colors shrink-0">
               {product.category}
             </button>
-            <span className="flex-shrink-0">→</span>
+            <span className="shrink-0">→</span>
             <span className="text-stone-600 truncate">{product.name}</span>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function ProductPage() {
                 {features.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 sm:gap-2.5 bg-stone-50
                                           border border-stone-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3">
-                    <span className="text-stone-400 text-sm flex-shrink-0">✓</span>
+                    <span className="text-stone-400 text-sm shrink-0">✓</span>
                     <span className="text-xs text-stone-600 leading-snug">{f}</span>
                   </div>
                 ))}
@@ -466,7 +466,7 @@ export default function ProductPage() {
                   disabled={busy}
                   className={`flex-1 text-sm py-4 rounded-full font-medium transition-all
                               flex items-center justify-center gap-2 disabled:cursor-not-allowed
-                              min-h-[52px] active:scale-[0.98]
+                              min-h-13 active:scale-[0.98]
                               ${added
                       ? "bg-stone-700 text-white"
                       : adding
@@ -492,7 +492,7 @@ export default function ProductPage() {
                   disabled={busy}
                   className={`border border-stone-300 text-stone-700 text-sm px-6 py-4
                               rounded-full transition-all flex items-center justify-center gap-2
-                              min-h-[52px] active:scale-[0.98]
+                              min-h-13 active:scale-[0.98]
                               ${buyingNow
                       ? "opacity-70 cursor-not-allowed"
                       : "hover:bg-stone-900 hover:text-white hover:border-stone-900"
@@ -541,7 +541,7 @@ export default function ProductPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`text-sm py-4 whitespace-nowrap transition-colors flex-shrink-0
+                  className={`text-sm py-4 whitespace-nowrap transition-colors shrink-0
                               ${activeTab === tab.key ? "tab-active" : "tab-inactive"}`}
                 >
                   {tab.label}
@@ -596,7 +596,7 @@ export default function ProductPage() {
                   ].map(({ label, value }) => (
                     <div key={label} className="flex items-center justify-between py-3
                                                 border-b border-stone-100 last:border-0 gap-4">
-                      <span className="text-xs text-stone-500 uppercase tracking-wide flex-shrink-0">
+                      <span className="text-xs text-stone-500 uppercase tracking-wide shrink-0">
                         {label}
                       </span>
                       <span className="text-sm text-stone-900 font-medium text-right">{value}</span>
@@ -617,7 +617,7 @@ export default function ProductPage() {
                   ].map(({ icon, title, body }) => (
                     <div key={title} className="flex gap-3 sm:gap-4 p-4 sm:p-5 bg-stone-50
                                                 rounded-2xl border border-stone-200">
-                      <span className="text-stone-500 text-lg flex-shrink-0 mt-0.5">{icon}</span>
+                      <span className="text-stone-500 text-lg shrink-0 mt-0.5">{icon}</span>
                       <div>
                         <p className="text-sm font-medium text-stone-900 mb-1">{title}</p>
                         <p className="text-sm text-stone-500 leading-relaxed">{body}</p>
@@ -738,7 +738,7 @@ function Shell({ children, cartCount = 0, onCartOpen }) {
             <button
               onClick={onCartOpen}
               className="relative p-2 text-stone-500 hover:text-stone-900 transition-colors
-                         min-h-[44px] min-w-[44px] flex items-center justify-center"
+                         min-h-11 min-w-11 flex items-center justify-center"
               aria-label="Open cart"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor"
@@ -760,7 +760,7 @@ function Shell({ children, cartCount = 0, onCartOpen }) {
               onClick={() => navigate("/home")}
               className="border border-stone-200 text-stone-600 text-xs px-3 sm:px-5 py-2
                          rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                         transition-all min-h-[36px]"
+                         transition-all min-h-9"
             >
               <span className="hidden sm:inline">← Back to Shop</span>
               <span className="sm:hidden">← Shop</span>

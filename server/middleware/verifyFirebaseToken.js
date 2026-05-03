@@ -12,6 +12,11 @@ const verifyFirebaseToken = async (req, res, next) => {
 
   try {
     const decoded = await admin.auth().verifyIdToken(token);
+
+    if (!decoded.email_verified) {
+      return res.status(403).json({ error: 'Forbidden — email not verified' });
+    }
+
     req.user = decoded;
     next();
   } catch (err) {

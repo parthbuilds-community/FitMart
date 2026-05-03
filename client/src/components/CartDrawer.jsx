@@ -45,7 +45,7 @@ function CartDrawer({
       >
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-5 sm:px-7 py-5 sm:py-6
-                        border-b border-stone-200 flex-shrink-0">
+                        border-b border-stone-200 shrink-0">
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">
               Your
@@ -62,7 +62,7 @@ function CartDrawer({
             onClick={onClose}
             aria-label="Close cart"
             className="text-stone-400 hover:text-stone-900 transition-colors
-                       text-2xl leading-none min-w-[44px] min-h-[44px] flex items-center
+                       text-2xl leading-none min-w-11 min-h-11 flex items-center
                        justify-center rounded-full hover:bg-stone-100 active:scale-95"
           >
             ×
@@ -98,7 +98,7 @@ function CartDrawer({
               <button
                 onClick={onClose}
                 className="bg-stone-900 text-white text-sm px-8 py-3 rounded-full
-                           hover:bg-stone-700 transition-colors min-h-[44px] active:scale-[0.98]"
+                           hover:bg-stone-700 transition-colors min-h-11 active:scale-[0.98]"
               >
                 Continue Shopping
               </button>
@@ -156,7 +156,7 @@ function CartDrawer({
                     <button
                       onClick={() => removeFromCart(item.id)}
                       className="text-xs text-stone-300 hover:text-stone-900 transition-colors
-                                 min-h-[28px] flex items-center"
+                                 min-h-7 flex items-center"
                     >
                       Remove
                     </button>
@@ -170,7 +170,7 @@ function CartDrawer({
                       >
                         −
                       </button>
-                      <span className="text-xs text-stone-900 min-w-[1rem] text-center
+                      <span className="text-xs text-stone-900 min-w-4 text-center
                                        select-none">
                         {item.qty}
                       </span>
@@ -193,7 +193,7 @@ function CartDrawer({
         {/* ── Footer ── */}
         {cart.length > 0 && (
           <div className="border-t border-stone-200 px-5 sm:px-7 py-5 sm:py-6
-                          space-y-3 sm:space-y-4 flex-shrink-0">
+                          space-y-3 sm:space-y-4 shrink-0">
             <div className="flex items-center justify-between">
               <p className="text-xs tracking-[0.2em] uppercase text-stone-400">
                 Subtotal
@@ -207,7 +207,7 @@ function CartDrawer({
             </p>
             <Link to="/checkout" onClick={onClose}>
               <button className="w-full bg-stone-900 text-white text-sm py-4 rounded-full
-                                 hover:bg-stone-700 transition-colors min-h-[52px]
+                                 hover:bg-stone-700 transition-colors min-h-13
                                  active:scale-[0.98]">
                 Checkout →
               </button>
@@ -215,7 +215,7 @@ function CartDrawer({
             <button
               onClick={onClose}
               className="w-full border border-stone-300 text-stone-700 text-sm py-3.5
-                         rounded-full hover:bg-stone-100 transition-colors min-h-[48px]
+                         rounded-full hover:bg-stone-100 transition-colors min-h-12
                          active:scale-[0.98]"
             >
               Continue Shopping

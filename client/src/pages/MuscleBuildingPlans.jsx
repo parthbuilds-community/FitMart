@@ -143,14 +143,14 @@ export default function MuscleBuildingPlans() {
                 <ul className="space-y-1.5 sm:space-y-2">
                   {plan.features.map((f, j) => (
                     <li key={j} className="text-xs flex items-start gap-2 text-stone-500">
-                      <span className="text-stone-900 flex-shrink-0 mt-0.5">✓</span> {f}
+                      <span className="text-stone-900 shrink-0 mt-0.5">✓</span> {f}
                     </li>
                   ))}
                 </ul>
 
                 <button className="text-xs py-2.5 rounded-full transition-all mt-1 border border-stone-300
                                    text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                   min-h-[40px]">
+                                   min-h-10">
                   Start Plan →
                 </button>
               </div>
@@ -190,7 +190,7 @@ export default function MuscleBuildingPlans() {
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
               <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-[36px] px-1">
+                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
                 {l}
               </button>
             ))}

@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "seed:fitness": "node seedFitnessCenters.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -17,6 +18,7 @@
     "firebase-admin": "^13.7.0",
     "helmet": "^8.1.0",
     "mongoose": "^7.0.0",
+    "nodemailer": "^8.0.6",
     "razorpay": "^2.9.6"
   },
   "devDependencies": {
