@@ -1,82 +1,63 @@
-// server/middleware/logger.js
+const SENSITIVE_FIELDS = [
+  "token",
+  "password",
+  "secret",
+  "authorization",
+  "accessToken",
+  "refreshToken",
+];
 
-  const SENSITIVE_FIELDS = ['token', 'password', 'secret', 'apiKey', 'api_key', 'authorization', 'credential'];
+// Recursive function to redact sensitive fields
+function redactSensitiveFields(data) {
+  if (data === null || data === undefined) return data;
 
-  // Function to recursively redact sensitive fields
-  const redactSensitiveFields = (obj) => {
-    if (typeof obj !== 'object' || obj === null) return obj;
+  if (Array.isArray(data)) {
+    return data.map(redactSensitiveFields);
+  }
 
-    const redacted = Array.isArray(obj) ? [...obj] : { ...obj };
+  if (typeof data === "object") {
+    const redacted = {};
 
-    for (const key of Object.keys(redacted)) {
-      const keyLower = key.toLowerCase();
-      if (SENSITIVE_FIELDS.some(field => keyLower.includes(field.toLowerCase()))) {
-        redacted[key] = '[REDACTED]';
-      } else if (typeof redacted[key] === 'object' && redacted[key] !== null) {
-        redacted[key] = redactSensitiveFields(redacted[key]);
+    for (const [key, value] of Object.entries(data)) {
+      if (SENSITIVE_FIELDS.includes(key)) {
+        redacted[key] = "[REDACTED]";
+      } else {
+        redacted[key] = redactSensitiveFields(value);
       }
     }
 
     return redacted;
-  };
+  }
 
-  // Function to get base route only
-  const getBaseRoute = (url) => {
-    const match = url.match(/^(\/api\/(?:cart|products|orders))/);
-    if (match) {
-      if (url.includes('/cart/') && !url.match(/^\/api\/cart\/?$/)) {
-        if (url.includes('/add')) return '/api/cart/add';
-        if (url.includes('/remove')) return '/api/cart/remove';
-      }
-      return match[1];
+  return data;
+}
+
+// Logger middleware
+function logger(req, res, next) {
+  const timestamp = new Date().toISOString();
+  const prefix = `[${timestamp}] ${req.method} ${req.url}`;
+
+  // Log GET requests (no body)
+  if (req.method === "GET") {
+    console.log(prefix);
+    return next();
+  }
+
+  try {
+    const safeBody = redactSensitiveFields(req.body || {});
+    const bodyStr = JSON.stringify(safeBody);
+
+    // Size guard
+    if (bodyStr.length < 1000) {
+      console.log(prefix, safeBody);
+    } else {
+      console.log(`${prefix} [body too large to log]`);
     }
-    return url;
-  };
+  } catch (error) {
+    console.log(`${prefix} [body could not be logged safely]`);
+  }
 
-  // Simple logger with timestamps, size guard, and sensitive field redaction
-  const logger = (req, res, next) => {
-    const start = Date.now();
+  next();
+}
 
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      const status = res.statusCode;
-      const timestamp = new Date().toISOString();
-
-      const simplifiedUrl = getBaseRoute(req.originalUrl);
-
-      const methodColor = {
-        'GET': '\x1b[34m',
-        'POST': '\x1b[32m',
-        'PUT': '\x1b[33m',
-        'DELETE': '\x1b[31m',
-        'PATCH': '\x1b[35m',
-      }[req.method] || '\x1b[0m';
-
-      const statusColor = status >= 500 ? '\x1b[31m' :
-        status >= 400 ? '\x1b[33m' :
-          status >= 300 ? '\x1b[36m' :
-            status >= 200 ? '\x1b[32m' :
-              '\x1b[0m';
-
-      console.log(
-        `${methodColor}${req.method.padEnd(6)}\x1b[0m ` +
-        `${statusColor}${status}\x1b[0m ` +
-        `${simplifiedUrl}`
-      );
-
-      // Log request body for non-GET requests with size guard and redaction
-      if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
-        const bodyStr = JSON.stringify(req.body);
-        if (bodyStr.length < 1000) {
-          const redactedBody = redactSensitiveFields(req.body);
-          console.log(`[${timestamp}] Body: ${JSON.stringify(redactedBody)}`);
-        } else {
-          console.log(`[${timestamp}] Body: [body too large to log - ${bodyStr.length} chars]`);
-        }
-      }
-    });
-
-    next();
-  };
-
-  module.exports = logger;
+module.exports = logger;
