@@ -127,7 +127,7 @@ export default function Navbar({
                       {user.photoURL ? (
                         <img
                           src={user.photoURL}
-                          alt={user.displayName || "avatar"}
+                          alt={user.displayName || "User profile picture"}
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />

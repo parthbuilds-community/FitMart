@@ -82,7 +82,7 @@ Whether you're a beginner learning full-stack development or an experienced deve
 
 <p align="center">
   <a href="https://fitmart-omega.vercel.app/" target="_blank">
-    <img src="https://img.shields.io/badge/Launch%20FitMart-Live%20Now-black?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Launch%20FitMart-Live%20Now-black?style=for-the-badge" alt="Launch FitMart Live Demo" />
   </a>
 </p>
 

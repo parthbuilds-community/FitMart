@@ -95,7 +95,7 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
                   {user?.photoURL ? (
                     <img
                       src={user.photoURL}
-                      alt={user.displayName || "avatar"}
+                      alt={user.displayName || "Admin profile picture"}
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                     />
