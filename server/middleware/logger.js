@@ -1,78 +1,98 @@
-// server/middleware/logger.js
+// server/logger.js
 
-// server/middleware/logger.js
+const SENSITIVE_FIELDS = new Set([
+  "token",
+  "password",
+  "secret",
+  "authorization",
+  "accessToken",
+  "refreshToken",
+  "apiKey",
+  "api_key",
+  "credential",
+]);
 
-// Function to get base route only
-const getBaseRoute = (url) => {
-  // Match patterns like /api/cart, /api/products, /api/orders
-  const match = url.match(/^(\/api\/(?:cart|products|orders))/);
-  if (match) {
-    // If it's a cart route with additional path, append the action
-    if (url.includes('/cart/') && !url.match(/^\/api\/cart\/?$/)) {
-      if (url.includes('/add')) return '/api/cart/add';
-      if (url.includes('/remove')) return '/api/cart/remove';
-    }
-    return match[1];
+/**
+ * Recursively redact sensitive fields from objects/arrays
+ */
+function redactSensitiveFields(data) {
+  if (data === null || data === undefined) return data;
+
+  if (Array.isArray(data)) {
+    return data.map(redactSensitiveFields);
   }
-  return url;
-};
 
-// Simple logger with colors (without timestamps)
-const logger = (req, res, next) => {
+  if (typeof data === "object") {
+    const redacted = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      const keyLower = key.toLowerCase();
+
+      if (SENSITIVE_FIELDS.has(key) || SENSITIVE_FIELDS.has(keyLower)) {
+        redacted[key] = "[REDACTED]";
+      } else {
+        redacted[key] = redactSensitiveFields(value);
+      }
+    }
+
+    return redacted;
+  }
+
+  return data;
+}
+
+/**
+ * Safe stringify to prevent crashes on circular JSON
+ */
+function safeStringify(obj) {
+  try {
+    return JSON.stringify(obj);
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Logger middleware
+ */
+function logger(req, res, next) {
   const start = Date.now();
 
-  res.on('finish', () => {
+  res.on("finish", () => {
+    const timestamp = new Date().toISOString();
     const duration = Date.now() - start;
     const status = res.statusCode;
-    const simplifiedUrl = getBaseRoute(req.originalUrl);
-    const timestamp = new Date().toISOString();
 
-    const methodColor = {
-      'GET': '\x1b[34m',
-      'POST': '\x1b[32m',
-      'PUT': '\x1b[33m',
-      'DELETE': '\x1b[31m',
-      'PATCH': '\x1b[35m',
-    }[req.method] || '\x1b[0m';
+    const prefix = `[${timestamp}] ${req.method} ${req.originalUrl} ${status} ${duration}ms`;
 
-    const statusColor = status >= 500 ? '\x1b[31m' :
-      status >= 400 ? '\x1b[33m' :
-        status >= 300 ? '\x1b[36m' :
-          status >= 200 ? '\x1b[32m' :
-            '\x1b[0m';
+    // Always log basic request info
+    console.log(prefix);
 
-    console.log(
-      `[${timestamp}] ` +
-      `${methodColor}${req.method.padEnd(6)}\x1b[0m ` +
-      `${statusColor}${status}\x1b[0m ` +
-      `${simplifiedUrl} (${duration}ms)`
-    );
-
-    if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
+    // Only log body for non-GET requests
+    if (req.method !== "GET" && req.body && Object.keys(req.body).length > 0) {
       try {
-        const sensitiveKeys = ['password', 'token', 'secret', 'apiKey'];
-        const safeBody = { ...req.body };
+        const redactedBody = redactSensitiveFields(req.body);
+        const bodyStr = safeStringify(redactedBody);
 
-        sensitiveKeys.forEach((key) => {
-          if (safeBody[key]) {
-            safeBody[key] = '[REDACTED]';
-          }
-        });
-
-        const bodyStr = JSON.stringify(safeBody);
+        if (!bodyStr) {
+          console.log(`[${timestamp}] Body: [could not stringify body]`);
+          return;
+        }
 
         if (bodyStr.length < 1000) {
-          console.log(`   Body: ${bodyStr}`);
+          console.log(`[${timestamp}] Body: ${bodyStr}`);
         } else {
-          console.log(`   Body: [too large to log]`);
+          console.log(
+            `[${timestamp}] Body: [body too large to log - ${bodyStr.length} chars]`
+          );
         }
       } catch (err) {
-        console.log(`   Body: [error parsing body]`);
+        console.log(`[${timestamp}] Body: [error while logging body]`);
       }
     }
   });
 
   next();
-};
+}
 
 module.exports = logger;
