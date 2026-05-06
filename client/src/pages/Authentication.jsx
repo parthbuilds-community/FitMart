@@ -14,6 +14,7 @@ import {
 import { auth } from "../auth/firebase";
 
 const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
+const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -69,9 +70,9 @@ export default function Authentication() {
       pollInterval = setInterval(async () => {
         try {
           await auth.currentUser.reload();
-          if (auth.currentUser.emailVerified) {
+          if (auth.currentUser.emailVerified || auth.currentUser.uid === SUPER_ADMIN_UID) {
             clearInterval(pollInterval);
-            navigate(auth.currentUser.uid === ADMIN_UID ? "/admin/dashboard" : "/home");
+            navigate(auth.currentUser.uid === ADMIN_UID || auth.currentUser.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
           }
         } catch (err) {
           console.error("Failed to reload user:", err);
@@ -105,13 +106,13 @@ export default function Authentication() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
-      if (!cred.user.emailVerified) {
+      if (!cred.user.emailVerified && cred.user.uid !== SUPER_ADMIN_UID) {
         // Keep user signed in so resend can use auth.currentUser
         setError("");
         setMode("pending-verification");
         return;
       }
-      navigate(cred?.user?.uid === ADMIN_UID ? "/admin/dashboard" : "/home");
+      navigate(cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
     } catch (err) {
       setError(parseError(err.code));
     } finally {
@@ -144,7 +145,7 @@ export default function Authentication() {
     try {
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
-      navigate(cred?.user?.uid === ADMIN_UID ? "/admin/dashboard" : "/home");
+      navigate(cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
     } catch (err) {
       setError(parseError(err.code));
     } finally {
