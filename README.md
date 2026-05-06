@@ -463,6 +463,7 @@ ALLOWED_ORIGIN=http://localhost:5173    # comma-separate multiple origins
 FIREBASE_PROJECT_ID=<your_firebase_project_id>
 FIREBASE_CLIENT_EMAIL=<your_firebase_client_email>
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_APPLICATION_CREDENTIALS=<path_to_service_account_json>
 
 # Admin UID (used by bug routes to guard admin actions)
 ADMIN_UID=<firebase_uid_of_admin_account>
@@ -484,7 +485,15 @@ SMTP_FROM=noreply@fitmart.com
 APP_BASE_URL=http://localhost:5173
 ```
 
-> **Startup behaviour:** The server validates environment variables on startup. `MONGO_URI` is the only truly critical variable — the server will exit if it's missing. All other variables are optional; missing ones produce a warning and disable the corresponding feature gracefully.
+**Startup behaviour:** The server validates environment variables on startup.
+`MONGO_URI` and Firebase Admin credentials are critical variables.
+
+Firebase Admin can be configured using either:
+- `GOOGLE_APPLICATION_CREDENTIALS`
+OR
+- `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY`
+
+The server will exit if the required configuration is missing. All other variables are optional; missing ones produce a warning and disable the corresponding feature gracefully.
 
 #### Getting Firebase Admin Credentials
 

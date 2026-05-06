@@ -23,9 +23,6 @@ const OPTIONAL_ENV_VARS = [
   "RAZORPAY_KEY_SECRET",
   "MONGO_DB",
   "PORT",
-  "FIREBASE_PROJECT_ID",
-  "FIREBASE_CLIENT_EMAIL",
-  "FIREBASE_PRIVATE_KEY",
   "SMTP_HOST",
   "SMTP_PORT",
   "SMTP_USER",
@@ -33,6 +30,14 @@ const OPTIONAL_ENV_VARS = [
 ];
 
 const missingCritical = CRITICAL_ENV_VARS.filter((v) => !process.env[v]);
+
+if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  const firebaseVars = ["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"];
+  firebaseVars.forEach((v) => {
+    if (!process.env[v]) missingCritical.push(v);
+  });
+}
+
 const missingOptional = OPTIONAL_ENV_VARS.filter((v) => !process.env[v]);
 
 if (missingCritical.length > 0) {
