@@ -1,11 +1,11 @@
-const express  = require('express');
-const router   = express.Router();
-const path     = require('path');
-const fs       = require('fs');
-const multer   = require('multer');
-const Bug      = require('../models/Bug');
+const express = require('express');
+const router = express.Router();
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+const Bug = require('../models/Bug');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
-const admin    = require('../firebaseAdmin');
+const admin = require('../firebaseAdmin');
 
 const ADMIN_UID = process.env.ADMIN_UID || process.env.VITE_ADMIN_UID || '';
 const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
@@ -16,8 +16,8 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename:    (_req, file, cb) => {
-    const ext  = path.extname(file.originalname).toLowerCase();
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
     const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
     cb(null, name);
   },
@@ -45,9 +45,9 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
       if (authHeader?.startsWith('Bearer ')) {
-        const token   = authHeader.split('Bearer ')[1];
+        const token = authHeader.split('Bearer ')[1];
         const decoded = await admin.auth().verifyIdToken(token);
-        reporterName  = decoded.name  || decoded.emailName || reporterName  || decoded.uid;
+        reporterName = decoded.name || decoded.emailName || reporterName || decoded.uid;
         reporterEmail = decoded.email || reporterEmail || '';
       }
     } catch {
@@ -73,7 +73,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
     res.status(201).json({ ok: true, bug });
   } catch (err) {
     // Clean up uploaded file if DB save fails
-    if (req.file) fs.unlink(req.file.path, () => {});
+    if (req.file) fs.unlink(req.file.path, () => { });
     console.error('Error saving bug:', err);
     res.status(500).json({ error: 'Failed to submit bug' });
   }
