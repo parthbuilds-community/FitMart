@@ -198,9 +198,10 @@ router.post('/:userId/send-reminder', verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.params;
     const adminUid = process.env.VITE_ADMIN_UID || 'n5LtrXIGVSVjNktRn1PgDXZbHgq1';
+    const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
 
-    // Check if requester is admin
-    if (req.user.uid !== adminUid) {
+    // Check if requester is admin (allow super admin as well)
+    if (req.user.uid !== adminUid && req.user.uid !== SUPER_ADMIN_UID) {
       return res.status(403).json({ success: false, error: 'Forbidden — admin access required' });
     }
 

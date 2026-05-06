@@ -8,6 +8,7 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const admin    = require('../firebaseAdmin');
 
 const ADMIN_UID = process.env.ADMIN_UID || process.env.VITE_ADMIN_UID || '';
+const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
 
 // ── Multer setup — store screenshots in /uploads/bugs/ ────────────────────
 const uploadDir = path.join(__dirname, '..', 'uploads', 'bugs');
@@ -92,7 +93,7 @@ router.get('/', verifyFirebaseToken, async (_req, res) => {
 // ── PATCH /api/bugs/:id — admin only ─────────────────────────────────────
 router.patch('/:id', verifyFirebaseToken, async (req, res) => {
   try {
-    if (!req.user || (ADMIN_UID && req.user.uid !== ADMIN_UID))
+    if (!req.user || (ADMIN_UID && req.user.uid !== ADMIN_UID && req.user.uid !== SUPER_ADMIN_UID))
       return res.status(403).json({ error: 'Forbidden' });
 
     const { status } = req.body;
