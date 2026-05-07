@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import PropTypes from "prop-types";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessCenterDetail from "./FitnessCenterDetail";
 
@@ -148,3 +149,10 @@ export default function NearbyFitnessCenters({ visible = true }) {
     </>
   );
 }
+Stars.propTypes = {
+  rating: PropTypes.number,
+};
+
+NearbyFitnessCenters.propTypes = {
+  visible: PropTypes.bool,
+};
