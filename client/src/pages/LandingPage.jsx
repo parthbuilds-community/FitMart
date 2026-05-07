@@ -4,16 +4,11 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
+import { fetchGithubStats } from "../utils/githubStats";
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // ── Static data ────────────────────────────────────────────────────────────
 // Real repo stats from GitHub API
-const STATS = [
-  { value: "105", label: "GitHub Stars" },
-  { value: "144", label: "Forks" },
-  { value: "20", label: "Contributors" },
-  { value: "82+", label: "Commits" },
-];
 
 const CATEGORIES = [
   {
@@ -124,6 +119,20 @@ export default function LandingPage() {
     return () => clearInterval(t);
   }, []);
 
+  const [gitStats, setGitStats] = useState({
+    stars: "105",
+    forks: "144",
+    contributors: "20",
+    commits: "82+",
+  });
+
+  useEffect(() => {
+    (async () => {
+      const stats = await fetchGithubStats();
+      setGitStats(stats);
+    })();
+  }, []);
+
   useEffect(() => {
     (async () => {
       setLoadingProducts(true);
@@ -173,6 +182,7 @@ export default function LandingPage() {
         navOpaque={navOpaque}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
+        gitStats={gitStats}
       />
 
       {/* ── HERO ── */}
@@ -245,7 +255,7 @@ export default function LandingPage() {
                 <span>Star on GitHub</span>
                 <span className="bg-stone-100 text-stone-700 text-xs px-2 py-0.5 rounded-full
                                    font-medium min-w-7 text-center group-hover:bg-stone-800">
-                  105
+                  {gitStats.stars}
                 </span>
               </a>
             </div>
@@ -274,7 +284,12 @@ export default function LandingPage() {
         <div className="border-t border-stone-200 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8
                           grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            {STATS.map((s, i) => (
+            {[
+              { value: gitStats.stars, label: "GitHub Stars" },
+              { value: gitStats.forks, label: "Forks" },
+              { value: gitStats.contributors, label: "Contributors" },
+              { value: gitStats.commits, label: "Commits" },
+            ].map((s, i) => (
               <div key={i} className="stat-card text-center md:text-left">
                 <div className="font-['DM_Serif_Display'] text-2xl sm:text-3xl text-stone-900 leading-none">
                   {s.value}
@@ -601,13 +616,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <LandingFooter aboutRef={aboutRef} />
+      <LandingFooter aboutRef={aboutRef} gitStats={gitStats} />
     </div>
   );
 }
 
 // ── NavbarWithGithub — extends Navbar with a GitHub star button ────────────
-function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
+// ── NavbarWithGithub — extends Navbar with a GitHub star button ────────────
+function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, gitStats }) {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
 
@@ -658,7 +674,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
             <span>Star</span>
             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
                                 ${isOpaque ? "bg-stone-100 text-stone-700" : "bg-white/10 text-white/70"}`}>
-              105
+              {gitStats.stars}
             </span>
           </a>
 
@@ -681,7 +697,8 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
 }
 
 // ── LandingFooter — rich footer with community + links ────────────────────
-function LandingFooter({ aboutRef }) {
+// ── LandingFooter — rich footer with community + links ────────────────────
+function LandingFooter({ aboutRef, gitStats }) {
   const navigate = useNavigate();
   const year = new Date().getFullYear();
 
@@ -736,8 +753,8 @@ function LandingFooter({ aboutRef }) {
             {/* GitHub stats pills */}
             <div className="flex flex-wrap gap-2">
               {[
-                { icon: <StarIcon className="w-3 h-3" />, label: "105 stars" },
-                { icon: <GithubIcon className="w-3 h-3" />, label: "144 forks" },
+                { icon: <StarIcon className="w-3 h-3" />, label: `${gitStats.stars} stars` },
+                { icon: <GithubIcon className="w-3 h-3" />, label: `${gitStats.forks} forks` },
               ].map(({ icon, label }) => (
                 <a
                   key={label}
