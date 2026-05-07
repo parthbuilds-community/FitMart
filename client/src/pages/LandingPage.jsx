@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 
 // ── Static data ────────────────────────────────────────────────────────────
 // Real repo stats from GitHub API
@@ -20,7 +20,9 @@ const CATEGORIES = [
     title: "Home Gym Hardware",
     desc: "Professional-grade equipment, curated for your space.",
     tag: "EQUIPMENT",
-    bg: "bg-stone-900", text: "text-white", sub: "text-stone-400",
+    bg: "bg-stone-900",
+    text: "text-white",
+    sub: "text-stone-400",
     btn: "border-stone-600 text-stone-300 hover:bg-stone-800",
     filter: "Equipment",
   },
@@ -28,7 +30,9 @@ const CATEGORIES = [
     title: "Certified Nutrition",
     desc: "100% authenticated supplements, sourced direct.",
     tag: "NUTRITION",
-    bg: "bg-stone-100", text: "text-stone-900", sub: "text-stone-500",
+    bg: "bg-stone-100",
+    text: "text-stone-900",
+    sub: "text-stone-500",
     btn: "border-stone-300 text-stone-700 hover:bg-stone-200",
     filter: "Nutrition",
   },
@@ -36,28 +40,67 @@ const CATEGORIES = [
     title: "Digital Coaching",
     desc: "Personalized plans built around your goals.",
     tag: "PROGRAMS",
-    bg: "bg-stone-200", text: "text-stone-900", sub: "text-stone-500",
+    bg: "bg-stone-200",
+    text: "text-stone-900",
+    sub: "text-stone-500",
     btn: "border-stone-400 text-stone-700 hover:bg-stone-300",
     filter: "Programs",
   },
 ];
 
 const PROGRAMS = [
-  { name: "Weight Loss", duration: "12 Weeks", desc: "Caloric-deficit nutrition + cardio-focused programming", level: "Beginner to Intermediate" },
-  { name: "Muscle Building", duration: "16 Weeks", desc: "Progressive overload training + protein-optimized meal plans", level: "Intermediate to Advanced" },
-  { name: "Mobility & Recovery", duration: "8 Weeks", desc: "Flexibility-first programming, ideal for desk workers", level: "All Levels" },
+  {
+    name: "Weight Loss",
+    duration: "12 Weeks",
+    desc: "Caloric-deficit nutrition + cardio-focused programming",
+    level: "Beginner to Intermediate",
+  },
+  {
+    name: "Muscle Building",
+    duration: "16 Weeks",
+    desc: "Progressive overload training + protein-optimized meal plans",
+    level: "Intermediate to Advanced",
+  },
+  {
+    name: "Mobility & Recovery",
+    duration: "8 Weeks",
+    desc: "Flexibility-first programming, ideal for desk workers",
+    level: "All Levels",
+  },
 ];
 
 const TESTIMONIALS = [
-  { quote: "FitMart replaced three different subscriptions for me. Equipment, nutrition and coaching — finally in one place.", name: "Arjun M.", role: "Software Engineer, Powai" },
-  { quote: "The authenticity guarantee is real. I've never doubted a single supplement I've ordered here.", name: "Priya S.", role: "Fitness Coach, Bandra" },
-  { quote: "Set up a complete home gym through FitMart. The setup guide that came with it was genuinely useful.", name: "Rohan K.", role: "Architect, Andheri" },
+  {
+    quote:
+      "FitMart replaced three different subscriptions for me. Equipment, nutrition and coaching — finally in one place.",
+    name: "Arjun M.",
+    role: "Software Engineer, Powai",
+  },
+  {
+    quote:
+      "The authenticity guarantee is real. I've never doubted a single supplement I've ordered here.",
+    name: "Priya S.",
+    role: "Fitness Coach, Bandra",
+  },
+  {
+    quote:
+      "Set up a complete home gym through FitMart. The setup guide that came with it was genuinely useful.",
+    name: "Rohan K.",
+    role: "Architect, Andheri",
+  },
 ];
 
 // ── SVG Icons ──────────────────────────────────────────────────────────────
 const GithubIcon = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path fillRule="evenodd" clipRule="evenodd"
+  <svg
+    className={className}
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
       d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483
          0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608
          1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338
@@ -78,7 +121,8 @@ const StarIcon = ({ className = "w-3.5 h-3.5" }) => (
 
 const InstagramIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069
+    <path
+      d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069
              1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058
              -1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265
              -.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057
@@ -87,7 +131,8 @@ const InstagramIcon = ({ className = "w-4 h-4" }) => (
              8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073
              -1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014
              15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110
-             -8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+             -8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"
+    />
   </svg>
 );
 
@@ -120,7 +165,10 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(() => setActiveTestimonial(p => (p + 1) % TESTIMONIALS.length), 4000);
+    const t = setInterval(
+      () => setActiveTestimonial((p) => (p + 1) % TESTIMONIALS.length),
+      4000,
+    );
     return () => clearInterval(t);
   }, []);
 
@@ -132,7 +180,7 @@ export default function LandingPage() {
         const res = await fetch(`${API}/api/products`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setProducts(data.map(p => ({ ...p, id: p.productId || p.id })));
+        setProducts(data.map((p) => ({ ...p, id: p.productId || p.id })));
       } catch (err) {
         console.error("Error loading products:", err);
         setBackendError(true);
@@ -180,47 +228,61 @@ export default function LandingPage() {
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: "linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px)",
+            backgroundImage:
+              "linear-gradient(#000 1px,transparent 1px),linear-gradient(90deg,#000 1px,transparent 1px)",
             backgroundSize: "80px 80px",
           }}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-24 relative z-10 w-full">
           <div className="max-w-4xl">
-
             {/* Badge */}
-            <div className={`fade-up ${visible ? "visible" : ""} delay-1 mb-5 sm:mb-6`}>
-              <span className="inline-flex items-center gap-2 text-xs tracking-[0.2em] uppercase
-                               text-stone-500 border border-stone-200 px-3 py-1.5 rounded-full">
+            <div
+              className={`fade-up ${visible ? "visible" : ""} delay-1 mb-5 sm:mb-6`}
+            >
+              <span
+                className="inline-flex items-center gap-2 text-xs tracking-[0.2em] uppercase
+                               text-stone-500 border border-stone-200 px-3 py-1.5 rounded-full"
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-pulse" />
                 Mumbai's Fitness Marketplace
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="font-['DM_Serif_Display'] text-[2.4rem] sm:text-6xl md:text-7xl lg:text-8xl
-                           text-stone-900 leading-[1.05] mb-5 sm:mb-6 tracking-tight">
+            <h1
+              className="font-['DM_Serif_Display'] text-[2.4rem] sm:text-6xl md:text-7xl lg:text-8xl
+                           text-stone-900 leading-[1.05] mb-5 sm:mb-6 tracking-tight"
+            >
               <div className="hero-line">
-                <span className={`slide-up ${visible ? "visible" : ""} delay-1`}>
+                <span
+                  className={`slide-up ${visible ? "visible" : ""} delay-1`}
+                >
                   Everything fitness.
                 </span>
               </div>
               <div className="hero-line">
-                <span className={`slide-up ${visible ? "visible" : ""} delay-2`}>
+                <span
+                  className={`slide-up ${visible ? "visible" : ""} delay-2`}
+                >
                   Nothing <em className="not-italic text-stone-400">extra.</em>
                 </span>
               </div>
             </h1>
 
             {/* Subheading */}
-            <p className={`fade-up ${visible ? "visible" : ""} delay-3 text-base sm:text-lg text-stone-500
-                           max-w-xl leading-relaxed mb-8 sm:mb-10`}>
-              Curated equipment, verified nutrition, and digital coaching — built for people
-              who take their health seriously.
+            <p
+              className={`fade-up ${visible ? "visible" : ""} delay-3 text-base sm:text-lg text-stone-500
+                           max-w-xl leading-relaxed mb-8 sm:mb-10`}
+            >
+              Curated equipment, verified nutrition, and digital coaching —
+              built for people who take their health seriously.
             </p>
 
             {/* CTA buttons */}
-            <div className={`fade-up ${visible ? "visible" : ""} delay-4
-                             flex flex-col sm:flex-row gap-3`}>
+            <div
+              className={`fade-up ${visible ? "visible" : ""} delay-4
+                             flex flex-col sm:flex-row gap-3`}
+            >
               <button
                 onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
                 className="bg-stone-900 text-white text-sm px-8 py-3.5 rounded-full
@@ -243,8 +305,10 @@ export default function LandingPage() {
                 <GithubIcon />
                 <StarIcon className="w-3.5 h-3.5" />
                 <span>Star on GitHub</span>
-                <span className="bg-stone-100 text-stone-700 text-xs px-2 py-0.5 rounded-full
-                                   font-medium min-w-7 text-center group-hover:bg-stone-800">
+                <span
+                  className="bg-stone-100 text-stone-700 text-xs px-2 py-0.5 rounded-full
+                                   font-medium min-w-7 text-center group-hover:bg-stone-800"
+                >
                   105
                 </span>
               </a>
@@ -263,8 +327,7 @@ export default function LandingPage() {
                   transition-colors"
                 >
                   parth.builds community
-                </a>
-                {" "}
+                </a>{" "}
               </p>
             </div>
           </div>
@@ -272,8 +335,10 @@ export default function LandingPage() {
 
         {/* ── Stats bar — real GitHub stats ── */}
         <div className="border-t border-stone-200 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8
-                          grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          <div
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8
+                          grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6"
+          >
             {STATS.map((s, i) => (
               <div key={i} className="stat-card text-center md:text-left">
                 <div className="font-['DM_Serif_Display'] text-2xl sm:text-3xl text-stone-900 leading-none">
@@ -289,10 +354,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── CATEGORIES ── */}
-      <section ref={categoriesRef} className="py-12 sm:py-24 bg-white scroll-mt-20">
+      <section
+        ref={categoriesRef}
+        className="py-12 sm:py-24 bg-white scroll-mt-20"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
           <div className="mb-10 sm:mb-14">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">What We Offer</p>
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">
+              What We Offer
+            </p>
             <h2 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-5xl text-stone-900">
               Shop by category
             </h2>
@@ -304,15 +374,21 @@ export default function LandingPage() {
                 key={i}
                 className={`cat-card rounded-2xl p-6 sm:p-8 md:p-10 flex flex-col justify-between
                               min-h-56 sm:min-h-64 md:min-h-72 cursor-pointer ${c.bg}`}
-                onClick={() => navigate("/home", { state: { category: c.filter } })}
+                onClick={() =>
+                  navigate("/home", { state: { category: c.filter } })
+                }
               >
                 <div>
-                  <span className={`text-[10px] tracking-[0.2em] uppercase font-medium
-                                      ${c.sub} mb-3 sm:mb-4 block`}>
+                  <span
+                    className={`text-[10px] tracking-[0.2em] uppercase font-medium
+                                      ${c.sub} mb-3 sm:mb-4 block`}
+                  >
                     {c.tag}
                   </span>
-                  <h3 className={`font-['DM_Serif_Display'] text-2xl md:text-3xl ${c.text}
-                                    leading-snug mb-2 sm:mb-3`}>
+                  <h3
+                    className={`font-['DM_Serif_Display'] text-2xl md:text-3xl ${c.text}
+                                    leading-snug mb-2 sm:mb-3`}
+                  >
                     {c.title}
                   </h3>
                   <p className={`text-sm leading-relaxed ${c.sub}`}>{c.desc}</p>
@@ -320,7 +396,7 @@ export default function LandingPage() {
                 <button
                   className={`mt-6 sm:mt-8 self-start text-xs border px-5 py-2.5 rounded-full
                                 transition-colors ${c.btn} min-h-10 active:scale-[0.97]`}
-                  onClick={e => {
+                  onClick={(e) => {
                     e.stopPropagation();
                     navigate("/home", { state: { category: c.filter } });
                   }}
@@ -336,7 +412,9 @@ export default function LandingPage() {
       <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
           <div className="mb-6 sm:mb-8">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Featured</p>
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+              Featured
+            </p>
             <h2 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl text-stone-900">
               Popular products
             </h2>
@@ -344,35 +422,59 @@ export default function LandingPage() {
 
           {loadingProducts ? (
             <div className="text-center py-12 text-stone-400">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4
-                              border-stone-300 border-t-stone-900 mb-4" />
+              <div
+                className="inline-block animate-spin rounded-full h-8 w-8 border-4
+                              border-stone-300 border-t-stone-900 mb-4"
+              />
               <p className="text-sm">Loading products...</p>
             </div>
           ) : backendError ? (
             <div className="text-center py-12 text-stone-400">
               <p className="text-3xl mb-2">🔌</p>
               <p className="text-sm mb-1">Cannot connect to the server</p>
-              <p className="text-xs">Make sure the backend is running on port 5000</p>
+              <p className="text-xs">
+                Make sure the backend is running on port 5000
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {products.slice(0, 4).map((p) => (
-                <div key={p.productId || p.id}
+                <div
+                  key={p.productId || p.id}
                   onClick={() => navigate(`/product/${p.productId || p.id}`)}
-                  className="bg-white border border-stone-100 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200">
+                  className="bg-white border border-stone-100 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200"
+                >
                   <div className="relative bg-stone-100 aspect-square flex items-center justify-center overflow-hidden">
                     {p.image ? (
-                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
                     ) : (
                       <div className="text-4xl opacity-20 select-none">
-                        {p.category === "Nutrition" ? "🧴" : p.category === "Wearables" ? "⌚" : "🏋️"}
+                        {p.category === "Nutrition"
+                          ? "🧴"
+                          : p.category === "Wearables"
+                            ? "⌚"
+                            : "🏋️"}
                       </div>
                     )}
                   </div>
                   <div className="p-3 text-left">
-                    <p className="text-[10px] text-stone-400 mb-1 truncate">{p.brand}</p>
-                    <h3 className="text-sm font-medium text-stone-900 mb-1 line-clamp-2">{p.name}</h3>
-                    <div className="text-sm font-semibold text-stone-900">{fmt(p.price)}</div>
+                    <p className="text-[10px] text-stone-400 mb-1 truncate">
+                      {p.brand}
+                    </p>
+                    <h3 className="text-sm font-medium text-stone-900 mb-1 line-clamp-2">
+                      {p.name}
+                    </h3>
+                    <div className="text-sm font-semibold text-stone-900">
+                      {fmt(p.price)}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -382,10 +484,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── PROGRAMS ── */}
-      <section ref={programsRef} className="py-16 sm:py-24 bg-stone-50 scroll-mt-20">
+      <section
+        ref={programsRef}
+        className="py-16 sm:py-24 bg-stone-50 scroll-mt-20"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
           <div className="mb-10 sm:mb-14">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">Digital Coaching</p>
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">
+              Digital Coaching
+            </p>
             <h2 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-5xl text-stone-900">
               Our programs
             </h2>
@@ -405,11 +512,17 @@ export default function LandingPage() {
                 <h3 className="font-['DM_Serif_Display'] text-2xl text-stone-900 mb-2">
                   {program.name}
                 </h3>
-                <p className="text-sm text-stone-500 mb-3 sm:mb-4">{program.duration}</p>
-                <p className="text-sm text-stone-600 leading-relaxed mb-5 sm:mb-6">{program.desc}</p>
-                <button className="text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <p className="text-sm text-stone-500 mb-3 sm:mb-4">
+                  {program.duration}
+                </p>
+                <p className="text-sm text-stone-600 leading-relaxed mb-5 sm:mb-6">
+                  {program.desc}
+                </p>
+                <button
+                  className="text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                      rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                     transition-all min-h-10 active:scale-[0.97]">
+                                     transition-all min-h-10 active:scale-[0.97]"
+                >
                   Learn More →
                 </button>
               </div>
@@ -421,17 +534,36 @@ export default function LandingPage() {
       {/* ── FEATURE STRIP ── */}
       <section className="py-14 sm:py-20 bg-stone-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12
-                            divide-y divide-stone-800 md:divide-y-0 md:divide-x md:divide-stone-800">
+          <div
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12
+                            divide-y divide-stone-800 md:divide-y-0 md:divide-x md:divide-stone-800"
+          >
             {[
-              { icon: "✓", title: "100% Authenticity", desc: "Every supplement sourced direct from manufacturer with QR batch verification." },
-              { icon: "⚡︎", title: "Mumbai-Speed Delivery", desc: "24-hour fulfillment within MMR. Real-time tracking via WhatsApp and email." },
-              { icon: "◎", title: "Fitness-as-a-Service", desc: "Buy a product, unlock a plan. Equipment and coaching aren't separate here." },
+              {
+                icon: "✓",
+                title: "100% Authenticity",
+                desc: "Every supplement sourced direct from manufacturer with QR batch verification.",
+              },
+              {
+                icon: "⚡︎",
+                title: "Mumbai-Speed Delivery",
+                desc: "24-hour fulfillment within MMR. Real-time tracking via WhatsApp and email.",
+              },
+              {
+                icon: "◎",
+                title: "Fitness-as-a-Service",
+                desc: "Buy a product, unlock a plan. Equipment and coaching aren't separate here.",
+              },
             ].map((f, i) => (
-              <div key={i} className={`flex flex-col gap-3 ${i > 0 ? "pt-8 md:pt-0 md:pl-12" : ""}`}>
+              <div
+                key={i}
+                className={`flex flex-col gap-3 ${i > 0 ? "pt-8 md:pt-0 md:pl-12" : ""}`}
+              >
                 <span className="text-stone-400 text-lg">{f.icon}</span>
                 <h3 className="font-['DM_Serif_Display'] text-xl">{f.title}</h3>
-                <p className="text-sm text-stone-400 leading-relaxed">{f.desc}</p>
+                <p className="text-sm text-stone-400 leading-relaxed">
+                  {f.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -442,23 +574,32 @@ export default function LandingPage() {
       <section ref={aboutRef} className="py-16 sm:py-24 bg-white scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
           <div className="max-w-3xl mx-auto text-center">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">About FitMart</p>
-            <h2 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-5xl text-stone-900
-                             mb-6 sm:mb-8">
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">
+              About FitMart
+            </p>
+            <h2
+              className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-5xl text-stone-900
+                             mb-6 sm:mb-8"
+            >
               Built for Mumbai's fitness community
             </h2>
             <p className="text-base sm:text-lg text-stone-600 leading-relaxed mb-8 sm:mb-12">
-              We started FitMart because we believe fitness shouldn't be complicated.
-              By bringing together equipment, nutrition, and coaching under one roof,
-              we've created Mumbai's first integrated fitness ecosystem.
+              We started FitMart because we believe fitness shouldn't be
+              complicated. By bringing together equipment, nutrition, and
+              coaching under one roof, we've created Mumbai's first integrated
+              fitness ecosystem.
             </p>
             <div className="grid grid-cols-2 gap-6 sm:gap-8 max-w-xs sm:max-w-sm md:max-w-2xl mx-auto">
               <div className="text-center">
-                <div className="font-['DM_Serif_Display'] text-3xl text-stone-900">2024</div>
+                <div className="font-['DM_Serif_Display'] text-3xl text-stone-900">
+                  2024
+                </div>
                 <p className="text-xs text-stone-500 mt-0.5">Founded</p>
               </div>
               <div className="text-center">
-                <div className="font-['DM_Serif_Display'] text-3xl text-stone-900">1000+</div>
+                <div className="font-['DM_Serif_Display'] text-3xl text-stone-900">
+                  1000+
+                </div>
                 <p className="text-xs text-stone-500 mt-0.5">Happy Customers</p>
               </div>
             </div>
@@ -474,8 +615,10 @@ export default function LandingPage() {
               From the Community
             </p>
             <div key={activeTestimonial} className="testimonial-enter">
-              <blockquote className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl
-                                       text-stone-800 leading-relaxed mb-6 sm:mb-8">
+              <blockquote
+                className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl
+                                       text-stone-800 leading-relaxed mb-6 sm:mb-8"
+              >
                 "{TESTIMONIALS[activeTestimonial].quote}"
               </blockquote>
               <p className="text-sm font-medium text-stone-900">
@@ -493,7 +636,12 @@ export default function LandingPage() {
                   onClick={() => setActiveTestimonial(i)}
                   className={`h-1.5 rounded-full transition-all
                       ${i === activeTestimonial ? "bg-stone-900 w-5" : "bg-stone-200 w-1.5"}`}
-                  style={{ minWidth: "6px", minHeight: "24px", display: "flex", alignItems: "center" }}
+                  style={{
+                    minWidth: "6px",
+                    minHeight: "24px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                   aria-label={`Testimonial ${i + 1}`}
                 />
               ))}
@@ -506,7 +654,9 @@ export default function LandingPage() {
       <section className="py-16 sm:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
           <div className="text-center mb-10 sm:mb-14">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">Membership Plans</p>
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">
+              Membership Plans
+            </p>
             <h2 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-5xl text-stone-900">
               Choose your level
             </h2>
@@ -514,25 +664,58 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
             {[
-              { name: "Freemium", price: 0, perks: ["Store access", "Public workout blogs", "Product reviews"], cta: "Start Free" },
-              { name: "Pro", price: 499, perks: ["Personalized nutrition plans", "5% discount on all products", "Priority support"], cta: "Go Pro", highlight: true },
-              { name: "Elite", price: 1499, perks: ["1-on-1 digital coaching", "Early access to drops", "Biometric data sync"], cta: "Go Elite" },
+              {
+                name: "Freemium",
+                price: 0,
+                perks: [
+                  "Store access",
+                  "Public workout blogs",
+                  "Product reviews",
+                ],
+                cta: "Start Free",
+              },
+              {
+                name: "Pro",
+                price: 499,
+                perks: [
+                  "Personalized nutrition plans",
+                  "5% discount on all products",
+                  "Priority support",
+                ],
+                cta: "Go Pro",
+                highlight: true,
+              },
+              {
+                name: "Elite",
+                price: 1499,
+                perks: [
+                  "1-on-1 digital coaching",
+                  "Early access to drops",
+                  "Biometric data sync",
+                ],
+                cta: "Go Elite",
+              },
             ].map((plan, i) => (
               <div
                 key={i}
                 className={`rounded-2xl p-6 sm:p-8 flex flex-col gap-4 sm:gap-5 cursor-pointer
                               transition-all hover:shadow-lg active:scale-[0.99]
-                              ${plan.highlight
-                    ? "bg-stone-900 text-white hover:bg-stone-800"
-                    : "bg-white border border-stone-200 hover:border-stone-300"
-                  }`}
+                              ${
+                                plan.highlight
+                                  ? "bg-stone-900 text-white hover:bg-stone-800"
+                                  : "bg-white border border-stone-200 hover:border-stone-300"
+                              }`}
                 onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
               >
                 <div>
-                  <p className="text-xs tracking-widest uppercase text-stone-400">{plan.name}</p>
+                  <p className="text-xs tracking-widest uppercase text-stone-400">
+                    {plan.name}
+                  </p>
                   <div className="flex items-baseline gap-1 mt-2">
-                    <span className={`font-['DM_Serif_Display'] text-4xl
-                                        ${plan.highlight ? "text-white" : "text-stone-900"}`}>
+                    <span
+                      className={`font-['DM_Serif_Display'] text-4xl
+                                        ${plan.highlight ? "text-white" : "text-stone-900"}`}
+                    >
                       {fmt(plan.price)}
                     </span>
                     {plan.price !== 0 && (
@@ -542,19 +725,27 @@ export default function LandingPage() {
                 </div>
                 <ul className="flex flex-col gap-2 sm:gap-2.5 flex-1">
                   {plan.perks.map((p, j) => (
-                    <li key={j} className={`text-sm flex items-start gap-2
-                                              ${plan.highlight ? "text-stone-300" : "text-stone-600"}`}>
-                      <span className="mt-0.5 text-stone-400 shrink-0">─</span>{p}
+                    <li
+                      key={j}
+                      className={`text-sm flex items-start gap-2
+                                              ${plan.highlight ? "text-stone-300" : "text-stone-600"}`}
+                    >
+                      <span className="mt-0.5 text-stone-400 shrink-0">─</span>
+                      {p}
                     </li>
                   ))}
                 </ul>
                 <button
-                  onClick={e => { e.stopPropagation(); navigate(auth.currentUser ? "/home" : "/auth"); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(auth.currentUser ? "/home" : "/auth");
+                  }}
                   className={`text-sm py-3 rounded-full transition-colors min-h-11
-                                ${plan.highlight
-                      ? "bg-white text-stone-900 hover:bg-stone-100"
-                      : "border border-stone-300 text-stone-700 hover:bg-stone-50"
-                    }`}
+                                ${
+                                  plan.highlight
+                                    ? "bg-white text-stone-900 hover:bg-stone-100"
+                                    : "border border-stone-300 text-stone-700 hover:bg-stone-50"
+                                }`}
                 >
                   {plan.cta}
                 </button>
@@ -570,8 +761,10 @@ export default function LandingPage() {
           <p className="text-xs tracking-[0.2em] uppercase text-stone-500 mb-4 sm:mb-5">
             Get Started Today
           </p>
-          <h2 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-6xl text-white
-                           max-w-2xl mx-auto leading-tight mb-7 sm:mb-8">
+          <h2
+            className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-6xl text-white
+                           max-w-2xl mx-auto leading-tight mb-7 sm:mb-8"
+          >
             Your fitness journey starts with one decision.
           </h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -626,10 +819,13 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
     : "bg-transparent";
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${bgClass}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 h-14 sm:h-16
-                      flex items-center justify-between gap-3">
-
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${bgClass}`}
+    >
+      <div
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 h-14 sm:h-16
+                      flex items-center justify-between gap-3"
+      >
         {/* Brand */}
         <span
           className={`font-['DM_Serif_Display'] text-lg sm:text-xl tracking-tight cursor-pointer
@@ -648,16 +844,19 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
             rel="noopener noreferrer"
             className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full
                           border transition-all min-h-8.5
-                          ${isOpaque
-                ? "border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900"
-                : "border-white/30 text-white/80 hover:bg-white/10"
-              }`}
+                          ${
+                            isOpaque
+                              ? "border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900"
+                              : "border-white/30 text-white/80 hover:bg-white/10"
+                          }`}
           >
             <GithubIcon className="w-3.5 h-3.5" />
             <StarIcon className="w-3 h-3" />
             <span>Star</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
-                                ${isOpaque ? "bg-stone-100 text-stone-700" : "bg-white/10 text-white/70"}`}>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
+                                ${isOpaque ? "bg-stone-100 text-stone-700" : "bg-white/10 text-white/70"}`}
+            >
               105
             </span>
           </a>
@@ -667,10 +866,11 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
             onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
             className={`text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full transition-colors
                            min-h-9 active:scale-[0.97]
-                           ${isOpaque
-                ? "bg-stone-900 text-white hover:bg-stone-700"
-                : "bg-white text-stone-900 hover:bg-stone-100"
-              }`}
+                           ${
+                             isOpaque
+                               ? "bg-stone-900 text-white hover:bg-stone-700"
+                               : "bg-white text-stone-900 hover:bg-stone-100"
+                           }`}
           >
             Get Started
           </button>
@@ -696,39 +896,46 @@ function LandingFooter({ aboutRef }) {
 
   return (
     <footer className="bg-stone-950 text-white">
-
       {/* ── Main footer body ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-14 sm:pt-16 pb-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
-
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
             <span className="font-['DM_Serif_Display'] text-2xl text-white block mb-3">
               FitMart
             </span>
             <p className="text-sm text-stone-400 leading-relaxed mb-5 max-w-xs">
-              Mumbai's open-source fitness marketplace — built in public, powered by community.
+              Mumbai's open-source fitness marketplace — built in public,
+              powered by community.
             </p>
 
             {/* Community badge */}
-            <div className="inline-flex items-center gap-2.5 bg-stone-900 border border-stone-800
-                            rounded-xl px-4 py-3 mb-5">
+            <div
+              className="inline-flex items-center gap-2.5 bg-stone-900 border border-stone-800
+                            rounded-xl px-4 py-3 mb-5"
+            >
               <a
                 href={INSTAGRAM}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 group"
               >
-                <div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 via-pink-500
-                                  to-orange-400 flex items-center justify-center shrink-0">
+                <div
+                  className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 via-pink-500
+                                  to-orange-400 flex items-center justify-center shrink-0"
+                >
                   <InstagramIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-white group-hover:text-stone-200
-                                  transition-colors leading-tight">
+                  <p
+                    className="text-xs font-medium text-white group-hover:text-stone-200
+                                  transition-colors leading-tight"
+                  >
                     parth.builds
                   </p>
-                  <p className="text-[10px] text-stone-500 leading-tight">Tech Content · Mumbai</p>
+                  <p className="text-[10px] text-stone-500 leading-tight">
+                    Tech Content · Mumbai
+                  </p>
                 </div>
               </a>
             </div>
@@ -737,7 +944,10 @@ function LandingFooter({ aboutRef }) {
             <div className="flex flex-wrap gap-2">
               {[
                 { icon: <StarIcon className="w-3 h-3" />, label: "105 stars" },
-                { icon: <GithubIcon className="w-3 h-3" />, label: "144 forks" },
+                {
+                  icon: <GithubIcon className="w-3 h-3" />,
+                  label: "144 forks",
+                },
               ].map(({ icon, label }) => (
                 <a
                   key={label}
@@ -772,12 +982,18 @@ function LandingFooter({ aboutRef }) {
             inline-flex items-center gap-1.5 group"
                     >
                       {label === "parth.builds on Instagram" && (
-                        <InstagramIcon className="w-3.5 h-3.5 text-stone-600
-                                      group-hover:text-pink-400 transition-colors" />
+                        <InstagramIcon
+                          className="w-3.5 h-3.5 text-stone-600
+                                      group-hover:text-pink-400 transition-colors"
+                        />
                       )}
-                      {(label === "GitHub Repository" || label === "Contribute" || label === "Open Issues") && (
-                        <GithubIcon className="w-3.5 h-3.5 text-stone-600 group-hover:text-white
-                                   transition-colors" />
+                      {(label === "GitHub Repository" ||
+                        label === "Contribute" ||
+                        label === "Open Issues") && (
+                        <GithubIcon
+                          className="w-3.5 h-3.5 text-stone-600 group-hover:text-white
+                                   transition-colors"
+                        />
                       )}
                       {label}
                     </a>
@@ -791,9 +1007,10 @@ function LandingFooter({ aboutRef }) {
 
       {/* ── Footer bottom bar ── */}
       <div className="border-t border-stone-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-5
-                        flex flex-col sm:flex-row items-center justify-between gap-3">
-
+        <div
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-5
+                        flex flex-col sm:flex-row items-center justify-between gap-3"
+        >
           <p className="text-xs text-stone-600 text-center sm:text-left">
             © {year} FitMart · Built by Parth Builds Community
           </p>

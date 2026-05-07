@@ -5,19 +5,26 @@ import { auth } from "../auth/firebase";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 function useRazorpayScript() {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    if (window.Razorpay) { setLoaded(true); return; }
+    if (window.Razorpay) {
+      setLoaded(true);
+      return;
+    }
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.onload = () => setLoaded(true);
     script.onerror = () => console.error("Failed to load Razorpay script");
     document.body.appendChild(script);
-    return () => { try { document.body.removeChild(script); } catch { } };
+    return () => {
+      try {
+        document.body.removeChild(script);
+      } catch {}
+    };
   }, []);
   return loaded;
 }
@@ -60,7 +67,7 @@ export default function PaymentPage() {
         body: JSON.stringify({ userId }),
       });
     } catch (err) {
-      console.error('clear-cart failed:', err);
+      console.error("clear-cart failed:", err);
     }
 
     if (discountApplied) {
@@ -78,13 +85,25 @@ export default function PaymentPage() {
     }
 
     navigate("/payment-confirmation", {
-      state: { items, total, subtotal, discountAmt, discountPercent, discountApplied, paymentId, address },
+      state: {
+        items,
+        total,
+        subtotal,
+        discountAmt,
+        discountPercent,
+        discountApplied,
+        paymentId,
+        address,
+      },
     });
   };
 
   const handleDemoSuccess = async () => {
     const user = auth.currentUser;
-    if (!user) { navigate("/auth"); return; }
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
     setBypassing(true);
     setError(null);
     try {
@@ -104,9 +123,15 @@ export default function PaymentPage() {
   };
 
   const handlePay = async () => {
-    if (!rzpReady) { setError("Payment SDK not loaded. Please refresh."); return; }
+    if (!rzpReady) {
+      setError("Payment SDK not loaded. Please refresh.");
+      return;
+    }
     const user = auth.currentUser;
-    if (!user) { navigate("/auth"); return; }
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
     const userId = user.uid;
     setPaying(true);
     setError(null);
@@ -153,7 +178,9 @@ export default function PaymentPage() {
         modal: {
           ondismiss: () => {
             setPaying(false);
-            setError("Payment was cancelled. Use the button below to simulate success.");
+            setError(
+              "Payment was cancelled. Use the button below to simulate success.",
+            );
           },
         },
       };
@@ -161,10 +188,11 @@ export default function PaymentPage() {
       const rzp = new window.Razorpay(options);
       rzp.on("payment.failed", (resp) => {
         setPaying(false);
-        setError(`Payment failed: ${resp.error?.description || "Unknown error"}`);
+        setError(
+          `Payment failed: ${resp.error?.description || "Unknown error"}`,
+        );
       });
       rzp.open();
-
     } catch (err) {
       setError(err.message);
       setPaying(false);
@@ -174,15 +202,18 @@ export default function PaymentPage() {
   const busy = paying || bypassing;
 
   const fmt = (n) =>
-    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(n);
 
   return (
-    <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <Navbar
-        variant="home"
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-      />
+    <div
+      className="min-h-screen bg-stone-50"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <Navbar variant="home" menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}</style>
 
       <div className="max-w-xl mx-auto px-4 sm:px-5 py-10 sm:py-16">
@@ -197,8 +228,10 @@ export default function PaymentPage() {
         </h1>
 
         {/* Order summary card */}
-        <div className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7 mb-4 sm:mb-5
-                        hover:border-stone-300 transition-all duration-300">
+        <div
+          className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7 mb-4 sm:mb-5
+                        hover:border-stone-300 transition-all duration-300"
+        >
           <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-4">
             Order Summary
           </p>
@@ -206,9 +239,17 @@ export default function PaymentPage() {
           <div className="space-y-3 mb-5">
             {address && (
               <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 mb-2">
-                <div className="text-sm font-medium text-stone-900">Shipping to</div>
-                <div className="text-sm text-stone-700">{address.label} — {address.line1}{address.line2 ? `, ${address.line2}` : ''}</div>
-                <div className="text-sm text-stone-700">{address.city}{address.state ? `, ${address.state}` : ''} {address.zip}</div>
+                <div className="text-sm font-medium text-stone-900">
+                  Shipping to
+                </div>
+                <div className="text-sm text-stone-700">
+                  {address.label} — {address.line1}
+                  {address.line2 ? `, ${address.line2}` : ""}
+                </div>
+                <div className="text-sm text-stone-700">
+                  {address.city}
+                  {address.state ? `, ${address.state}` : ""} {address.zip}
+                </div>
               </div>
             )}
             {items.map(({ product, quantity }) => (
@@ -219,7 +260,9 @@ export default function PaymentPage() {
                   className="w-10 h-10 object-cover rounded-lg bg-stone-100 shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-stone-900 truncate">{product.name}</p>
+                  <p className="text-sm text-stone-900 truncate">
+                    {product.name}
+                  </p>
                   <p className="text-xs text-stone-400">Qty {quantity}</p>
                 </div>
                 <p className="text-sm text-stone-900 shrink-0">
@@ -277,7 +320,9 @@ export default function PaymentPage() {
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               Opening payment…
             </>
-          ) : `Pay ${fmt(total)} →`}
+          ) : (
+            `Pay ${fmt(total)} →`
+          )}
         </button>
 
         <p className="text-xs text-stone-400 text-center mt-3 sm:mt-4">
@@ -307,7 +352,9 @@ export default function PaymentPage() {
                 <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 Processing…
               </>
-            ) : "Simulate Successful Payment ✓"}
+            ) : (
+              "Simulate Successful Payment ✓"
+            )}
           </button>
 
           <p className="text-[10px] text-stone-400 text-center mt-2">
