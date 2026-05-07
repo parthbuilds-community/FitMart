@@ -4,16 +4,10 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
+import { useGithubStats } from "../utils/useGithubStats";
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// ── Static data ────────────────────────────────────────────────────────────
-// Real repo stats from GitHub API
-const STATS = [
-  { value: "105", label: "GitHub Stars" },
-  { value: "144", label: "Forks" },
-  { value: "20", label: "Contributors" },
-  { value: "82+", label: "Commits" },
-];
+const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
 const CATEGORIES = [
   {
@@ -107,6 +101,14 @@ export default function LandingPage() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [backendError, setBackendError] = useState(false);
+
+  const { stats: ghStats, loading: ghLoading } = useGithubStats();
+  const STATS = [
+    { value: formatStat(ghStats.stars, ghLoading), label: "GitHub Stars" },
+    { value: formatStat(ghStats.forks, ghLoading), label: "Forks" },
+    { value: formatStat(ghStats.contributors, ghLoading), label: "Contributors" },
+    { value: formatStat(ghStats.commits, ghLoading), label: "Commits" },
+  ];
 
   useEffect(() => {
     document.title = "FitMart - Fitness & Nutrition Store";
@@ -601,7 +603,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <LandingFooter aboutRef={aboutRef} />
+      <LandingFooter aboutRef={aboutRef} ghStats={ghStats} ghLoading={ghLoading} />
     </div>
   );
 }
@@ -681,7 +683,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
 }
 
 // ── LandingFooter — rich footer with community + links ────────────────────
-function LandingFooter({ aboutRef }) {
+function LandingFooter({ aboutRef, ghStats, ghLoading }) {
   const navigate = useNavigate();
   const year = new Date().getFullYear();
 
@@ -736,8 +738,8 @@ function LandingFooter({ aboutRef }) {
             {/* GitHub stats pills */}
             <div className="flex flex-wrap gap-2">
               {[
-                { icon: <StarIcon className="w-3 h-3" />, label: "105 stars" },
-                { icon: <GithubIcon className="w-3 h-3" />, label: "144 forks" },
+                { icon: <StarIcon className="w-3 h-3" />, label: `${formatStat(ghStats.stars, ghLoading)} stars` },
+                { icon: <GithubIcon className="w-3 h-3" />, label: `${formatStat(ghStats.forks, ghLoading)} forks` },
               ].map(({ icon, label }) => (
                 <a
                   key={label}
