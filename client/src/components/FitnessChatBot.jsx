@@ -1,7 +1,7 @@
 // src/components/FitnessChatBot.jsx
 import { useState, useEffect, useRef } from "react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 
 const WELCOME = {
   role: "bot",
@@ -37,7 +37,9 @@ export default function FitnessChatBot() {
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   const send = async () => {
@@ -99,14 +101,16 @@ export default function FitnessChatBot() {
             parts.push(
               <span key={`text-${lineIndex}-${idx}`}>
                 {line.substring(currentPos, match.start)}
-              </span>
+              </span>,
             );
           }
           parts.push(
-            <strong key={`bold-${lineIndex}-${idx}`}
-              className="font-semibold text-stone-900">
+            <strong
+              key={`bold-${lineIndex}-${idx}`}
+              className="font-semibold text-stone-900"
+            >
               {match.text}
-            </strong>
+            </strong>,
           );
           currentPos = match.end;
         });
@@ -114,7 +118,7 @@ export default function FitnessChatBot() {
           parts.push(
             <span key={`text-${lineIndex}-end`}>
               {line.substring(currentPos)}
-            </span>
+            </span>,
           );
         }
       }
@@ -187,8 +191,10 @@ export default function FitnessChatBot() {
         }}
       >
         {/* ── Header ── */}
-        <div className="bg-stone-900 px-4 sm:px-5 py-3.5 sm:py-4 flex items-center
-                        justify-between shrink-0">
+        <div
+          className="bg-stone-900 px-4 sm:px-5 py-3.5 sm:py-4 flex items-center
+                        justify-between shrink-0"
+        >
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">
               FitMart
@@ -218,28 +224,33 @@ export default function FitnessChatBot() {
         </div>
 
         {/* ── Messages Area ── */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 space-y-3
-                        fm-scrollbar bg-stone-50">
+        <div
+          className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 space-y-3
+                        fm-scrollbar bg-stone-50"
+        >
           {msgs.map((msg, idx) => (
             <div
               key={idx}
               className={`fm-msg flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "bot" && (
-                <div className="w-7 h-7 rounded-full bg-stone-900 flex items-center
-                                justify-center text-white text-xs shrink-0 mr-2 mt-0.5">
+                <div
+                  className="w-7 h-7 rounded-full bg-stone-900 flex items-center
+                                justify-center text-white text-xs shrink-0 mr-2 mt-0.5"
+                >
                   ◎
                 </div>
               )}
               <div
                 className={`max-w-[80%] sm:max-w-[78%] px-3.5 sm:px-4 py-2.5 sm:py-3
                             rounded-2xl text-sm leading-relaxed
-                            ${msg.role === "user"
-                    ? "bg-stone-900 text-white rounded-br-sm"
-                    : msg.error
-                      ? "bg-red-50 border border-red-100 text-red-600 rounded-bl-sm"
-                      : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
-                  }`}
+                            ${
+                              msg.role === "user"
+                                ? "bg-stone-900 text-white rounded-br-sm"
+                                : msg.error
+                                  ? "bg-red-50 border border-red-100 text-red-600 rounded-bl-sm"
+                                  : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
+                            }`}
               >
                 {formatMessageText(msg.text)}
               </div>
@@ -249,12 +260,16 @@ export default function FitnessChatBot() {
           {/* Typing Indicator */}
           {typing && (
             <div className="fm-msg flex justify-start">
-              <div className="w-7 h-7 rounded-full bg-stone-900 flex items-center
-                              justify-center text-white text-xs shrink-0 mr-2 mt-0.5">
+              <div
+                className="w-7 h-7 rounded-full bg-stone-900 flex items-center
+                              justify-center text-white text-xs shrink-0 mr-2 mt-0.5"
+              >
                 ◎
               </div>
-              <div className="bg-white border border-stone-200 rounded-2xl rounded-bl-sm
-                              px-4 py-3 flex items-center gap-1.5 shadow-sm">
+              <div
+                className="bg-white border border-stone-200 rounded-2xl rounded-bl-sm
+                              px-4 py-3 flex items-center gap-1.5 shadow-sm"
+              >
                 <span className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block" />
                 <span className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block" />
                 <span className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block" />
@@ -284,7 +299,8 @@ export default function FitnessChatBot() {
             style={{ maxHeight: "96px", overflowY: "auto" }}
             onInput={(e) => {
               e.target.style.height = "auto";
-              e.target.style.height = Math.min(e.target.scrollHeight, 96) + "px";
+              e.target.style.height =
+                Math.min(e.target.scrollHeight, 96) + "px";
             }}
           />
           <button
@@ -296,9 +312,16 @@ export default function FitnessChatBot() {
                        active:scale-95 min-w-10"
             aria-label="Send message"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-              strokeLinejoin="round">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
@@ -315,15 +338,29 @@ export default function FitnessChatBot() {
         aria-label="Toggle fitness assistant"
       >
         {open ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-            strokeLinejoin="round">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         )}

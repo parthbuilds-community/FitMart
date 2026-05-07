@@ -7,7 +7,7 @@ import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -21,21 +21,34 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => { document.title = "My Cart - FitMart"; }, []);
+  useEffect(() => {
+    document.title = "My Cart - FitMart";
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) { navigate("/auth"); return; }
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
       const userId = user.uid;
 
       try {
         const headers = await getAuthHeaders();
 
         const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
-          fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
+          fetch(`${API}/api/cart/${userId}`, {
+            headers,
+            credentials: "include",
+          }),
           fetch(`${API}/api/products`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
-          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
+          fetch(`${API}/api/user/discount-status/${userId}`, {
+            credentials: "include",
+          }),
+          fetch(`${API}/api/user/profile/${userId}`, {
+            headers,
+            credentials: "include",
+          }),
         ]);
 
         if (!cartRes.ok) throw new Error("Failed to fetch cart");
@@ -53,16 +66,24 @@ export default function Checkout() {
         if (profileRes && profileRes.ok) {
           const p = await profileRes.json();
           setProfile(p);
-          const def = p?.defaultAddressId ? (p.addresses || []).find(a => a.id === p.defaultAddressId) : null;
+          const def = p?.defaultAddressId
+            ? (p.addresses || []).find((a) => a.id === p.defaultAddressId)
+            : null;
           setSelectedAddress(def || (p?.addresses && p.addresses[0]) || null);
         }
 
-        if (!cart.items?.length) { setItems([]); setLoading(false); return; }
+        if (!cart.items?.length) {
+          setItems([]);
+          setLoading(false);
+          return;
+        }
 
-        const productMap = Object.fromEntries(products.map(p => [p.productId, p]));
+        const productMap = Object.fromEntries(
+          products.map((p) => [p.productId, p]),
+        );
         const enriched = cart.items
-          .map(item => ({ ...item, product: productMap[item.productId] }))
-          .filter(item => item.product);
+          .map((item) => ({ ...item, product: productMap[item.productId] }))
+          .filter((item) => item.product);
 
         setItems(enriched);
       } catch (err) {
@@ -75,14 +96,22 @@ export default function Checkout() {
     return () => unsubscribe();
   }, [navigate]);
 
-  const subtotal = items.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
-  const discountAmt = discountEligible ? Math.round(subtotal * discountPercent / 100) : 0;
+  const subtotal = items.reduce(
+    (sum, { product, quantity }) => sum + product.price * quantity,
+    0,
+  );
+  const discountAmt = discountEligible
+    ? Math.round((subtotal * discountPercent) / 100)
+    : 0;
   const total = subtotal - discountAmt;
 
   const handleProceed = () => {
     navigate("/payment", {
       state: {
-        items, total, subtotal, discountAmt,
+        items,
+        total,
+        subtotal,
+        discountAmt,
         discountPercent: discountEligible ? discountPercent : 0,
         discountApplied: discountEligible,
         address: selectedAddress,
@@ -90,23 +119,26 @@ export default function Checkout() {
     });
   };
 
-  if (loading) return (
-    <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <Spinner />
-    </PageShell>
-  );
+  if (loading)
+    return (
+      <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
+        <Spinner />
+      </PageShell>
+    );
 
-  if (error) return (
-    <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <ErrorMsg msg={error} />
-    </PageShell>
-  );
+  if (error)
+    return (
+      <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
+        <ErrorMsg msg={error} />
+      </PageShell>
+    );
 
-  if (!items.length) return (
-    <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <EmptyCart navigate={navigate} />
-    </PageShell>
-  );
+  if (!items.length)
+    return (
+      <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
+        <EmptyCart navigate={navigate} />
+      </PageShell>
+    );
 
   return (
     <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
@@ -115,7 +147,6 @@ export default function Checkout() {
       `}</style>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">
-
         {/* Back + heading */}
         <div className="mb-8 sm:mb-10">
           <button
@@ -124,11 +155,15 @@ export default function Checkout() {
                        bg-white text-stone-700 hover:text-stone-900 text-sm px-4 sm:px-5 py-2.5
                        rounded-full transition-all duration-300 hover:shadow-md group cursor-pointer mb-5 sm:mb-6"
           >
-            <span className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
+            <span className="transition-transform duration-200 group-hover:-translate-x-1">
+              ←
+            </span>
             Back to Shop
           </button>
 
-          <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Review</p>
+          <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+            Review
+          </p>
           <h1
             style={{ fontFamily: "'DM Serif Display', serif" }}
             className="text-3xl sm:text-4xl md:text-5xl text-stone-900"
@@ -139,28 +174,51 @@ export default function Checkout() {
 
         {/* On mobile: summary appears ABOVE product list for quick visibility */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-
           {/* ── Order summary — top on mobile, sidebar on lg ── */}
           <div className="lg:col-span-1 order-first lg:order-last">
             <div className="bg-stone-900 rounded-2xl p-6 sm:p-8 lg:sticky lg:top-24">
-              <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5 sm:mb-6">Summary</p>
+              <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5 sm:mb-6">
+                Summary
+              </p>
               <div className="space-y-3 mb-5 sm:mb-6">
                 {selectedAddress && (
                   <div className="bg-stone-800 text-white rounded-lg p-3">
                     <div className="text-sm font-medium">Shipping to</div>
-                    <div className="text-sm">{selectedAddress.label} — {selectedAddress.line1}{selectedAddress.line2 ? `, ${selectedAddress.line2}` : ''}</div>
-                    <div className="text-sm text-stone-200">{selectedAddress.city}{selectedAddress.state ? `, ${selectedAddress.state}` : ''} {selectedAddress.zip}</div>
-                    <div className="text-xs mt-2"><button onClick={() => navigate('/profile')} className="underline">Edit addresses</button></div>
+                    <div className="text-sm">
+                      {selectedAddress.label} — {selectedAddress.line1}
+                      {selectedAddress.line2
+                        ? `, ${selectedAddress.line2}`
+                        : ""}
+                    </div>
+                    <div className="text-sm text-stone-200">
+                      {selectedAddress.city}
+                      {selectedAddress.state
+                        ? `, ${selectedAddress.state}`
+                        : ""}{" "}
+                      {selectedAddress.zip}
+                    </div>
+                    <div className="text-xs mt-2">
+                      <button
+                        onClick={() => navigate("/profile")}
+                        className="underline"
+                      >
+                        Edit addresses
+                      </button>
+                    </div>
                   </div>
                 )}
 
                 <div className="flex justify-between text-sm text-stone-300">
-                  <span>Subtotal ({items.length} item{items.length > 1 ? "s" : ""})</span>
+                  <span>
+                    Subtotal ({items.length} item{items.length > 1 ? "s" : ""})
+                  </span>
                   <span>{fmt(subtotal)}</span>
                 </div>
                 {discountEligible && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-stone-400">Welcome {discountPercent}% off</span>
+                    <span className="text-stone-400">
+                      Welcome {discountPercent}% off
+                    </span>
                     <span className="text-stone-300">−{fmt(discountAmt)}</span>
                   </div>
                 )}
@@ -186,7 +244,9 @@ export default function Checkout() {
               >
                 Proceed to Payment →
               </button>
-              <p className="text-xs text-stone-500 text-center mt-4">Secured by Razorpay</p>
+              <p className="text-xs text-stone-500 text-center mt-4">
+                Secured by Razorpay
+              </p>
             </div>
           </div>
 
@@ -201,7 +261,8 @@ export default function Checkout() {
               >
                 {/* Product image — smaller on mobile */}
                 <img
-                  src={product.image} alt={product.name}
+                  src={product.image}
+                  alt={product.name}
                   className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl shrink-0 bg-stone-100"
                 />
                 <div className="flex-1 min-w-0">
@@ -216,8 +277,10 @@ export default function Checkout() {
                     {product.name}
                   </h3>
                   {product.badge && (
-                    <span className="text-[10px] tracking-widest uppercase bg-stone-900
-                                     text-white px-2.5 py-1 rounded-full">
+                    <span
+                      className="text-[10px] tracking-widest uppercase bg-stone-900
+                                     text-white px-2.5 py-1 rounded-full"
+                    >
                       {product.badge}
                     </span>
                   )}
@@ -253,19 +316,23 @@ export default function Checkout() {
 
             {/* Welcome discount callout */}
             {discountEligible && (
-              <div className="bg-stone-100 border border-stone-200 rounded-2xl px-4 sm:px-6 py-4
-                              flex items-center gap-3 sm:gap-4">
+              <div
+                className="bg-stone-100 border border-stone-200 rounded-2xl px-4 sm:px-6 py-4
+                              flex items-center gap-3 sm:gap-4"
+              >
                 <span className="text-stone-900 text-lg shrink-0">✓</span>
                 <div>
-                  <p className="text-sm font-medium text-stone-900">Welcome discount applied</p>
+                  <p className="text-sm font-medium text-stone-900">
+                    Welcome discount applied
+                  </p>
                   <p className="text-xs text-stone-500 mt-0.5">
-                    {discountPercent}% off your first order — saving you {fmt(discountAmt)}
+                    {discountPercent}% off your first order — saving you{" "}
+                    {fmt(discountAmt)}
                   </p>
                 </div>
               </div>
             )}
           </div>
-
         </div>
       </div>
     </PageShell>
@@ -274,7 +341,10 @@ export default function Checkout() {
 
 function PageShell({ children, menuOpen, setMenuOpen }) {
   return (
-    <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      className="min-h-screen bg-stone-50"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
       <Navbar variant="home" menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       {children}
     </div>
@@ -291,8 +361,10 @@ function Spinner() {
 
 function ErrorMsg({ msg }) {
   return (
-    <div className="max-w-md mx-auto mt-16 sm:mt-24 bg-red-50 border border-red-100
-                    rounded-2xl p-6 sm:p-8 text-center sm:mx-auto">
+    <div
+      className="max-w-md mx-auto mt-16 sm:mt-24 bg-red-50 border border-red-100
+                    rounded-2xl p-6 sm:p-8 text-center sm:mx-auto"
+    >
       <p className="text-red-600 text-sm">{msg}</p>
     </div>
   );
