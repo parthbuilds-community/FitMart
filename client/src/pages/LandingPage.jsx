@@ -8,12 +8,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // ── Static data ────────────────────────────────────────────────────────────
 // Real repo stats from GitHub API
-const STATS = [
-  { value: "105", label: "GitHub Stars" },
-  { value: "144", label: "Forks" },
-  { value: "20", label: "Contributors" },
-  { value: "82+", label: "Commits" },
-];
+
 
 const CATEGORIES = [
   {
@@ -52,6 +47,13 @@ const TESTIMONIALS = [
   { quote: "FitMart replaced three different subscriptions for me. Equipment, nutrition and coaching — finally in one place.", name: "Arjun M.", role: "Software Engineer, Powai" },
   { quote: "The authenticity guarantee is real. I've never doubted a single supplement I've ordered here.", name: "Priya S.", role: "Fitness Coach, Bandra" },
   { quote: "Set up a complete home gym through FitMart. The setup guide that came with it was genuinely useful.", name: "Rohan K.", role: "Architect, Andheri" },
+];
+
+const STATS = [
+  { value: "105", label: "GitHub Stars" },
+  { value: "144", label: "Forks" },
+  { value: "1000+", label: "Happy Customers" },
+  { value: "2024", label: "Founded" },
 ];
 
 // ── SVG Icons ──────────────────────────────────────────────────────────────
@@ -142,7 +144,7 @@ export default function LandingPage() {
       }
     })();
   }, []);
-
+  
   const navOpaque = scrollY > 60;
 
   return (
@@ -343,11 +345,22 @@ export default function LandingPage() {
           </div>
 
           {loadingProducts ? (
-            <div className="text-center py-12 text-stone-400">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4
-                              border-stone-300 border-t-stone-900 mb-4" />
-              <p className="text-sm">Loading products...</p>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
+  {[...Array(4)].map((_, i) => (
+    <div
+      key={i}
+      className="bg-white border border-stone-100 rounded-2xl overflow-hidden"
+    >
+      <div className="aspect-square bg-stone-200" />
+      <div className="p-3 space-y-2">
+        <div className="h-2 w-16 bg-stone-200 rounded" />
+        <div className="h-3 w-full bg-stone-200 rounded" />
+        <div className="h-3 w-3/4 bg-stone-200 rounded" />
+        <div className="h-4 w-20 bg-stone-300 rounded mt-3" />
+      </div>
+    </div>
+  ))}
+</div>
           ) : backendError ? (
             <div className="text-center py-12 text-stone-400">
               <p className="text-3xl mb-2">🔌</p>
