@@ -10,7 +10,11 @@ const BugSchema = new mongoose.Schema(
     reporterName: { type: String, default: '' },
     reporterEmail: { type: String, default: '' },
     // allowed statuses: open, in-progress, resolved
-    screenshot: { type: String, default: '' }, // relative path under /uploads/bugs/
+    // legacy local path (kept for backward compatibility)
+    screenshot: { type: String, default: '' }, // previously relative path under /uploads/bugs/
+    // new Cloudinary-hosted URL
+    screenshotUrl: { type: String, default: '' },
+    screenshotPublicId: { type: String, default: '' },
     status: { type: String, enum: ['open', 'in-progress', 'resolved'], default: 'open' },
   },
   { timestamps: true }

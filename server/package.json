@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.0.0",
@@ -20,7 +21,8 @@
     "mongoose": "^7.0.0",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.6",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

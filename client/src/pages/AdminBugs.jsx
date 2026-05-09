@@ -429,20 +429,26 @@ export default function AdminBugs() {
                       )}
                     </td>
                     <td className="px-6 py-5 text-center">
-                      {bug.screenshot ? (
-                        <a
-                          href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${bug.screenshot}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="inline-block"
-                        >
-                          <img
-                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${bug.screenshot}`}
-                            alt="Screenshot"
-                            className="w-12 h-8 object-cover rounded border border-stone-200 hover:opacity-80 transition-opacity"
-                          />
-                        </a>
+                      {(bug.screenshotUrl || bug.screenshot) ? (
+                        (() => {
+                          const api = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                          const url = bug.screenshotUrl ? bug.screenshotUrl : `${api}${bug.screenshot}`;
+                          return (
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="inline-block"
+                            >
+                              <img
+                                src={url}
+                                alt="Screenshot"
+                                className="w-12 h-8 object-cover rounded border border-stone-200 hover:opacity-80 transition-opacity"
+                              />
+                            </a>
+                          );
+                        })()
                       ) : (
                         <span className="text-xs text-stone-300">—</span>
                       )}

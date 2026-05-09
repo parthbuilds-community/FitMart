@@ -12,9 +12,12 @@ import {
   signOut,
 } from "firebase/auth";
 import { auth } from "../auth/firebase";
+import { useGithubStats } from "../utils/useGithubStats";
 
 const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
 const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
+
+const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -50,6 +53,7 @@ export default function Authentication() {
   const [visible, setVisible] = useState(false);
   const [resendDisabled, setResendDisabled] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const { stats: ghStats, loading: ghLoading } = useGithubStats();
 
   useEffect(() => { document.title = "Login - FitMart"; }, []);
   useEffect(() => { setTimeout(() => setVisible(true), 80); }, []);
@@ -240,10 +244,10 @@ export default function Authentication() {
 
         <div className="grid grid-cols-2 gap-4">
           {[
-            { v: "105", l: "Github Stars" },
-            { v: "144", l: "Forks" },
-            { v: "20", l: "Contributors" },
-            { v: "82+", l: "Commits" },
+            { v: formatStat(ghStats.stars, ghLoading), l: "Github Stars" },
+            { v: formatStat(ghStats.forks, ghLoading), l: "Forks" },
+            { v: formatStat(ghStats.contributors, ghLoading), l: "Contributors" },
+            { v: formatStat(ghStats.commits, ghLoading), l: "Commits" },
           ].map((s, i) => (
             <div key={i} className="bg-stone-800 rounded-xl p-4">
               <div className="font-['DM_Serif_Display'] text-2xl text-white">{s.v}</div>

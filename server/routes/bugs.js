@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
+const streamifier = require('streamifier');
+const cloudinary = require('../lib/cloudinary');
 const Bug = require('../models/Bug');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const admin = require('../firebaseAdmin');
@@ -10,24 +10,13 @@ const admin = require('../firebaseAdmin');
 const ADMIN_UID = process.env.ADMIN_UID || process.env.VITE_ADMIN_UID || '';
 const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
 
-// ── Multer setup — store screenshots in /uploads/bugs/ ────────────────────
-const uploadDir = path.join(__dirname, '..', 'uploads', 'bugs');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-    cb(null, name);
-  },
-});
-
+// Use memory storage so serverless environments (Vercel) work correctly
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
+    if (file.mimetype && file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Only image files are allowed'));
   },
 });
@@ -54,9 +43,32 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
       // ignore token errors for public submissions
     }
 
-    const screenshotPath = req.file
-      ? `/uploads/bugs/${req.file.filename}`
-      : '';
+    let screenshotUrl = '';
+    let screenshotPublicId = '';
+    if (req.file && req.file.buffer) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: 'fitmart/bugs',
+              resource_type: 'image',
+            },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            }
+          );
+
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
+        });
+
+        screenshotUrl = result.secure_url || '';
+        screenshotPublicId = result.public_id || '';
+      } catch (uploadErr) {
+        console.error('Cloudinary upload failed:', uploadErr);
+        return res.status(500).json({ error: 'Failed to upload screenshot' });
+      }
+    }
 
     const bug = new Bug({
       title,
@@ -66,14 +78,14 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
       browser,
       reporterName,
       reporterEmail,
-      screenshot: screenshotPath,
+      screenshot: '',
+      screenshotUrl,
+      screenshotPublicId,
     });
 
     await bug.save();
     res.status(201).json({ ok: true, bug });
   } catch (err) {
-    // Clean up uploaded file if DB save fails
-    if (req.file) fs.unlink(req.file.path, () => { });
     console.error('Error saving bug:', err);
     res.status(500).json({ error: 'Failed to submit bug' });
   }

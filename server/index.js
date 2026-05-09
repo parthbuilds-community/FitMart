@@ -110,7 +110,6 @@ app.use(
 app.use(helmet());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-app.use("/uploads", express.static(require("path").join(__dirname, "uploads")));
 // Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
 
