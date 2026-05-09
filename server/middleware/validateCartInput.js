@@ -8,25 +8,25 @@ const validateCartInput = (req, res, next) => {
     });
   }
 
-  // Convert to number
+  // Convert values to numbers
   productId = Number(productId);
   quantity = Number(quantity);
 
   // Validate productId
-  if (!Number.isInteger(productId)) {
+  if (Number.isNaN(productId) || !Number.isInteger(productId)) {
     return res.status(400).json({
       error: "productId must be an integer",
     });
   }
 
   // Validate quantity
-  if (!Number.isInteger(quantity) || quantity <= 0) {
+  if (Number.isNaN(quantity) || !Number.isInteger(quantity) || quantity <= 0) {
     return res.status(400).json({
       error: "quantity must be a positive integer",
     });
   }
 
-  // overwrite cleaned values (IMPORTANT)
+  // Save cleaned values back to req.body
   req.body.productId = productId;
   req.body.quantity = quantity;
 
