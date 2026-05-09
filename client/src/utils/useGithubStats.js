@@ -41,9 +41,7 @@ export function useGithubStats() {
           fetchPaginatedCount(`${API}/contributors?per_page=1&anon=1`),
           fetchPaginatedCount(`${API}/commits?per_page=1`),
         ]);
-
         if (cancelled) return;
-
         setStats({
           stars: repoData.stargazers_count ?? FALLBACK_STATS.stars,
           forks: repoData.forks_count ?? FALLBACK_STATS.forks,
@@ -56,11 +54,9 @@ export function useGithubStats() {
         if (!cancelled) setLoading(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, []);
-
   return { stats, loading, error };
 }

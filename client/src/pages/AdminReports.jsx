@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import { fmt } from "../utils/formatters";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
-
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+import { apiFetch } from "../lib/apiClient";
 
 const RANGE_LABELS = {
   daily: "Last 24 Hours",
@@ -84,27 +83,63 @@ export default function AdminReports() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetch(`${API_BASE}/reports/sales?range=${range}`)
-      .then(res => res.json())
-      .then(json => { setData(json); setLoading(false); })
-      .catch(() => { setError("Failed to load report data"); setLoading(false); });
+    const fetchReportData =
+      async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const json =
+            await apiFetch(
+              `/api/reports/sales?range=${range}`
+            );
+          setData(json);
+        } catch {
+          setError(
+            "Failed to load report data"
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+    fetchReportData();
   }, [range]);
 
   const { summary, revenueByDate, productPerformance } = data || {};
   const [productMap, setProductMap] = useState({});
 
   useEffect(() => {
-    if (!productPerformance || productPerformance.length === 0) return;
-    const ids = [...new Set(productPerformance.map(p => p.productId).filter(Boolean))];
-    if (ids.length === 0) return;
+    if (
+      !productPerformance ||
+      productPerformance.length === 0
+    ) {
+      return;
+    }
+    const ids = [
+      ...new Set(
+        productPerformance
+          .map((p) => p.productId)
+          .filter(Boolean)
+      ),
+    ];
+    if (ids.length === 0) {
+      return;
+    }
     const map = {};
-    Promise.all(ids.map(id =>
-      fetch(`${API_BASE}/products/${id}`).then(r => r.ok ? r.json() : null)
-        .then(p => { if (p) map[id] = p; })
-        .catch(() => { })
-    )).then(() => setProductMap(map));
+    Promise.all(
+      ids.map(async (id) => {
+        try {
+          const product =
+            await apiFetch(
+              `/api/products/${id}`
+            );
+          if (product) {
+            map[id] = product;
+          }
+        } catch {
+          // ignore individual failures
+        }
+      })
+    ).then(() => setProductMap(map));
   }, [productPerformance]);
 
   return (

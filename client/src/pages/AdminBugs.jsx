@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+apiFetch("/api/products");
 
 const SEGMENT_STYLES = {
   open: "bg-stone-900 text-white",
@@ -100,24 +101,29 @@ export default function AdminBugs() {
     setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: newStatus } : b)));
     try {
       const token = await user.getIdToken();
-      const url = `${API}/api/bugs/${id}`;
-      const res = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status: newStatus }),
+
+      await apiFetch(`/api/bugs/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
       });
-      if (!res.ok) {
-        let body = null;
-        try { body = await res.json(); } catch (e) { body = await res.text(); }
-        console.error('PATCH failed', { url, status: res.status, body });
-        throw new Error(`update failed (${res.status})`);
-      }
       setMobilePicker(null);
     } catch (err) {
       console.error(err);
       // rollback
-      setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: prev } : b)));
-      alert('Failed to update status');
+      setBugs((cur) =>
+        cur.map((b) =>
+          b._id === id
+            ? { ...b, status: prev }
+            : b
+        )
+      );
+      alert("Failed to update status");
     }
   };
 
@@ -128,15 +134,27 @@ export default function AdminBugs() {
     (async () => {
       try {
         const token = await user.getIdToken();
-        const res = await fetch(`${API}/api/bugs`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch');
-        const body = await res.json();
-        if (mounted) setBugs(body.bugs || []);
+
+        const body = await apiFetch(
+          "/api/bugs",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (mounted) {
+          setBugs(body.bugs || []);
+        }
       } catch (err) {
         console.error(err);
-        setError('Unable to load bug reports');
+        setError(
+          "Unable to load bug reports"
+        );
       } finally {
-        if (mounted) setLoadingBugs(false);
+        if (mounted) {
+          setLoadingBugs(false);
+        }
       }
     })();
     return () => { mounted = false; };
@@ -384,22 +402,31 @@ export default function AdminBugs() {
                             setBugs((cur) => cur.map(b => (b._id === bug._id ? { ...b, status: newStatus } : b)));
                             try {
                               const token = await user.getIdToken();
-                              const res = await fetch(`${API}/api/bugs/${bug._id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ status: newStatus }),
-                              });
-                              if (!res.ok) {
-                                let body = null;
-                                try { body = await res.json(); } catch (e) { body = await res.text(); }
-                                console.error('PATCH failed', { url: `${API}/api/bugs/${bug._id}`, status: res.status, body });
-                                throw new Error(`update failed (${res.status})`);
-                              }
+                              await apiFetch(
+                                `/api/bugs/${bug._id}`,
+                                {
+                                  method: "PATCH",
+                                  headers: {
+                                    "Content-Type":
+                                      "application/json",
+                                    Authorization: `Bearer ${token}`,
+                                  },
+                                  body: JSON.stringify({
+                                    status: newStatus,
+                                  }),
+                                }
+                              );
                             } catch (err) {
                               console.error(err);
                               // rollback
-                              setBugs((cur) => cur.map(b => (b._id === bug._id ? { ...b, status: prev } : b)));
-                              alert('Failed to update status');
+                              setBugs((cur) =>
+                                cur.map((b) =>
+                                  b._id === bug._id
+                                    ? { ...b, status: prev }
+                                    : b
+                                )
+                              );
+                              alert("Failed to update status");
                             }
                           }}
                           className="text-xs border border-stone-200 rounded-full px-3 py-1 bg-white"
@@ -431,14 +458,18 @@ export default function AdminBugs() {
                     <td className="px-6 py-5 text-center">
                       {(bug.screenshotUrl || bug.screenshot) ? (
                         (() => {
-                          const api = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                          const url = bug.screenshotUrl ? bug.screenshotUrl : `${api}${bug.screenshot}`;
+                          const BASE_URL =
+                            import.meta.env.VITE_API_URL ||
+                            "http://localhost:5000";
+                          const url = bug.screenshotUrl
+                            ? bug.screenshotUrl
+                            : `${BASE_URL}${bug.screenshot}`;
                           return (
                             <a
                               href={url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              onClick={e => e.stopPropagation()}
+                              onClick={(e) => e.stopPropagation()}
                               className="inline-block"
                             >
                               <img
@@ -450,7 +481,9 @@ export default function AdminBugs() {
                           );
                         })()
                       ) : (
-                        <span className="text-xs text-stone-300">—</span>
+                        <span className="text-xs text-stone-300">
+                          —
+                        </span>
                       )}
                     </td>
                   </tr>

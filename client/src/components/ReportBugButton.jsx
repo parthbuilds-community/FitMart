@@ -1,32 +1,33 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/useAuth';
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+apiFetch("/api/products");
 
 const CATEGORIES = [
-  { id: 'bug',     label: 'Bug' },
+  { id: 'bug', label: 'Bug' },
   { id: 'payment', label: 'Payment' },
   { id: 'content', label: 'Wrong info' },
-  { id: 'other',   label: 'Other' },
+  { id: 'other', label: 'Other' },
 ];
 
 const SEVERITIES = [
-  { id: 'blocking',   label: 'Blocking',   hint: "Can't use the app" },
-  { id: 'minor',      label: 'Minor',      hint: 'Annoying but workable' },
+  { id: 'blocking', label: 'Blocking', hint: "Can't use the app" },
+  { id: 'minor', label: 'Minor', hint: 'Annoying but workable' },
   { id: 'suggestion', label: 'Suggestion', hint: 'Nice to have' },
 ];
 
-const DESC_MAX   = 500;
-const TITLE_MAX  = 80;
+const DESC_MAX = 500;
+const TITLE_MAX = 80;
 const IMG_MAX_MB = 2;
 
 function getBrowserInfo() {
   if (typeof window === 'undefined') return '';
   const ua = navigator.userAgent;
-  if (ua.includes('Edg/'))                          return 'Edge';
-  if (ua.includes('Chrome/'))                       return 'Chrome';
-  if (ua.includes('Firefox/'))                      return 'Firefox';
+  if (ua.includes('Edg/')) return 'Edge';
+  if (ua.includes('Chrome/')) return 'Chrome';
+  if (ua.includes('Firefox/')) return 'Firefox';
   if (ua.includes('Safari/') && !ua.includes('Chrome')) return 'Safari';
   return ua.slice(0, 60);
 }
@@ -137,18 +138,18 @@ function SuccessOverlay() {
 export default function ReportBugButton() {
   const { user } = useAuth();
 
-  const [open, setOpen]               = useState(false);
-  const [category, setCategory]       = useState('bug');
-  const [severity, setSeverity]       = useState('minor');
-  const [title, setTitle]             = useState('');
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState('bug');
+  const [severity, setSeverity] = useState('minor');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [steps, setSteps]             = useState('');
-  const [screenshot, setScreenshot]   = useState(null); // { file, preview }
-  const [loading, setLoading]         = useState(false);
-  const [success, setSuccess]         = useState(false);
-  const [toast, setToast]             = useState(null);
-  const [errors, setErrors]           = useState({});
-  const [imgError, setImgError]       = useState('');
+  const [steps, setSteps] = useState('');
+  const [screenshot, setScreenshot] = useState(null); // { file, preview }
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [imgError, setImgError] = useState('');
 
   const fileInputRef = useRef(null);
   const pageUrl = typeof window !== 'undefined' ? window.location.pathname : '/';
@@ -167,7 +168,7 @@ export default function ReportBugButton() {
     setSuccess(false);
   };
 
-  const openModal  = () => { resetForm(); setOpen(true); };
+  const openModal = () => { resetForm(); setOpen(true); };
   const closeModal = () => { if (loading) return; setOpen(false); };
 
   // Escape to close
@@ -204,7 +205,7 @@ export default function ReportBugButton() {
 
   const validate = () => {
     const e = {};
-    if (!title.trim())       e.title       = 'Give it a short title so we know where to look.';
+    if (!title.trim()) e.title = 'Give it a short title so we know where to look.';
     if (!description.trim()) e.description = 'Tell us what went wrong — even a sentence helps.';
     return e;
   };
@@ -226,33 +227,33 @@ export default function ReportBugButton() {
       if (screenshot?.file) {
         // Send as multipart so the image travels alongside the fields
         const fd = new FormData();
-        fd.append('title',         `[${category.toUpperCase()}][${severity}] ${title.trim()}`);
-        fd.append('description',   description.trim());
-        fd.append('steps',         steps.trim());
-        fd.append('pageUrl',       pageUrl);
-        fd.append('browser',       getBrowserInfo());
-        fd.append('reporterName',  user?.displayName || '');
+        fd.append('title', `[${category.toUpperCase()}][${severity}] ${title.trim()}`);
+        fd.append('description', description.trim());
+        fd.append('steps', steps.trim());
+        fd.append('pageUrl', pageUrl);
+        fd.append('browser', getBrowserInfo());
+        fd.append('reporterName', user?.displayName || '');
         fd.append('reporterEmail', user?.email || '');
-        fd.append('screenshot',    screenshot.file);
+        fd.append('screenshot', screenshot.file);
         body = fd;
       } else {
         headers['Content-Type'] = 'application/json';
         body = JSON.stringify({
-          title:         `[${category.toUpperCase()}][${severity}] ${title.trim()}`,
-          description:   description.trim(),
-          steps:         steps.trim(),
+          title: `[${category.toUpperCase()}][${severity}] ${title.trim()}`,
+          description: description.trim(),
+          steps: steps.trim(),
           pageUrl,
-          browser:       getBrowserInfo(),
-          reporterName:  user?.displayName || '',
+          browser: getBrowserInfo(),
+          reporterName: user?.displayName || '',
           reporterEmail: user?.email || '',
         });
       }
 
-      const res = await fetch(`${API}/api/bugs`, { method: 'POST', headers, body });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || 'Server error. Please try again.');
-      }
+      await apiFetch("/api/bugs", {
+        method: "POST",
+        headers,
+        body,
+      });
 
       // Show success overlay inside modal, then close after 1.8s
       setSuccess(true);
@@ -272,8 +273,8 @@ export default function ReportBugButton() {
     `w-full border rounded-lg px-3 py-2.5 text-sm text-stone-900 placeholder-stone-300
      focus:outline-none transition-colors disabled:opacity-50
      ${hasError
-       ? 'border-red-300 bg-red-50 focus:border-red-400'
-       : 'border-stone-200 bg-white focus:border-stone-900'}`;
+      ? 'border-red-300 bg-red-50 focus:border-red-400'
+      : 'border-stone-200 bg-white focus:border-stone-900'}`;
 
   return (
     <>

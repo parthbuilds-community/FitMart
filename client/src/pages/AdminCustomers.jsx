@@ -2,10 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import AdminNavbar from "../components/AdminNavbar";
+import { apiFetch } from "../lib/apiClient";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const SEGMENT_STYLES = {
   "high-value": "bg-stone-900 text-white",
@@ -124,59 +123,78 @@ export default function AdminCustomers() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE}/customers`)
-      .then(res => res.json())
-      .then(json => {
+    const fetchCustomers = async () => {
+      try {
+        const json = await apiFetch(
+          "/api/customers"
+        );
         if (!json.success) {
-          throw new Error(json.error || "Failed to load customers");
+          throw new Error(
+            json.error ||
+            "Failed to load customers"
+          );
         }
         setCustomers(json.data || []);
+      } catch (err) {
+        console.error(
+          "Customers fetch error:",
+          err
+        );
+        setError(
+          err.message ||
+          "Failed to load customers"
+        );
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error("Customers fetch error:", err);
-        setError(err.message || "Failed to load customers");
-        setLoading(false);
-      });
+      }
+    };
+    fetchCustomers();
   }, []);
-
   // Send reminder email for a customer
   const handleSendReminder = async (e, customerId) => {
     e.stopPropagation();
     setSendingReminderId(customerId);
 
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/customers/${customerId}/send-reminder`, {
-        method: "POST",
-        headers,
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setReminderError(prev => ({ ...prev, [customerId]: data.error || "Failed to send" }));
-        setSendingReminderId(null);
-        return;
-      }
-
-      setReminderSent(prev => ({ ...prev, [customerId]: true }));
-      setReminderError(prev => ({ ...prev, [customerId]: null }));
-
+      await apiFetch(
+        `/api/customers/${customerId}/send-reminder`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      setReminderSent((prev) => ({
+        ...prev,
+        [customerId]: true,
+      }));
+      setReminderError((prev) => ({
+        ...prev,
+        [customerId]: null,
+      }));
       // Update customer data to show latest reminder sent time
-      setCustomers(prev => prev.map(c =>
-        c.userId === customerId
-          ? { ...c, lastReminderEmailSentAt: new Date().toISOString() }
-          : c
-      ));
-
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.userId === customerId
+            ? {
+              ...c,
+              lastReminderEmailSentAt:
+                new Date().toISOString(),
+            }
+            : c
+        )
+      );
       // Clear success message after 3 seconds
       setTimeout(() => {
-        setReminderSent(prev => ({ ...prev, [customerId]: false }));
+        setReminderSent((prev) => ({
+          ...prev,
+          [customerId]: false,
+        }));
       }, 3000);
     } catch (err) {
-      setReminderError(prev => ({ ...prev, [customerId]: err.message }));
+      setReminderError((prev) => ({
+        ...prev,
+        [customerId]: err.message,
+      }));
     } finally {
       setSendingReminderId(null);
     }

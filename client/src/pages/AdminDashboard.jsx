@@ -1,6 +1,7 @@
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminNavbar from "../components/AdminNavbar";
+import { apiFetch } from "../lib/apiClient";
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -9,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const data = await apiFetch("/api/products");
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", {
@@ -141,9 +142,8 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/dashboard?range=${range}`);
-        if (!res.ok) throw new Error("Failed to fetch dashboard data");
-        setData(await res.json());
+        const data = await apiFetch(`/api/dashboard?range=${range}`);
+        setData(data);
       } catch (err) {
         setError(err.message);
       } finally {

@@ -76,7 +76,7 @@ const PrivacyPolicy = () => {
         {/* Quick Navigation */}
         <div className="mb-12 sm:mb-16 fade-up delay-2">
           <div className="bg-white border border-stone-200 rounded-xl p-6 sm:p-8">
-            <p className="text-xs tracking-[0.1em] uppercase text-stone-400 font-semibold mb-4">Quick Links</p>
+            <p className="text-xs tracking-widest uppercase text-stone-400 font-semibold mb-4">Quick Links</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 "Information We Collect",
@@ -112,19 +112,19 @@ const PrivacyPolicy = () => {
                   <h3 className="font-semibold text-stone-800 mb-3 text-sm sm:text-base">Information You Provide Directly</h3>
                   <ul className="space-y-2 text-sm text-stone-700">
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400 shrink-0">•</span>
                       <span>Name, email address, phone number, and shipping address</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400 shrink-0">•</span>
                       <span>Payment information (processed securely through third-party providers)</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400 shrink-0">•</span>
                       <span>Account credentials and user preferences</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400  shrink-0">•</span>
                       <span>Product reviews and customer feedback</span>
                     </li>
                   </ul>
@@ -134,19 +134,19 @@ const PrivacyPolicy = () => {
                   <h3 className="font-semibold text-stone-800 mb-3 text-sm sm:text-base">Information Collected Automatically</h3>
                   <ul className="space-y-2 text-sm text-stone-700">
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400 shrink-0">•</span>
                       <span>Device information including IP address and browser type</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400 shrink-0">•</span>
                       <span>Usage data and browsing patterns</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400 shrink-0">•</span>
                       <span>Location information (with your consent)</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="text-stone-400 flex-shrink-0">•</span>
+                      <span className="text-stone-400 shrink-0">•</span>
                       <span>Cookies and tracking technologies</span>
                     </li>
                   </ul>
@@ -168,27 +168,27 @@ const PrivacyPolicy = () => {
               </div>
               <ul className="space-y-3 text-sm sm:text-base text-stone-600">
                 <li className="flex gap-3">
-                  <span className="text-stone-400 flex-shrink-0 font-bold">✓</span>
+                  <span className="text-stone-400 shrink-0 font-bold">✓</span>
                   <span>Process and fulfill your orders including shipping and returns</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-stone-400 flex-shrink-0 font-bold">✓</span>
+                  <span className="text-stone-400 shrink-0 font-bold">✓</span>
                   <span>Communicate with you about your account and orders</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-stone-400 flex-shrink-0 font-bold">✓</span>
+                  <span className="text-stone-400 shrink-0 font-bold">✓</span>
                   <span>Send you marketing communications with your consent</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-stone-400 flex-shrink-0 font-bold">✓</span>
+                  <span className="text-stone-400 shrink-0 font-bold">✓</span>
                   <span>Improve and personalize your experience on our platform</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-stone-400 flex-shrink-0 font-bold">✓</span>
+                  <span className="text-stone-400 shrink-0 font-bold">✓</span>
                   <span>Detect and prevent fraud and security incidents</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-stone-400 flex-shrink-0 font-bold">✓</span>
+                  <span className="text-stone-400 shrink-0 font-bold">✓</span>
                   <span>Comply with legal obligations and requirements</span>
                 </li>
               </ul>
@@ -250,19 +250,19 @@ const PrivacyPolicy = () => {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="border border-stone-200 rounded-lg p-4 flex items-start gap-3">
-                  <span className="text-stone-900 font-bold text-lg flex-shrink-0">✓</span>
+                  <span className="text-stone-900 font-bold text-lg shrink-0">✓</span>
                   <span className="text-sm text-stone-700">Access and receive a copy of your data</span>
                 </div>
                 <div className="border border-stone-200 rounded-lg p-4 flex items-start gap-3">
-                  <span className="text-stone-900 font-bold text-lg flex-shrink-0">✓</span>
+                  <span className="text-stone-900 font-bold text-lg shrink-0">✓</span>
                   <span className="text-sm text-stone-700">Correct inaccurate information</span>
                 </div>
                 <div className="border border-stone-200 rounded-lg p-4 flex items-start gap-3">
-                  <span className="text-stone-900 font-bold text-lg flex-shrink-0">✓</span>
+                  <span className="text-stone-900 font-bold text-lg shrink-0">✓</span>
                   <span className="text-sm text-stone-700">Request deletion of your data</span>
                 </div>
                 <div className="border border-stone-200 rounded-lg p-4 flex items-start gap-3">
-                  <span className="text-stone-900 font-bold text-lg flex-shrink-0">✓</span>
+                  <span className="text-stone-900 font-bold text-lg shrink-0">✓</span>
                   <span className="text-sm text-stone-700">Opt out of marketing communications</span>
                 </div>
               </div>

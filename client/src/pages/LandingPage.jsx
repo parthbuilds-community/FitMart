@@ -5,8 +5,9 @@ import Navbar from "../components/Navbar";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
 import { useGithubStats } from "../utils/useGithubStats";
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiFetch } from "../lib/apiClient";
 
+apiFetch("/api/products");
 const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
 const CATEGORIES = [
@@ -131,12 +132,20 @@ export default function LandingPage() {
       setLoadingProducts(true);
       setBackendError(false);
       try {
-        const res = await fetch(`${API}/api/products`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setProducts(data.map(p => ({ ...p, id: p.productId || p.id })));
+        const data = await apiFetch(
+          "/api/products"
+        );
+        setProducts(
+          data.map((p) => ({
+            ...p,
+            id: p.productId || p.id,
+          }))
+        );
       } catch (err) {
-        console.error("Error loading products:", err);
+        console.error(
+          "Error loading products:",
+          err
+        );
         setBackendError(true);
         setProducts([]);
       } finally {

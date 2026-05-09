@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { addExerciseToWorkout, getWorkoutByDate } from "../utils/workoutStorage";
+import { apiFetch } from "../lib/apiClient";
 
 const CATEGORIES = [
   { id: "chest", name: "Chest" },
@@ -40,35 +41,50 @@ export default function ExercisePage() {
     setError("");
     setExercises([]);
     setImageErrors(new Set());
-
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const response = await fetch(`${apiUrl}/api/exercises/${bodyPart}`);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch exercises. Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
+      const data = await apiFetch(
+        `/api/exercises/${bodyPart}`
+      );
       // Client-side debug logging
       if (data && data.length > 0) {
         const firstEx = data[0];
-        console.log(`\n[Exercise Client] Received ${data.length} exercises for "${bodyPart}"`);
-        console.log("  First exercise name:", firstEx.name);
-        console.log("  First exercise gifUrl:", firstEx.gifUrl ? `✅ Present` : "❌ null");
-        console.log("  First exercise imageUrl:", firstEx.imageUrl ? `✅ Present` : "❌ null");
+        console.log(
+          `\n[Exercise Client] Received ${data.length} exercises for "${bodyPart}"`
+        );
+        console.log(
+          "  First exercise name:",
+          firstEx.name
+        );
+        console.log(
+          "  First exercise gifUrl:",
+          firstEx.gifUrl
+            ? `Present`
+            : "null"
+        );
+        console.log(
+          "  First exercise imageUrl:",
+          firstEx.imageUrl
+            ? `Present`
+            : "null"
+        );
         if (firstEx.gifUrl) {
-          console.log("  GIF URL preview:", firstEx.gifUrl.substring(0, 100));
+          console.log(
+            "  GIF URL preview:",
+            firstEx.gifUrl.substring(0, 100)
+          );
         }
         console.log("");
       }
-
       setExercises(data || []);
     } catch (err) {
-      setError(err.message || "Failed to load exercises. Please try again.");
-      console.error("Exercise fetch error:", err);
+      setError(
+        err.message ||
+        "Failed to load exercises. Please try again."
+      );
+      console.error(
+        "Exercise fetch error:",
+        err
+      );
     } finally {
       setLoading(false);
     }

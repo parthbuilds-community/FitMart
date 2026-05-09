@@ -281,7 +281,7 @@ export default function ProductConfirmation() {
               >
                 {/* Product image */}
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-stone-100
-                                flex-shrink-0 overflow-hidden">
+                                shrink-0 overflow-hidden">
                   <img
                     src={product.image}
                     alt={product.name}
@@ -313,7 +313,7 @@ export default function ProductConfirmation() {
                 {/* Line total */}
                 <p
                   style={{ fontFamily: "'DM Serif Display', serif" }}
-                  className="text-lg sm:text-xl text-stone-900 flex-shrink-0"
+                  className="text-lg sm:text-xl text-stone-900 shrink-0"
                 >
                   {fmt(product.price * quantity)}
                 </p>
@@ -352,7 +352,7 @@ export default function ProductConfirmation() {
             className="w-full border border-stone-900 text-stone-900 text-sm px-8 py-4
                        rounded-full hover:bg-stone-900 hover:text-white transition-all
                        disabled:opacity-50 flex items-center justify-center gap-2
-                       min-h-[52px] active:scale-[0.98]"
+                       min-h-13 active:scale-[0.98]"
           >
             {downloading ? (
               <>
@@ -384,7 +384,7 @@ export default function ProductConfirmation() {
             onClick={() => navigate("/home")}
             className="flex-1 bg-stone-900 text-white text-sm px-8 py-4
                        rounded-full hover:bg-stone-700 transition-colors text-center
-                       min-h-[52px] active:scale-[0.98]"
+                       min-h-13 active:scale-[0.98]"
           >
             Continue Shopping
           </button>

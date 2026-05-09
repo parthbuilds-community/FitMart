@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
+import { apiFetch } from "../lib/apiClient";
 
 const LOW_STOCK_THRESHOLD = 5;
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const statusConfig = (p) => {
   const isUnavailable = p.stock === null;
@@ -123,12 +123,11 @@ export default function AdminInventory() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/products`);
-      const data = await res.json();
+      const data = await apiFetch("/api/products");
       setProducts(data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load inventory');
+      setError('Failed to load inventory',err);
       setLoading(false);
     }
   };
@@ -199,15 +198,13 @@ export default function AdminInventory() {
         }
       }
 
-      const res = await fetch(`${API_BASE}/products/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || 'Save failed');
-      }
+      await apiFetch(
+        `/api/products/${id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        }
+      );
       // refresh full list from server to ensure consistency
       await fetchProducts();
       setSaving(false);

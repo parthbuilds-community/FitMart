@@ -1,8 +1,8 @@
 // src/auth/useWelcomeDiscount.js
 import { useState, useEffect, useRef } from "react";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+apiFetch("/api/products");
 
 export function useWelcomeDiscount(user) {
   const [showBanner, setShowBanner] = useState(false);
@@ -16,22 +16,31 @@ export function useWelcomeDiscount(user) {
 
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/login`, {
-          method: "POST",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({ userId: user.uid }),
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.showBanner && !data.discountUsed) {
+        const data = await apiFetch(
+          "/api/user/login",
+          {
+            method: "POST",
+            credentials: "include",
+            body: JSON.stringify({
+              userId: user.uid,
+            }),
+          }
+        );
+        if (
+          data.showBanner &&
+          !data.discountUsed
+        ) {
           setShowBanner(true);
           setDiscountEligible(true);
-          setDiscountPercent(data.discountPercent ?? 10);
+          setDiscountPercent(
+            data.discountPercent ?? 10
+          );
         }
       } catch (err) {
-        console.error("useWelcomeDiscount error:", err);
+        console.error(
+          "useWelcomeDiscount error:",
+          err
+        );
       }
     })();
   }, [user]);
@@ -40,10 +49,9 @@ export function useWelcomeDiscount(user) {
     setShowBanner(false);
     if (!user) return;
     try {
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/user/dismiss-banner`, {
+
+      await apiFetch(`/api/user/dismiss-banner`, {
         method: "POST",
-        headers,
         credentials: "include",
         body: JSON.stringify({ userId: user.uid }),
       });
