@@ -7,6 +7,10 @@ import { fmt } from "../utils/formatters";
 import { useGithubStats } from "../utils/useGithubStats";
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+
+// ── Static data ────────────────────────────────────────────────────────────
+// Real repo stats from GitHub API
+
 const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
 const CATEGORIES = [
@@ -101,6 +105,12 @@ export default function LandingPage() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [backendError, setBackendError] = useState(false);
+  const [stats, setStats] = useState([
+  { value: "0", label: "GitHub Stars" },
+  { value: "0", label: "Forks" },
+  { value: "0", label: "Contributors" },
+  { value: "0", label: "Commits" },
+]);
 
   const { stats: ghStats, loading: ghLoading } = useGithubStats();
   const STATS = [
@@ -144,6 +154,56 @@ export default function LandingPage() {
       }
     })();
   }, []);
+  useEffect(() => {
+  const fetchGitHubStats = async () => {
+    try {
+      // Repository stats
+      const repoResponse = await fetch(
+        "https://api.github.com/repos/parthnarkar/FitMart"
+      );
+      const repoData = await repoResponse.json();
+
+      // Contributors
+      const contributorsResponse = await fetch(
+        "https://api.github.com/repos/parthnarkar/FitMart/contributors"
+      );
+      const contributorsData = await contributorsResponse.json();
+
+      // Commits
+      const commitsResponse = await fetch(
+  "https://api.github.com/repos/parthnarkar/FitMart/commits"
+);
+
+const commitsData = await commitsResponse.json();
+
+const totalCommits = commitsData.length;
+
+      // Update stats
+      setStats([
+        {
+          value: repoData.stargazers_count.toString(),
+          label: "GitHub Stars",
+        },
+        {
+          value: repoData.forks_count.toString(),
+          label: "Forks",
+        },
+        {
+          value: contributorsData.length.toString(),
+          label: "Contributors",
+        },
+        {
+          value: totalCommits.toString(),
+          label: "Commits",
+        },
+      ]);
+    } catch (error) {
+      console.error("Error fetching GitHub stats:", error);
+    }
+  };
+
+  fetchGitHubStats();
+}, []);
 
   const navOpaque = scrollY > 60;
 
@@ -276,13 +336,13 @@ export default function LandingPage() {
         <div className="border-t border-stone-200 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8
                           grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            {STATS.map((s, i) => (
+            {stats.map((stat , i) => (
               <div key={i} className="stat-card text-center md:text-left">
                 <div className="font-['DM_Serif_Display'] text-2xl sm:text-3xl text-stone-900 leading-none">
-                  {s.value}
+                  {stat.value}
                 </div>
                 <div className="text-xs text-stone-500 mt-1.5 tracking-wide uppercase leading-tight">
-                  {s.label}
+                  {stat.label}
                 </div>
               </div>
             ))}
