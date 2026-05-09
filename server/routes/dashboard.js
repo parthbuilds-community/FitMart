@@ -4,6 +4,7 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const admin = require('../firebaseAdmin');
+const { LOW_STOCK_THRESHOLD } = require("../config/inventory");
 
 // ── Helper: resolve Firebase UID → { displayName, email } ─────────────────
 // Returns "—" gracefully if user is deleted or UID is invalid
@@ -61,10 +62,12 @@ router.get('/', async (req, res) => {
     const totalCustomers = uniqueCustomers.length;
 
     // ── 3. KPI: Products Low on Stock ─────────────────────────────────────
-    const LOW_STOCK_THRESHOLD = 10;
-    const lowStockCount = await Product.countDocuments({
-      stock: { $ne: null, $lt: LOW_STOCK_THRESHOLD },
-    });
+
+    const products = await Product.find({ stock: { $ne: null } });
+
+    const lowStockCount = products.filter(
+      (p) => p.stock - (p.reserved || 0) < LOW_STOCK_THRESHOLD,
+    ).length;
 
     // ── 4. Chart: Revenue Over Time ───────────────────────────────────────
     const revenueGroupFormat =

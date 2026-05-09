@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const { LOW_STOCK_THRESHOLD } = require("../config/inventory");
 
 /**
  * @route   GET /api/products
@@ -18,11 +19,11 @@ router.get('/', async (req, res) => {
 
 /**
  * @route   GET /api/products/low-stock
- * @desc    Returns all products where available stock (stock - reserved) is below threshold of 5
+ * @desc    Returns all products where available stock is below configured threshold
  * @access  Public
  */
 // GET /api/products/low-stock - get products with low stock
-const LOW_STOCK_THRESHOLD = 5;
+
 
 router.get('/low-stock', async (req, res) => {
   try {

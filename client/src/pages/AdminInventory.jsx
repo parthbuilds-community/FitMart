@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
+import { LOW_STOCK_THRESHOLD } from "../constants/inventory";
 
-const LOW_STOCK_THRESHOLD = 5;
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const statusConfig = (p) => {
