@@ -3,11 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+import { apiClient } from "../lib/apiClient";
 function Toast({ message, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3500);
@@ -128,21 +126,21 @@ export default function Profile() {
       setPhotoURL(user.photoURL);
       setLoading(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/profile/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load profile");
-        const data = await res.json();
-        setProfile({
-          name: data.name || user.displayName || "",
-          phone: data.phone || "",
-          addresses: data.addresses || [],
-          defaultAddressId: data.defaultAddressId,
-        });
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+  const data = await apiClient.get(`/api/user/profile/${user.uid}`, {
+    auth: true,
+  });
+
+  setProfile({
+    name: data.name || user.displayName || "",
+    phone: data.phone || "",
+    addresses: data.addresses || [],
+    defaultAddressId: data.defaultAddressId,
+  });
+} catch (err) {
+  setError(err.message);
+} finally {
+  setLoading(false);
+}
     });
     return () => unsub();
   }, [navigate]);
@@ -153,27 +151,24 @@ export default function Profile() {
     setError(null);
     setSaving(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/profile/${user.uid}`, {
-        method: "PUT",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({
-          name: profile.name,
-          phone: profile.phone,
-          addresses: profile.addresses,
-          defaultAddressId: profile.defaultAddressId,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to save profile");
-      const data = await res.json();
-      setProfile((prev) => ({ ...prev, ...data }));
-      setToast("Profile updated successfully");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+  const data = await apiClient.put(
+    `/api/user/profile/${user.uid}`,
+    {
+      name: profile.name,
+      phone: profile.phone,
+      addresses: profile.addresses,
+      defaultAddressId: profile.defaultAddressId,
+    },
+    { auth: true }
+  );
+
+  setProfile((prev) => ({ ...prev, ...data }));
+  setToast("Profile updated successfully");
+} catch (err) {
+  setError(err.message);
+} finally {
+  setSaving(false);
+}
   };
 
   const addAddress = () => {

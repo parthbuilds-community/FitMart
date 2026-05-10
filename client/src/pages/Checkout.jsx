@@ -4,11 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+import { apiClient } from "../lib/apiClient";
 export default function Checkout() {
   const navigate = useNavigate();
 
@@ -17,7 +16,7 @@ export default function Checkout() {
   const [error, setError] = useState(null);
   const [discountEligible, setDiscountEligible] = useState(false);
   const [discountPercent, setDiscountPercent] = useState(10);
-  const [profile, setProfile] = useState(null);
+  const [, setProfile] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -29,47 +28,51 @@ export default function Checkout() {
       const userId = user.uid;
 
       try {
-        const headers = await getAuthHeaders();
+  const [cart, products, discountData, profileData] = await Promise.all([
+    apiClient.get(`/api/cart/${userId}`, { auth: true }),
+    apiClient.get("/api/products"),
+    apiClient.get(`/api/user/discount-status/${userId}`),
+    apiClient.get(`/api/user/profile/${userId}`, { auth: true }),
+  ]);
 
-        const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
-          fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
-          fetch(`${API}/api/products`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
-          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
-        ]);
+  setDiscountEligible(discountData?.eligible);
+  setDiscountPercent(discountData?.discountPercent ?? 10);
 
-        if (!cartRes.ok) throw new Error("Failed to fetch cart");
-        if (!prodRes.ok) throw new Error("Failed to fetch products");
+  setProfile(profileData);
 
-        const cart = await cartRes.json();
-        const products = await prodRes.json();
+  const def = profileData?.defaultAddressId
+    ? (profileData.addresses || []).find(
+        (a) => a.id === profileData.defaultAddressId
+      )
+    : null;
 
-        if (discountRes.ok) {
-          const d = await discountRes.json();
-          setDiscountEligible(d.eligible);
-          setDiscountPercent(d.discountPercent ?? 10);
-        }
+  setSelectedAddress(
+    def || (profileData?.addresses && profileData.addresses[0]) || null
+  );
 
-        if (profileRes && profileRes.ok) {
-          const p = await profileRes.json();
-          setProfile(p);
-          const def = p?.defaultAddressId ? (p.addresses || []).find(a => a.id === p.defaultAddressId) : null;
-          setSelectedAddress(def || (p?.addresses && p.addresses[0]) || null);
-        }
+  if (!cart.items?.length) {
+    setItems([]);
+    setLoading(false);
+    return;
+  }
 
-        if (!cart.items?.length) { setItems([]); setLoading(false); return; }
+  const productMap = Object.fromEntries(
+    products.map((p) => [p.productId, p])
+  );
 
-        const productMap = Object.fromEntries(products.map(p => [p.productId, p]));
-        const enriched = cart.items
-          .map(item => ({ ...item, product: productMap[item.productId] }))
-          .filter(item => item.product);
+  const enriched = cart.items
+    .map((item) => ({
+      ...item,
+      product: productMap[item.productId],
+    }))
+    .filter((item) => item.product);
 
-        setItems(enriched);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+  setItems(enriched);
+} catch (err) {
+  setError(err.message);
+} finally {
+  setLoading(false);
+}
     });
 
     return () => unsubscribe();

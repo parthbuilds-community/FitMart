@@ -1,11 +1,9 @@
 // src/pages/AdminInventory.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiClient } from "../lib/apiClient";
 
 const LOW_STOCK_THRESHOLD = 5;
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const statusConfig = (p) => {
   const isUnavailable = p.stock === null;
@@ -113,7 +111,6 @@ const Modal = ({ open, onClose, children }) => {
 };
 
 export default function AdminInventory() {
-  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -122,18 +119,16 @@ export default function AdminInventory() {
   const [editing, setEditing] = useState(null); // product being edited
   const [saving, setSaving] = useState(false);
   const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products`, { headers });
-      const data = await res.json();
-      setProducts(data);
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to load inventory');
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const data = await apiClient.get("/api/products", { auth: true });
+    setProducts(data);
+  } catch {
+    setError("Failed to load inventory");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -201,24 +196,16 @@ export default function AdminInventory() {
         }
       }
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products/${id}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || 'Save failed');
-      }
+      await apiClient.put(`/api/products/${id}`, payload, { auth: true });
       // refresh full list from server to ensure consistency
       await fetchProducts();
       setSaving(false);
       setEditing(null);
-    } catch (err) {
-      setSaving(false);
-      setError(err.message || 'Failed to save product');
-    }
+      } catch (err) {
+    setError(err.message || "Failed to save product");
+  } finally {
+    setSaving(false);
+  }
   };
 
   return (
