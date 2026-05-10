@@ -246,6 +246,7 @@ FitMart/
 ├── server/                        # Node.js + Express Backend
 │   ├── middleware/
 │   │   ├── logger.js              # Colored request/response logger
+│   │   ├── verifyAdmin.js         # Admin UID authorization middleware
 │   │   └── verifyFirebaseToken.js # Firebase Bearer token middleware
 │   ├── models/
 │   │   ├── Bug.js                 # Bug report schema
@@ -595,9 +596,9 @@ cd server && npm start
 |--------|----------|------|-------------|
 | `GET` | `/api/products` | — | List all products (sorted by `productId`) |
 | `GET` | `/api/products/:id` | — | Get product by `productId` |
-| `POST` | `/api/products` | — | Create a new product |
-| `PUT` | `/api/products/:id` | — | Update product by `productId` |
-| `DELETE` | `/api/products/:id` | — | Delete product by `productId` |
+| `POST` | `/api/products` | ✅ Admin | Create a new product |
+| `PUT` | `/api/products/:id` | ✅ Admin | Update product by `productId` |
+| `DELETE` | `/api/products/:id` | ✅ Admin | Delete product by `productId` |
 
 ### 🛒 Cart
 
@@ -674,10 +675,10 @@ Supported `category` values: `chest`, `back`, `shoulders`, `cardio`, `abs`, `arm
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/api/dashboard?range=today\|week\|month` | — | Dashboard KPIs, charts, recent orders |
-| `GET` | `/api/reports/sales?range=daily\|weekly\|monthly` | — | Sales summary + revenue by date + product performance |
-| `GET` | `/api/customers` | — | All customers with order counts, spend, and segment |
-| `GET` | `/api/customers/:userId` | — | Single customer profile + order history |
+| `GET` | `/api/dashboard?range=today\|week\|month` | ✅ Admin | Dashboard KPIs, charts, recent orders |
+| `GET` | `/api/reports/sales?range=daily\|weekly\|monthly` | ✅ Admin | Sales summary + revenue by date + product performance |
+| `GET` | `/api/customers` | ✅ Admin | All customers with order counts, spend, and segment |
+| `GET` | `/api/customers/:userId` | ✅ Admin | Single customer profile + order history |
 
 ---
 

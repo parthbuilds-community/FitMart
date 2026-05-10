@@ -128,6 +128,11 @@ export default function AdminCustomers() {
         const json = await apiFetch(
           "/api/customers"
         );
+    (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/customers`, { headers });
+        const json = await res.json();
         if (!json.success) {
           throw new Error(
             json.error ||
@@ -149,6 +154,12 @@ export default function AdminCustomers() {
       }
     };
     fetchCustomers();
+      } catch (err) {
+        console.error("Customers fetch error:", err);
+        setError(err.message || "Failed to load customers");
+        setLoading(false);
+      }
+    })();
   }, []);
   // Send reminder email for a customer
   const handleSendReminder = async (e, customerId) => {

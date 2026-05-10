@@ -162,8 +162,20 @@ export default function AdminCustomerDetail() {
           err.message ||
           "Customer not found"
         );
+    (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/customers/${userId}`, { headers });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || "Failed to load customer");
+        setData(json.data);
         setLoading(false);
-      });
+      } catch (err) {
+        console.error("Customer detail fetch error:", err);
+        setError(err.message || "Customer not found");
+        setLoading(false);
+      }
+    })();
   }, [userId]);
 
   // Fetch product details for all products referenced in orders (watch `data` to avoid TDZ)
@@ -203,6 +215,19 @@ export default function AdminCustomerDetail() {
             `<div style="margin-top:4px">${[addr.city, addr.state, addr.zip].filter(Boolean).join(", ")}</div>` +
             `${addr.country ? `<div style="margin-top:4px">${addr.country}</div>` : ""}` +
             `${addr.phone ? `<div style="margin-top:4px">${addr.phone}</div>` : ""}`;
+        const root = API_BASE.replace(/\/api$/, "");
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${root}/api/user/profile/${userId}`, { headers });
+        if (res.ok) {
+          const p = await res.json();
+          const addr = (p?.addresses || []).find(a => a.id === p?.defaultAddressId) || (p?.addresses || [])[0];
+          if (addr) {
+            profileAddrHtml = `<div style="margin-top:6px">${addr.label || ''}</div>` +
+              `<div style="margin-top:4px">${addr.line1 || ''}${addr.line2 ? ', ' + addr.line2 : ''}</div>` +
+              `<div style="margin-top:4px">${[addr.city, addr.state, addr.zip].filter(Boolean).join(', ')}</div>` +
+              `${addr.country ? `<div style="margin-top:4px">${addr.country}</div>` : ''}` +
+              `${addr.phone ? `<div style="margin-top:4px">${addr.phone}</div>` : ''}`;
+          }
         }
       } catch (e) {
         // ignore profile fetch errors — invoice will still work without address

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { apiFetch } from "../lib/apiClient";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -124,6 +125,9 @@ export default function AdminInventory() {
     setLoading(true);
     try {
       const data = await apiFetch("/api/products");
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE}/products`, { headers });
+      const data = await res.json();
       setProducts(data);
       setLoading(false);
     } catch (err) {
@@ -205,6 +209,16 @@ export default function AdminInventory() {
           body: JSON.stringify(payload),
         }
       );
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE}/products/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || 'Save failed');
+      }
       // refresh full list from server to ensure consistency
       await fetchProducts();
       setSaving(false);

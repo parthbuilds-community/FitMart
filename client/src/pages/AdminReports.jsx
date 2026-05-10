@@ -4,6 +4,9 @@ import { fmt } from "../utils/formatters";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { apiFetch } from "../lib/apiClient";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
+
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const RANGE_LABELS = {
   daily: "Last 24 Hours",
@@ -102,6 +105,20 @@ export default function AdminReports() {
         }
       };
     fetchReportData();
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/reports/sales?range=${range}`, { headers });
+        const json = await res.json();
+        setData(json);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load report data");
+        setLoading(false);
+      }
+    })();
   }, [range]);
 
   const { summary, revenueByDate, productPerformance } = data || {};

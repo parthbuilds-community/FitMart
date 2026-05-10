@@ -5,10 +5,10 @@ const streamifier = require('streamifier');
 const cloudinary = require('../lib/cloudinary');
 const Bug = require('../models/Bug');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const verifyAdmin = require('../middleware/verifyAdmin');
 const admin = require('../firebaseAdmin');
 
-const ADMIN_UID = process.env.ADMIN_UID || process.env.VITE_ADMIN_UID || '';
-const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
+
 
 // Use memory storage so serverless environments (Vercel) work correctly
 const storage = multer.memoryStorage();
@@ -92,7 +92,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 });
 
 // ── GET /api/bugs — admin only ────────────────────────────────────────────
-router.get('/', verifyFirebaseToken, async (_req, res) => {
+router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
   try {
     const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
     res.json({ ok: true, bugs });
@@ -103,10 +103,8 @@ router.get('/', verifyFirebaseToken, async (_req, res) => {
 });
 
 // ── PATCH /api/bugs/:id — admin only ─────────────────────────────────────
-router.patch('/:id', verifyFirebaseToken, async (req, res) => {
+router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-    if (!req.user || (ADMIN_UID && req.user.uid !== ADMIN_UID && req.user.uid !== SUPER_ADMIN_UID))
-      return res.status(403).json({ error: 'Forbidden' });
 
     const { status } = req.body;
     if (!['open', 'in-progress', 'resolved'].includes(status))

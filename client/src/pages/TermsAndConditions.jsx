@@ -1,20 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { signOut } from "firebase/auth";
-import { useState } from "react";
 
 const TermsAndConditions = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);
-    const unsub = auth.onAuthStateChanged(u => setUser(u));
-    return () => unsub();
   }, []);
 
   const handleSignOut = async () => {

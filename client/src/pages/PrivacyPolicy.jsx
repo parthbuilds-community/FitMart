@@ -41,9 +41,9 @@ const PrivacyPolicy = () => {
         .delay-3 { transition-delay: 300ms; }
       `}</style>
 
-      <Navbar 
-        variant="home" 
-        menuOpen={menuOpen} 
+      <Navbar
+        variant="home"
+        menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         onSignOut={handleSignOut}
       />
@@ -72,7 +72,7 @@ const PrivacyPolicy = () => {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-5 lg:px-10 py-12 sm:py-16 md:py-20">
-        
+
         {/* Quick Navigation */}
         <div className="mb-12 sm:mb-16 fade-up delay-2">
           <div className="bg-white border border-stone-200 rounded-xl p-6 sm:p-8">
@@ -106,7 +106,7 @@ const PrivacyPolicy = () => {
               <p className="text-sm sm:text-base text-stone-600 leading-relaxed mb-5">
                 FitMart collects information to provide better services to our customers through various methods:
               </p>
-              
+
               <div className="space-y-6">
                 <div className="bg-stone-50 rounded-lg p-4 sm:p-5">
                   <h3 className="font-semibold text-stone-800 mb-3 text-sm sm:text-base">Information You Provide Directly</h3>
@@ -293,8 +293,8 @@ const PrivacyPolicy = () => {
                 <div>
                   <p className="text-xs text-stone-400 uppercase tracking-wider font-semibold mb-2">Mailing Address</p>
                   <p className="text-base text-stone-900 font-medium">
-                    Privacy Compliance Officer<br/>
-                    123 Fitness Avenue<br/>
+                    Privacy Compliance Officer<br />
+                    123 Fitness Avenue<br />
                     Mumbai, India
                   </p>
                 </div>

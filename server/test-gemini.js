@@ -16,8 +16,9 @@ async function testGeminiAPI() {
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-  // Try with gemini-1.5-flash first (more generous free tier)
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  // Gemini Config
+  const modelName = process.env.GEMINI_MODEL_NAME
+  const model = genAI.getGenerativeModel({ model: modelName });
 
   try {
     console.log("Sending test request...");
