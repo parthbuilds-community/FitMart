@@ -4,40 +4,34 @@ const Order = require('../models/Order');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 
+const RANGE_DAYS = {
+  daily: 1,
+  weekly: 7,
+  monthly: 30,
+};
+
 /**
  * @route   GET /api/reports/sales
- * @desc    Returns sales report for a given time range (query: range=daily|weekly|monthly);
- *          includes a summary of total revenue, order count and average order value,
- *          revenue breakdown by date, and product performance ranked by revenue
- * @access  Public
+ * @desc    Returns sales report for a given time range (query: range=daily|weekly|monthly)
+ * @access  Admin
  */
 router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-    const { range = 'weekly' } = req.query;
+    const requestedRange = req.query.range || 'weekly';
+    const range = RANGE_DAYS[requestedRange] ? requestedRange : 'weekly';
 
-    // Step 1: Calculate the start date based on range
     const now = new Date();
-    const startDate = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - RANGE_DAYS[range]);
 
-    if (range === 'daily') {
-      startDate.setDate(now.getDate() - 1);       // last 24 hours
-    } else if (range === 'monthly') {
-      startDate.setDate(now.getDate() - 30);      // last 30 days
-    } else {
-      startDate.setDate(now.getDate() - 7);       // last 7 days (default: weekly)
-    }
+    const paidOrdersInRange = {
+      status: 'paid',
+      createdAt: { $gte: startDate, $lte: now },
+    };
 
-    // Step 2: Revenue by date aggregation pipeline
     const revenueByDate = await Order.aggregate([
+      { $match: paidOrdersInRange },
       {
-        // Stage 1: only paid orders within the date range
-        $match: {
-          status: 'paid',
-          createdAt: { $gte: startDate, $lte: now },
-        },
-      },
-      {
-        // Stage 2: group by date (year-month-day), sum total and count orders
         $group: {
           _id: {
             $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
@@ -46,12 +40,8 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
           orderCount: { $sum: 1 },
         },
       },
+      { $sort: { _id: 1 } },
       {
-        // Stage 3: sort by date ascending
-        $sort: { _id: 1 },
-      },
-      {
-        // Stage 4: rename _id to date for cleaner response
         $project: {
           _id: 0,
           date: '$_id',
@@ -61,34 +51,37 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     ]);
 
-    // Step 3: Product performance aggregation pipeline
     const productPerformance = await Order.aggregate([
+      { $match: paidOrdersInRange },
+      { $unwind: '$items' },
       {
-        // Stage 1: only paid orders within the date range
-        $match: {
-          status: 'paid',
-          createdAt: { $gte: startDate, $lte: now },
+        $lookup: {
+          from: 'products',
+          localField: 'items.productId',
+          foreignField: 'productId',
+          as: 'productInfo',
         },
       },
       {
-        // Stage 2: unwind items array — one document per item
-        // e.g. an order with 3 items becomes 3 separate documents
-        $unwind: '$items',
+        $addFields: {
+          itemPrice: {
+            $ifNull: ['$items.price', { $arrayElemAt: ['$productInfo.price', 0] }],
+          },
+        },
       },
       {
-        // Stage 3: group by productId, sum quantity sold and revenue
         $group: {
           _id: '$items.productId',
           totalQuantitySold: { $sum: '$items.quantity' },
-          totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          totalRevenue: {
+            $sum: {
+              $multiply: [{ $ifNull: ['$itemPrice', 0] }, '$items.quantity'],
+            },
+          },
         },
       },
+      { $sort: { totalRevenue: -1 } },
       {
-        // Stage 4: sort by revenue descending (highest first)
-        $sort: { totalRevenue: -1 },
-      },
-      {
-        // Stage 5: rename _id to productId for cleaner response
         $project: {
           _id: 0,
           productId: '$_id',
@@ -98,7 +91,6 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     ]);
 
-    // Step 4: Calculate summary totals
     const totalRevenue = revenueByDate.reduce((sum, d) => sum + d.totalRevenue, 0);
     const totalOrders = revenueByDate.reduce((sum, d) => sum + d.orderCount, 0);
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
