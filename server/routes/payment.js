@@ -72,7 +72,7 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
  */
 router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, discountApplied = false } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
       return res.status(400).json({ error: "Missing required payment fields" });
@@ -93,10 +93,10 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
       return res.json({ success: true, message: "Order already created" });
     }
 
-    // STEP 2: Create order using existing route logic
+    // STEP 2: Create order using existing route logic, passing discountApplied
     const orderResponse = await axios.post(
       "http://localhost:5000/api/orders",
-      { userId },
+      { userId, discountApplied },
       { headers: { Authorization: req.headers.authorization } }
     );
 
@@ -155,13 +155,14 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  */
 router.post("/demo-success", async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, discountApplied = false } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
     // Create an order from the user's cart (snapshot prices, deduct stock, finalize reservation)
     const Order = require("../models/Order");
+    const UserProfile = require("../models/UserProfile");
 
     const cart = await Cart.findOne({ userId });
     if (!cart || !cart.items.length) {
@@ -186,7 +187,26 @@ router.post("/demo-success", async (req, res) => {
       total += p.price * it.quantity;
     }
 
-    const order = await Order.create({ userId, items: populated, total, paymentId: fakePaymentId, status: "paid" });
+    // ATOMIC: Check and mark discount as used BEFORE creating order
+    let actualDiscountApplied = false;
+    if (discountApplied) {
+      const profile = await UserProfile.findOneAndUpdate(
+        { userId, discountUsed: false },   // only update if not already used
+        { $set: { discountUsed: true } },
+        { new: true }
+      );
+
+      if (profile) {
+        actualDiscountApplied = true;
+      } else {
+        // Discount already used - reject the order
+        return res.status(400).json({ 
+          error: 'Discount already applied to another order. Cannot apply twice.' 
+        });
+      }
+    }
+
+    const order = await Order.create({ userId, items: populated, total, paymentId: fakePaymentId, status: "paid", discountApplied: actualDiscountApplied });
 
     // Deduct stock and reserved for each item safely (avoid negative reserved)
     for (const it of cart.items) {

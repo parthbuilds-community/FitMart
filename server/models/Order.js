@@ -28,6 +28,12 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true // allows null values safely
+    },
+
+    // Track if welcome discount was applied to this order
+    discountApplied: {
+      type: Boolean,
+      default: false
     }
 
   },

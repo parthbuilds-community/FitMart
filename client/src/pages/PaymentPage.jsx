@@ -63,20 +63,6 @@ export default function PaymentPage() {
       console.error('clear-cart failed:', err);
     }
 
-    if (discountApplied) {
-      try {
-        const headers = await getAuthHeaders();
-        await fetch(`${API}/api/user/use-discount`, {
-          method: "POST",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({ userId }),
-        });
-      } catch (err) {
-        console.error("use-discount error:", err);
-      }
-    }
-
     navigate("/payment-confirmation", {
       state: { items, total, subtotal, discountAmt, discountPercent, discountApplied, paymentId, address },
     });
@@ -92,9 +78,12 @@ export default function PaymentPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ userId: user.uid }),
+        body: JSON.stringify({ userId: user.uid, discountApplied }),
       });
-      if (!res.ok) throw new Error("Demo order failed");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Demo order failed");
+      }
       const data = await res.json();
       await finishOrder(user.uid, data.paymentId);
     } catch (err) {
@@ -141,9 +130,12 @@ export default function PaymentPage() {
               method: "POST",
               headers,
               credentials: "include",
-              body: JSON.stringify({ ...response, userId }),
+              body: JSON.stringify({ ...response, userId, discountApplied }),
             });
-            if (!verifyRes.ok) throw new Error("Payment verification failed");
+            if (!verifyRes.ok) {
+              const errorData = await verifyRes.json().catch(() => ({}));
+              throw new Error(errorData.error || "Payment verification failed");
+            }
             await finishOrder(userId, response.razorpay_payment_id);
           } catch (err) {
             setError(err.message);

@@ -3,17 +3,19 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const UserProfile = require('../models/UserProfile');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 
 /**
  * @route   POST /api/orders
  * @desc    Creates a new order from explicit items or the user's cart; snapshots product
  *          prices at time of purchase, deducts stock, and clears the user's cart;
- *          body: { userId, items?: [{ productId, quantity }] }
+ *          Atomically checks and applies discount if eligible.
+ *          body: { userId, items?: [{ productId, quantity }], discountApplied?: boolean }
  * @access  Private
  */
 router.post('/', verifyFirebaseToken, async (req, res) => {
-  const { userId, items } = req.body;
+  const { userId, items, discountApplied = false } = req.body;
 
   if (!userId) return res.status(400).json({ error: 'userId required' });
 
@@ -49,8 +51,27 @@ router.post('/', verifyFirebaseToken, async (req, res) => {
       total += p.price * it.quantity;
     }
 
+    // ATOMIC: Check and mark discount as used BEFORE creating order
+    let actualDiscountApplied = false;
+    if (discountApplied) {
+      const profile = await UserProfile.findOneAndUpdate(
+        { userId, discountUsed: false },   // only update if not already used
+        { $set: { discountUsed: true } },
+        { new: true }
+      );
+
+      if (profile) {
+        actualDiscountApplied = true;
+      } else {
+        // Discount already used - reject the order
+        return res.status(400).json({ 
+          error: 'Discount already applied to another order. Cannot apply twice.' 
+        });
+      }
+    }
+
     // After order is created, deduct stock and reserved for each item
-    const order = await Order.create({ userId, items: populated, total });
+    const order = await Order.create({ userId, items: populated, total, discountApplied: actualDiscountApplied });
     for (const it of orderItems) {
       const p = await Product.findOne({ productId: Number(it.productId) });
       if (p && p.stock !== null) {
