@@ -368,6 +368,7 @@ React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin 
 
 ## 🚀 Quick Start
 
+
 ### Prerequisites
 
 Make sure you have the following installed:
@@ -382,6 +383,29 @@ Make sure you have the following installed:
 - An SMTP provider (e.g., Gmail) for transactional emails *(optional)*
 
 ---
+### Optional: Local MongoDB with Docker
+
+If you don't want to create a MongoDB Atlas account for local development,
+you can run MongoDB locally using Docker.
+
+1. Make sure Docker Desktop is installed and running.
+
+2. Start MongoDB:
+
+```bash
+docker compose up -d
+```
+
+3. Use this connection string in `server/.env`:
+
+```env
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB=FitMart
+```
+
+MongoDB will now run locally on port `27017`.
+
+> This setup is completely optional and does not affect the existing Atlas or Vercel production workflow.
 
 ### 1. Clone the Repository
 
