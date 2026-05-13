@@ -14,6 +14,7 @@ const userProfileSchema = new mongoose.Schema(
     // Profile fields
     name: { type: String },
     phone: { type: String },
+    photoURL: { type: String },
     // Addresses array for checkout/shipping
     addresses: [
       {
