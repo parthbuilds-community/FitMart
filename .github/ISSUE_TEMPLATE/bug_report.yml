@@ -1,0 +1,58 @@
+name: Bug report
+description: Report something that is broken or not working as expected.
+title: "fix: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve FitMart! Please search existing issues before opening a new one.
+  - type: input
+    id: affected-area
+    attributes:
+      label: Affected area
+      description: Which part of FitMart is impacted?
+      placeholder: "Example: cart, checkout, admin dashboard, workout tracker"
+    validations:
+      required: true
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current behavior
+      description: What happened?
+      placeholder: "Describe the bug clearly. Include error messages if available."
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps so maintainers can reproduce the issue.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Share the environment where you saw the problem.
+      placeholder: "OS, browser/version, Node.js version, client/server branch"
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or logs
+      description: Add screenshots, console output, or server logs if they help explain the bug. Do not include secrets.
+    validations:
+      required: false

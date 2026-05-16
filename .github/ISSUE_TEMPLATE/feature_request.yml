@@ -1,0 +1,54 @@
+name: Feature request
+description: Suggest a new capability or improvement for FitMart.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea! For large changes, please wait for maintainer feedback before starting implementation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What user problem does this solve, or what workflow does it improve?
+      placeholder: "As a user, I want ... so that ..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: Describe the change you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Share any other approaches you considered, if any.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the project would this affect most?
+      options:
+        - Client / React UI
+        - Server / API
+        - Database models or seed data
+        - Authentication
+        - Payments
+        - Admin panel
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add mockups, screenshots, examples, or links that clarify the request.
+    validations:
+      required: false
