@@ -12,6 +12,7 @@ This guide will walk you through **everything** you need to know to contribute t
 
 - [Code of Conduct](#-code-of-conduct)
 - [How Can I Contribute?](#-how-can-i-contribute)
+- [Opening a Helpful Issue](#-opening-a-helpful-issue)
 - [Getting Started (Step-by-Step)](#-getting-started-step-by-step)
 - [Picking an Issue](#-picking-an-issue)
 - [Branching Strategy](#-branching-strategy)
@@ -51,6 +52,20 @@ You don't need to write code to contribute! Here are all the ways you can help:
 | 🧪 **Tests** | Add unit or integration tests |
 | 🔧 **Refactor** | Clean up code without changing behavior |
 | 💬 **Discussion** | Comment on issues, review PRs, share ideas |
+
+---
+
+## 🧾 Opening a Helpful Issue
+
+If you want to contribute but are not ready to open a pull request yet, start with an issue. FitMart includes guided GitHub issue forms so maintainers get the details they need quickly:
+
+| Issue type | Use it when | Helpful details to include |
+|------------|-------------|----------------------------|
+| Bug report | Something is broken or behaves unexpectedly | Steps to reproduce, expected behavior, screenshots/logs, browser and Node.js versions |
+| Feature request | You want to propose a new capability or improvement | User problem, proposed solution, affected area, alternatives considered |
+| Documentation improvement | Setup docs, guides, examples, or wording can be clearer | File/section name, what is unclear, suggested wording if you have it |
+
+Before opening a new issue, search existing issues to avoid duplicates. For security vulnerabilities, follow [`docs/SECURITY.md`](SECURITY.md) instead of opening a public issue.
 
 ---
 
