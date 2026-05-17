@@ -1,7 +1,5 @@
 // server/middleware/logger.js
 
-// server/middleware/logger.js
-
 // Function to get base route only
 const getBaseRoute = (url) => {
   // Match patterns like /api/cart, /api/products, /api/orders
@@ -20,6 +18,34 @@ const getBaseRoute = (url) => {
 // Simple logger with colors (without timestamps)
 const logger = (req, res, next) => {
   const start = Date.now();
+
+  const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'apikey', 'authorization'];
+
+  const redactDeep = (obj) => {
+    if (!obj || typeof obj !== 'object') return obj;
+
+    if (Array.isArray(obj)) {
+      return obj.map(redactDeep);
+    }
+
+    const result = {};
+    for (const key in obj) {
+      if (SENSITIVE_FIELDS.includes(key.toLowerCase())) {
+        result[key] = '[REDACTED]';
+      } else {
+        result[key] = redactDeep(obj[key]);
+      }
+    }
+    return result;
+  };
+
+  const safeStringify = (obj) => {
+    try {
+      return JSON.stringify(obj);
+    } catch (err) {
+      return null;
+    }
+  };
 
   res.on('finish', () => {
     const duration = Date.now() - start;
@@ -48,28 +74,27 @@ const logger = (req, res, next) => {
       `${simplifiedUrl} (${duration}ms)`
     );
 
-    if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
-      try {
-        const sensitiveKeys = ['password', 'token', 'secret', 'apiKey'];
-        const safeBody = { ...req.body };
+    if (req.method !== 'GET' && req.body && Object.keys(req.body).length > 0) {
+      const sanitizedBody = redactDeep(req.body);
+      const bodyStr = safeStringify(sanitizedBody);
 
-        sensitiveKeys.forEach((key) => {
-          if (safeBody[key]) {
-            safeBody[key] = '[REDACTED]';
-          }
-        });
+      if (!bodyStr) {
+        console.log(`[${timestamp}]    Body: [unserializable body]`);
+        return;
+      }
 
-        const bodyStr = JSON.stringify(safeBody);
-
-        if (bodyStr.length < 1000) {
-          console.log(`   Body: ${bodyStr}`);
-        } else {
-          console.log(`   Body: [too large to log]`);
-        }
-      } catch (err) {
-        console.log(`   Body: [error parsing body]`);
+      if (bodyStr.length < 1000) {
+        console.log(`[${timestamp}]    Body: ${bodyStr}`);
+      } else {
+        console.log(`[${timestamp}]    Body: [body too large to log]`);
       }
     }
+  });
+
+  next();
+};
+
+module.exports = logger;
   });
 
   next();
