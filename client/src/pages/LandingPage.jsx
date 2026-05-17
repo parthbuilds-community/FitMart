@@ -620,12 +620,12 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
   }, []);
 
   const isOpaque = navOpaque || scrollY > 60;
-  const textColor = isOpaque ? "text-stone-900" : "text-white";
-  const mutedColor = isOpaque ? "text-stone-500" : "text-white/70";
-  const borderColor = isOpaque ? "border-stone-200" : "border-white/20";
+  const textColor = "text-stone-900";
+  const mutedColor = isOpaque ? "text-stone-500" : "text-stone-600";
+  const borderColor = isOpaque ? "border-stone-200" : "border-stone-200/40";
   const bgClass = isOpaque
     ? "bg-white/95 backdrop-blur-sm border-b border-stone-200 shadow-sm"
-    : "bg-transparent";
+    : "bg-white/80 backdrop-blur-sm border-b border-stone-200/40";
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${bgClass}`}>
