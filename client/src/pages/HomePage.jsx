@@ -612,12 +612,26 @@ export default function HomePage() {
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => navigate("/privacy-policy")}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+            >
+              Privacy
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/terms")}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+            >
+              Terms
+            </button>
+            <a
+              href="mailto:support@fitmart.com"
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1 inline-flex items-center"
+            >
+              Support
+            </a>
           </div>
         </div>
       </footer>
