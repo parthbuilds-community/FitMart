@@ -1,4 +1,5 @@
 // server/services/orderService.js
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
@@ -6,7 +7,7 @@ const Product = require('../models/Product');
 /**
  * Creates an order from explicit items or the user's cart.
  * Snapshots product prices, checks stock, creates the order,
- * deducts stock, and clears the cart.
+ * deducts stock, and clears the cart inside a MongoDB transaction.
  *
  * @param {string} userId - The Firebase UID of the user
  * @param {Array} [items] - Optional array of { productId, quantity }. If omitted, uses the cart.
@@ -15,16 +16,17 @@ const Product = require('../models/Product');
 async function createOrder(userId, items = null) {
   let orderItems = items;
 
-  // If no items are explicitly provided, fetch them from the user's cart
   if (!orderItems || !orderItems.length) {
     const cart = await Cart.findOne({ userId });
     if (!cart || !cart.items.length) {
       throw new Error('Cart is empty');
     }
-    orderItems = cart.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
+    orderItems = cart.items.map((i) => ({
+      productId: i.productId,
+      quantity: i.quantity,
+    }));
   }
 
-  // Build order items with price snapshot
   const populated = [];
   let total = 0;
 
@@ -34,7 +36,6 @@ async function createOrder(userId, items = null) {
       throw new Error(`Product ${it.productId} not found`);
     }
 
-    // Oversell guard - skip check if stock is null (unlimited)
     if (p.stock !== null) {
       const available = p.stock - (p.reserved || 0);
       if (available < it.quantity) {
@@ -46,31 +47,44 @@ async function createOrder(userId, items = null) {
     total += p.price * it.quantity;
   }
 
-  // Create the order document
-  const order = await Order.create({ userId, items: populated, total });
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // Deduct stock and reserved amounts for each item
-  for (const it of orderItems) {
-    const p = await Product.findOne({ productId: Number(it.productId) });
-    if (p && p.stock !== null) {
-      // Safely calculate new reserved to avoid negative values
-      const currentReserved = Number(p.reserved || 0);
-      const newReserved = Math.max(0, currentReserved - it.quantity);
-      
-      await Product.findOneAndUpdate(
-        { productId: p.productId },
-        { 
-          $inc: { stock: -it.quantity },
-          $set: { reserved: newReserved }
-        }
+  try {
+    const [order] = await Order.create(
+      [{ userId, items: populated, total }],
+      { session }
+    );
+
+    for (const it of orderItems) {
+      const p = await Product.findOne({ productId: Number(it.productId) }).session(
+        session
       );
+      if (p && p.stock !== null) {
+        const currentReserved = Number(p.reserved || 0);
+        const newReserved = Math.max(0, currentReserved - it.quantity);
+
+        await Product.findOneAndUpdate(
+          { productId: p.productId },
+          {
+            $inc: { stock: -it.quantity },
+            $set: { reserved: newReserved },
+          },
+          { session }
+        );
+      }
     }
+
+    await Cart.findOneAndUpdate({ userId }, { items: [] }, { session });
+
+    await session.commitTransaction();
+    return order;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
   }
-
-  // Clear the user's cart (purchasing finalizes reservation)
-  await Cart.findOneAndUpdate({ userId }, { items: [] });
-
-  return order;
 }
 
 module.exports = { createOrder };
