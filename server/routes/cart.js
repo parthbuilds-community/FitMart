@@ -3,6 +3,7 @@ const router = express.Router();
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const validateCartItemRequest = require('../middleware/validateCartItemRequest');
 
 // Helper: adjust product reserved count
 async function adjustReserved(productId, delta) {
@@ -22,14 +23,17 @@ function checkOwnership(req, res) {
   return true;
 }
 
+function ensureOwnership(req, res, next) {
+  if (!checkOwnership(req, res)) return;
+  next();
+}
+
 /**
  * @route   GET /api/cart/:userId
  * @desc    Get or create a cart for the given user
  * @access  Private
  */
-router.get('/:userId', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.get('/:userId', verifyFirebaseToken, ensureOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     let cart = await Cart.findOne({ userId });
@@ -47,18 +51,12 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
  * @desc    Add an item to the user's cart and reserve stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.post('/:userId/add', verifyFirebaseToken, ensureOwnership, validateCartItemRequest, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
+    const { productId, quantity: qty } = req.validatedCartItem;
 
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
-
-    const product = await Product.findOne({ productId: Number(productId) });
+    const product = await Product.findOne({ productId });
     if (!product) return res.status(404).json({ error: 'Product not found' });
 
     const available = product.stock == null ? Infinity : (product.stock - (product.reserved || 0));
@@ -67,11 +65,11 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
     let cart = await Cart.findOne({ userId });
     if (!cart) cart = new Cart({ userId, items: [] });
 
-    const itemIdx = cart.items.findIndex(i => i.productId === Number(productId));
+    const itemIdx = cart.items.findIndex(i => i.productId === productId);
     if (itemIdx >= 0) {
       cart.items[itemIdx].quantity += qty;
     } else {
-      cart.items.push({ productId: Number(productId), quantity: qty });
+      cart.items.push({ productId, quantity: qty });
     }
 
     await adjustReserved(productId, qty);
@@ -89,21 +87,15 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
  * @desc    Remove an item (or reduce its quantity) from the user's cart and release reserved stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.post('/:userId/remove', verifyFirebaseToken, ensureOwnership, validateCartItemRequest, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
-
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
+    const { productId, quantity: qty } = req.validatedCartItem;
 
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
 
-    const itemIdx = cart.items.findIndex(i => i.productId === Number(productId));
+    const itemIdx = cart.items.findIndex(i => i.productId === productId);
     if (itemIdx === -1) return res.status(404).json({ error: 'Item not in cart' });
 
     const removeQty = Math.min(cart.items[itemIdx].quantity, qty);
@@ -125,9 +117,7 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
  * @desc    Clear all items from the user's cart and release all reserved stock
  * @access  Private
  */
-router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.delete('/:userId', verifyFirebaseToken, ensureOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     const cart = await Cart.findOne({ userId });
