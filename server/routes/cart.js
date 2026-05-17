@@ -4,13 +4,51 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 
-// Helper: adjust product reserved count
+// Helper: atomically adjust product reserved count (avoids read-modify-write races)
 async function adjustReserved(productId, delta) {
-  const prod = await Product.findOne({ productId: Number(productId) });
-  if (!prod) throw new Error('Product not found');
-  prod.reserved = Math.max(0, (prod.reserved || 0) + delta);
-  await prod.save();
-  return prod;
+  const pid = Number(productId);
+  const change = Number(delta);
+  if (Number.isNaN(pid) || Number.isNaN(change) || change === 0) {
+    throw new Error('Invalid productId or delta');
+  }
+
+  if (change > 0) {
+    const updated = await Product.findOneAndUpdate(
+      {
+        productId: pid,
+        $or: [
+          { stock: null },
+          {
+            $expr: {
+              $lte: [{ $add: [{ $ifNull: ['$reserved', 0] }, change] }, '$stock'],
+            },
+          },
+        ],
+      },
+      { $inc: { reserved: change } },
+      { new: true }
+    );
+    if (!updated) {
+      throw new Error('Reserved update failed (insufficient stock or product not found)');
+    }
+    return updated;
+  }
+
+  const absChange = Math.abs(change);
+  const updated = await Product.findOneAndUpdate(
+    { productId: pid, reserved: { $gte: absChange } },
+    { $inc: { reserved: change } },
+    { new: true }
+  );
+  if (updated) return updated;
+
+  const clamped = await Product.findOneAndUpdate(
+    { productId: pid },
+    { $set: { reserved: 0 } },
+    { new: true }
+  );
+  if (!clamped) throw new Error('Product not found');
+  return clamped;
 }
 
 // Helper: check that the token uid matches the userId in the route
