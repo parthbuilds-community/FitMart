@@ -3,6 +3,11 @@ const router = express.Router();
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
+const { validateBody } = require('../middleware/validate');
+const {
+  createProductBodySchema,
+  updateProductBodySchema,
+} = require('../schemas/requestSchemas');
 
 /**
  * @route   GET /api/products
@@ -58,7 +63,7 @@ router.get('/:id', async (req, res) => {
  * @desc    Creates a new product; body: full product object including unique productId
  * @access  Private (Admin)
  */
-router.post('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+router.post('/', verifyFirebaseToken, verifyAdmin, validateBody(createProductBodySchema), async (req, res) => {
   try {
     const body = req.body;
     const existing = await Product.findOne({ productId: body.productId });
@@ -76,7 +81,7 @@ router.post('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
  * @desc    Updates an existing product by productId; body: fields to update
  * @access  Private (Admin)
  */
-router.put('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+router.put('/:id', verifyFirebaseToken, verifyAdmin, validateBody(updateProductBodySchema), async (req, res) => {
   try {
     const updated = await Product.findOneAndUpdate({ productId: Number(req.params.id) }, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'Product not found' });

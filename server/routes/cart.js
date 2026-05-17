@@ -3,6 +3,8 @@ const router = express.Router();
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const { validateBody } = require('../middleware/validate');
+const { cartMutationBodySchema } = require('../schemas/requestSchemas');
 
 // Helper: adjust product reserved count
 async function adjustReserved(productId, delta) {
@@ -47,16 +49,17 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
  * @desc    Add an item to the user's cart and reserve stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
+router.post(
+  '/:userId/add',
+  verifyFirebaseToken,
+  validateBody(cartMutationBodySchema),
+  async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
   try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
-
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
+    const qty = quantity;
 
     const product = await Product.findOne({ productId: Number(productId) });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -82,23 +85,25 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-});
+}
+);
 
 /**
  * @route   POST /api/cart/:userId/remove
  * @desc    Remove an item (or reduce its quantity) from the user's cart and release reserved stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
+router.post(
+  '/:userId/remove',
+  verifyFirebaseToken,
+  validateBody(cartMutationBodySchema),
+  async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
   try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
-
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
+    const qty = quantity;
 
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
@@ -118,7 +123,8 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-});
+}
+);
 
 /**
  * @route   DELETE /api/cart/:userId
