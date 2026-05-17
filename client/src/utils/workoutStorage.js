@@ -1,16 +1,20 @@
-/**
- * Utility for managing workout logs in localStorage.
- * Aligned with specific user requirements for Notes and Titles.
- */
+import { getAuthHeaders } from "./getAuthHeaders";
 
-const STORAGE_KEY = 'fitmart_workout_logs';
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 /**
- * Retrieves all stored workout logs.
+ * Retrieves all stored workout logs from the backend.
  */
-export const getWorkoutLogs = () => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : {};
+export const getWorkoutLogs = async () => {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API}/api/workouts`, { headers });
+    if (!res.ok) throw new Error("Failed to fetch workouts");
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return {};
+  }
 };
 
 /**
@@ -21,34 +25,44 @@ export const getWorkouts = getWorkoutLogs;
 /**
  * Retrieves workout data for a specific date (YYYY-MM-DD).
  */
-export const getWorkoutByDate = (date) => {
-  const logs = getWorkoutLogs();
+export const getWorkoutByDate = async (date) => {
+  const logs = await getWorkoutLogs();
   return logs[date] || null;
 };
 
 /**
  * Saves a workout entry.
  * Expects: { date, title, notes, exercises? }
- * Backward compatible with existing entries.
  */
-export const saveWorkout = (entry) => {
-  const { date, title, notes, exercises = [] } = entry;
-  const logs = getWorkoutLogs();
-  logs[date] = { 
-    title, 
-    notes,
-    exercises: exercises || []
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+export const saveWorkout = async (entry) => {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API}/api/workouts`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(entry),
+    });
+    if (!res.ok) throw new Error("Failed to save workout");
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+  }
 };
 
 /**
  * Removes a workout entry for a date.
  */
-export const deleteWorkout = (date) => {
-  const logs = getWorkoutLogs();
-  delete logs[date];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+export const deleteWorkout = async (date) => {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API}/api/workouts/${date}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to delete workout");
+  } catch (err) {
+    console.error(err);
+  }
 };
 
 /**
@@ -56,49 +70,46 @@ export const deleteWorkout = (date) => {
  * Prevents duplicate exercises based on exercise ID.
  * Expects exercise: { id, name, bodyPart, target, equipment, gifUrl }
  */
-export const addExerciseToWorkout = (date, exercise) => {
-  const workout = getWorkoutByDate(date);
-  if (!workout) {
-    console.warn(`No workout found for date ${date}`);
-    return;
-  }
-
-  // Prevent duplicates
+export const addExerciseToWorkout = async (date, exercise) => {
+  const workout = (await getWorkoutByDate(date)) || { date, title: "", notes: "", exercises: [] };
   const exercises = workout.exercises || [];
+
   if (exercises.some(e => e.id === exercise.id)) {
     console.warn(`Exercise with ID ${exercise.id} already exists in this workout`);
     return;
   }
 
   exercises.push(exercise);
-  const updated = { ...workout, exercises };
-  const logs = getWorkoutLogs();
-  logs[date] = updated;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  await saveWorkout({ ...workout, date, exercises });
 };
 
 /**
  * Removes an exercise from a workout for a specific date.
  */
-export const removeExerciseFromWorkout = (date, exerciseId) => {
-  const workout = getWorkoutByDate(date);
+export const removeExerciseFromWorkout = async (date, exerciseId) => {
+  const workout = await getWorkoutByDate(date);
   if (!workout) return;
 
   const exercises = (workout.exercises || []).filter(e => e.id !== exerciseId);
-  const updated = { ...workout, exercises };
-  const logs = getWorkoutLogs();
-  logs[date] = updated;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  await saveWorkout({ ...workout, date, exercises });
 };
 
 /**
  * Formats data specifically for FullCalendar events list.
  */
-export const getAllWorkoutEvents = () => {
-  const logs = getWorkoutLogs();
-  return Object.keys(logs).map(date => ({
-    title: logs[date].title || 'Logged Workout',
-    date: date, // FullCalendar can use 'date' or 'start'
-    allDay: true,
-  }));
+export const getAllWorkoutEvents = async () => {
+  const logs = await getWorkoutLogs();
+  return Object.keys(logs)
+    .filter(date => {
+      const log = logs[date];
+      // A workout is "valid" if it has a title, notes, or at least one exercise
+      return (log.title && log.title.trim() !== "") ||
+             (log.notes && log.notes.trim() !== "") ||
+             (log.exercises && log.exercises.length > 0);
+    })
+    .map(date => ({
+      title: logs[date].title || 'Logged Workout',
+      date: date,
+      allDay: true,
+    }));
 };

@@ -14,6 +14,10 @@ import BMICalculator from "../components/BMICalculator";
 import CalorieCalculator from "../components/CalorieCalculator";
 import NearbyFitnessCenters from "../components/NearbyFitnessCenters";
 import Stars from "../components/Stars";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
+import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+
+
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -305,13 +309,28 @@ export default function HomePage() {
   });
 
   const renderProductGrid = () => {
-    if (loading) return (
-      <div className="text-center py-12 text-stone-400">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4
-                        border-stone-300 border-t-stone-900 mb-4" />
-        <p className="text-sm">Loading products...</p>
-      </div>
-    );
+  if (loading) return (
+  <>
+    {/* Skeleton category pills */}
+    <div className="flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+      {["w-12", "w-24", "w-20", "w-24"].map((w, i) => (
+        <div
+          key={i}
+          className={`bg-stone-200 animate-pulse h-8 ${w} rounded-full flex-shrink-0`}
+          style={{ animationDelay: `${i * 60}ms` }}
+        />
+      ))}
+    </div>
+
+    {/* Skeleton product grid */}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <ProductCardSkeleton key={i} index={i} />
+      ))}
+    </div>
+  </>
+);
+    
     if (backendError) return (
       <div className="text-center py-12 text-stone-400">
         <p className="text-3xl mb-2">🔌</p>

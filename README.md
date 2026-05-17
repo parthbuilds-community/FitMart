@@ -383,6 +383,24 @@ Make sure you have the following installed:
 
 ---
 
+### 🐳 Local Database via Docker (Optional)
+
+If you don't have a MongoDB Atlas account or prefer to run a local database, you can use the included Docker configuration. This will spin up a local MongoDB instance.
+
+1.  Make sure [Docker](https://www.docker.com/products/docker-desktop/) is installed and running.
+2.  Run the following command in the project root:
+
+```bash
+docker-compose up -d
+```
+
+3.  In your `server/.env`, set `MONGO_URI` to:
+```env
+MONGO_URI=mongodb://localhost:27017
+```
+
+---
+
 ### 1. Clone the Repository
 
 ```bash

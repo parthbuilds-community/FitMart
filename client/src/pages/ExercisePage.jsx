@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { addExerciseToWorkout, getWorkoutByDate } from "../utils/workoutStorage";
 
@@ -15,7 +15,15 @@ const CATEGORIES = [
 
 export default function ExercisePage() {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState("chest");
+  const location = useLocation();
+  const suggestedCategory = location.state?.suggestedCategory || "chest";
+  const [selectedCategory, setSelectedCategory] = useState(suggestedCategory);
+
+  const sortedCategories = [...CATEGORIES].sort((a, b) => {
+    if (a.id === suggestedCategory) return -1;
+    if (b.id === suggestedCategory) return 1;
+    return 0;
+  });
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -74,14 +82,14 @@ export default function ExercisePage() {
     }
   };
 
-  const handleExerciseSelect = (exercise) => {
+  const handleExerciseSelect = async (exercise) => {
     if (!selectedDate) {
       alert("No date selected. Please go back and select a date first.");
       return;
     }
 
     // Add exercise to the workout
-    addExerciseToWorkout(selectedDate, exercise);
+    await addExerciseToWorkout(selectedDate, exercise);
 
     // Navigate back to notes page
     localStorage.setItem("selectedDate", selectedDate);
@@ -120,7 +128,7 @@ export default function ExercisePage() {
         {/* Category Filter */}
         <section className="mb-12">
           <div className="flex flex-wrap gap-2 sm:gap-3 justify-center md:justify-start">
-            {CATEGORIES.map((cat) => (
+            {sortedCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}

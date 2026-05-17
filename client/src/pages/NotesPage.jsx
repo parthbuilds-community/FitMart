@@ -1,335 +1,262 @@
-// src/components/Navbar.jsx
-import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
-import { signOut } from "firebase/auth";
-import { auth } from "../auth/firebase";
-import { useAuth } from "../auth/useAuth";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../utils/workoutStorage";
 
-export default function Navbar({
-  variant = "landing",
-  navOpaque = true,
-  onSearchToggle,
-  cartCount = 0,
-  onCartOpen,
-  menuOpen,
-  setMenuOpen,
-  onSignOut,
-}) {
+/**
+ * NotesPage
+ * Allows users to write workout details for a selected date.
+ * Supports adding exercises, viewing exercise GIFs, and managing workout details.
+ * Preserves content when navigating between notes and exercise selection.
+ */
+export default function NotesPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const [localMenuOpen, setLocalMenuOpen] = useState(false);
+  const [date, setDate] = useState("");
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [exercises, setExercises] = useState([]);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [imageErrors, setImageErrors] = useState(new Set());
 
-  // Treat tracker and notes as limited nav routes (no "Track Fitness" option)
-  const isLimitedNavRoute =
-    location?.pathname === "/profile" ||
-    location?.pathname === "/tracker" ||
-    location?.pathname === "/notes";
-
-  const handleSignOut = async () => {
-    if (onSignOut) {
-      onSignOut();
-    } else {
-      await signOut(auth);
-      navigate("/");
+  useEffect(() => {
+    // Get selectedDate from localStorage
+    const storedDate = localStorage.getItem("selectedDate");
+    if (!storedDate) {
+      setError("No date selected. Please go back to the calendar and select a date.");
+      return;
     }
-    // Close whichever menu state is in use
-    if (typeof setMenuOpen === "function") setMenuOpen(false);
-    else setLocalMenuOpen(false);
+    setDate(storedDate);
+
+    // Pre-fill if data exists
+    getWorkoutByDate(storedDate).then(workout => {
+      if (workout) {
+        setTitle(workout.title || "");
+        setNotes(workout.notes || "");
+        setExercises(workout.exercises || []);
+      }
+    });
+  }, []);
+
+  const handleSave = async () => {
+    // Prevent saving empty title
+    if (!title.trim()) {
+      alert("Please enter a workout title.");
+      return;
+    }
+
+    // Create entry object
+    const entry = {
+      date,
+      title,
+      notes,
+      exercises,
+    };
+
+    // Save functionality
+    await saveWorkout(entry);
+    setSaved(true);
+
+    // Redirect to "/tracker" after a brief confirmation
+    setTimeout(() => {
+      navigate("/tracker");
+    }, 1000);
   };
 
-  const isLanding = variant === "landing";
+  const handleAddExercise = async () => {
+    // Save draft state to backend
+    await saveWorkout({ date, title: title || "", notes: notes || "", exercises });
+    
+    // Determine suggested category
+    const combinedText = `${title} ${notes}`.toLowerCase();
+    let suggestedCategory = "chest"; // default
+    if (combinedText.includes("back") || combinedText.includes("pull") || combinedText.includes("lat")) suggestedCategory = "back";
+    else if (combinedText.includes("leg") || combinedText.includes("squat") || combinedText.includes("lower")) suggestedCategory = "legs";
+    else if (combinedText.includes("arm") || combinedText.includes("bicep") || combinedText.includes("tricep")) suggestedCategory = "arms";
+    else if (combinedText.includes("shoulder") || combinedText.includes("delt")) suggestedCategory = "shoulders";
+    else if (combinedText.includes("abs") || combinedText.includes("core")) suggestedCategory = "abs";
+    else if (combinedText.includes("cardio") || combinedText.includes("run")) suggestedCategory = "cardio";
+    else if (combinedText.includes("chest") || combinedText.includes("push") || combinedText.includes("pec")) suggestedCategory = "chest";
 
-  const handleNav = () => {
-    if (isLanding) window.scrollTo({ top: 0, behavior: "smooth" });
-    else navigate("/home");
+    localStorage.setItem("selectedDate", date);
+    navigate("/exercises", { state: { suggestedCategory } });
   };
 
-  const positionClass = isLanding
-    ? "fixed top-0 left-0 right-0 z-50"
-    : "sticky top-0 z-40";
+  const handleRemoveExercise = async (exerciseId) => {
+    await removeExerciseFromWorkout(date, exerciseId);
+    setExercises(exercises.filter(e => e.id !== exerciseId));
+  };
 
-  const bgClass = isLanding
-    ? navOpaque
-      ? "bg-white/95 backdrop-blur-sm border-b border-stone-200 shadow-sm"
-      : "bg-transparent"
-    : "bg-white border-b border-stone-200";
+  const handleImageError = (exerciseId) => {
+    setImageErrors((prev) => new Set([...prev, exerciseId]));
+  };
 
-  const logoColor = isLanding && !navOpaque ? "text-white" : "text-stone-900";
-  const iconColor =
-    isLanding && !navOpaque
-      ? "text-white/80 hover:text-white"
-      : "text-stone-500 hover:text-stone-900";
+  const formattedDate = date ? new Date(date).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }) : "";
 
-  return (
-    <nav className={`w-full ${positionClass} transition-all duration-300 ${bgClass}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 h-14 sm:h-16
-                      flex items-center justify-between">
-
-        {/* ── Brand ── */}
-        {/* FIX: Added role, tabIndex, aria-label, onKeyDown for keyboard accessibility */}
-        <span
-          className={`font-['DM_Serif_Display'] text-lg sm:text-xl tracking-tight
-                       cursor-pointer transition-colors ${logoColor}`}
-          onClick={handleNav}
-          role="button"
-          tabIndex="0"
-          aria-label="FitMart – go to home"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleNav();
-          }}
-        >
-          FitMart
-        </span>
-
-        {/* ── Right side ── */}
-        <div className="flex items-center gap-0.5 sm:gap-1.5">
-
-          {/* Search icon — home only */}
-          {onSearchToggle && (
-            <button
-              onClick={onSearchToggle}
-              className={`p-2 transition-colors min-w-10 min-h-10 flex items-center
-                          justify-center rounded-full ${iconColor}`}
-              aria-label="Toggle search"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor"
-                strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m16.5 16.5 4 4" />
-              </svg>
-            </button>
-          )}
-
-          {/* Cart icon — home only */}
-          {onCartOpen && (
-            <button
-              onClick={onCartOpen}
-              className={`relative p-2 transition-colors min-w-10 min-h-10
-                          flex items-center justify-center rounded-full ${iconColor}`}
-              aria-label={`Cart, ${cartCount} item${cartCount !== 1 ? "s" : ""}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor"
-                strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
-              {cartCount > 0 && (
-                <span
-                  className="absolute top-0.5 right-0.5 bg-stone-900 text-white
-                               text-[9px] w-4 h-4 rounded-full flex items-center
-                               justify-center font-semibold"
-                  aria-hidden="true"
-                >
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* ── Auth area ── */}
-          {!authLoading && (
-            <>
-              {user ? (
-                /* ── Logged IN: avatar + dropdown ── */
-                <div className="relative">
-                  {/* FIX: Added aria-expanded, aria-controls, aria-label for screen readers */}
-                  <button
-                    onClick={() => {
-                      if (typeof setMenuOpen === "function") setMenuOpen(!menuOpen);
-                      else setLocalMenuOpen((p) => !p);
-                    }}
-                    aria-expanded={typeof setMenuOpen === "function" ? !!menuOpen : localMenuOpen}
-                    aria-controls="user-dropdown-menu"
-                    aria-label="User menu"
-                    className={`flex items-center gap-1.5 sm:gap-2 border rounded-full
-                                px-2 sm:px-2.5 py-1.5 hover:bg-stone-50 transition-colors ml-0.5
-                                min-h-9
-                                ${isLanding && !navOpaque
-                        ? "border-white/30 hover:bg-white/10"
-                        : "border-stone-200"
-                      }`}
-                  >
-                    {/* Avatar */}
-                    <div className="w-6 h-6 rounded-full overflow-hidden shrink-0
-                                    bg-stone-200 flex items-center justify-center">
-                      {user.photoURL ? (
-                        <img
-                          src={user.photoURL}
-                          alt={user.displayName ? `${user.displayName}'s avatar` : "User avatar"}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <span
-                          className={`text-[11px] font-medium
-                                      ${isLanding && !navOpaque
-                              ? "text-stone-700"
-                              : "text-stone-600"
-                            }`}
-                          aria-hidden="true"
-                        >
-                          {(user.displayName?.[0] || user.email?.[0] || "U").toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    {/* Name — hidden on mobile */}
-                    {!isLanding && (
-                      <span className="hidden sm:block text-xs text-stone-700
-                                       max-w-20 sm:max-w-24 truncate">
-                        {user.displayName || user.email?.split("@")[0]}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Dropdown */}
-                  {(typeof setMenuOpen === "function" ? menuOpen : localMenuOpen) && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => {
-                          if (typeof setMenuOpen === "function") setMenuOpen(false);
-                          else setLocalMenuOpen(false);
-                        }}
-                        aria-hidden="true"
-                      />
-                      {/* FIX: Added id matching aria-controls on the toggle button */}
-                      <div
-                        id="user-dropdown-menu"
-                        role="menu"
-                        className="absolute right-0 top-full mt-2 w-44 sm:w-48 bg-white
-                                    border border-stone-200 rounded-xl shadow-lg py-1 z-50"
-                      >
-                        <div className="px-4 py-2.5 border-b border-stone-100">
-                          <p className="text-xs font-medium text-stone-900 truncate">
-                            {user.displayName || "Account"}
-                          </p>
-                          <p className="text-[10px] text-stone-400 truncate mt-0.5">
-                            {user.email}
-                          </p>
-                        </div>
-
-                        {/* Limited routes (tracker, notes, profile) show only View Profile + Sign Out */}
-                        {isLimitedNavRoute ? (
-                          <div className="border-t border-stone-100 mt-1">
-                            <button
-                              role="menuitem"
-                              onClick={() => {
-                                navigate('/profile');
-                                if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                else setLocalMenuOpen(false);
-                              }}
-                              className="w-full text-left text-xs text-stone-700 hover:bg-stone-50
-                                         px-4 py-2.5 transition-colors min-h-9"
-                            >
-                              View Profile
-                            </button>
-
-                            <button
-                              role="menuitem"
-                              onClick={handleSignOut}
-                              className="w-full text-left text-xs text-stone-500 hover:bg-stone-50
-                                         px-4 py-2.5 transition-colors min-h-9"
-                            >
-                              Sign Out
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            {isLanding && (
-                              <button
-                                role="menuitem"
-                                onClick={() => {
-                                  navigate("/home");
-                                  if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                  else setLocalMenuOpen(false);
-                                }}
-                                className="w-full text-left text-xs text-stone-700 font-medium
-                                           hover:bg-stone-50 px-4 py-2.5 transition-colors
-                                           min-h-9"
-                              >
-                                Go to Shop →
-                              </button>
-                            )}
-
-                            {/* Fitness tracker link - shown on non-limited routes */}
-                            <button
-                              role="menuitem"
-                              onClick={() => {
-                                navigate("/tracker");
-                                if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                else setLocalMenuOpen(false);
-                              }}
-                              className="w-full text-left text-xs text-stone-700 font-medium
-                                         hover:bg-stone-50 px-4 py-2.5 transition-colors
-                                         min-h-9"
-                            >
-                              Track Fitness →
-                            </button>
-
-                            <div className="border-t border-stone-100 mt-1">
-                              <button
-                                role="menuitem"
-                                onClick={() => {
-                                  navigate('/profile');
-                                  if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                  else setLocalMenuOpen(false);
-                                }}
-                                className="w-full text-left text-xs text-stone-700 hover:bg-stone-50
-                                           px-4 py-2.5 transition-colors min-h-9"
-                              >
-                                View Profile
-                              </button>
-
-                              <button
-                                role="menuitem"
-                                onClick={handleSignOut}
-                                className="w-full text-left text-xs text-stone-500 hover:bg-stone-50
-                                           px-4 py-2.5 transition-colors min-h-9"
-                              >
-                                Sign Out
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-              ) : (
-                /* ── Logged OUT ── */
-                <div className="flex items-center gap-1.5 sm:gap-2 ml-0.5 sm:ml-1">
-                  {/* "Sign In" text link — hidden on mobile */}
-                  <button
-                    onClick={() => navigate(user ? "/home" : "/auth")}
-                    className={`hidden sm:block text-sm px-3 sm:px-4 py-2 transition-colors
-                                 ${isLanding && !navOpaque
-                        ? "text-white/80 hover:text-white"
-                        : "text-stone-600 hover:text-stone-900"
-                      }`}
-                  >
-                    Sign In
-                  </button>
-                  {/* Primary CTA */}
-                  <button
-                    onClick={() => navigate(user ? "/home" : "/auth")}
-                    className={`text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full
-                                 transition-colors min-h-9
-                                 ${isLanding && !navOpaque
-                        ? "bg-white text-stone-900 hover:bg-stone-100"
-                        : "bg-stone-900 text-white hover:bg-stone-700"
-                      }`}
-                  >
-                    {isLanding ? "Get Started" : "Sign In"}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+  if (error) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white border border-stone-200 rounded-2xl p-10 text-center">
+          <p className="text-3xl mb-4">∅</p>
+          <p className="text-stone-700 font-medium mb-6">{error}</p>
+          <button
+            onClick={() => navigate("/tracker")}
+            className="w-full bg-stone-900 text-white py-3 rounded-full hover:bg-stone-700 transition-all font-medium"
+          >
+            ← Back to Tracker
+          </button>
         </div>
       </div>
-    </nav>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif]">
+      <Navbar variant="product" />
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-16">
+        <button
+          onClick={() => navigate("/tracker")}
+          className="text-xs tracking-[0.2em] uppercase text-stone-400 hover:text-stone-900 transition-colors mb-12 flex items-center gap-2 group"
+        >
+          <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Calendar
+        </button>
+
+        <div className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 md:p-10 shadow-sm">
+          <header className="mb-8 sm:mb-10 text-center md:text-left">
+            <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-stone-400 mb-2 font-medium">Training Session For</p>
+            <h1 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl text-stone-900">{formattedDate}</h1>
+          </header>
+
+          <div className="space-y-8">
+            {/* Input field for "Workout Title" */}
+            <div>
+              <label className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
+                Workout Title
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Chest Day"
+                className="w-full border-b border-stone-200 bg-transparent py-3 text-2xl sm:text-3xl md:text-4xl text-stone-900 
+                           font-['DM_Serif_Display'] placeholder-stone-200 focus:outline-none focus:border-stone-900 transition-colors"
+              />
+            </div>
+
+            {/* Textarea for "Workout Notes" */}
+            <div>
+              <label className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
+                Workout Notes
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="List exercises, weight, reps..."
+                rows={12}
+                className="w-full border border-stone-200 bg-white rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-6 text-sm sm:text-base text-stone-700 
+                           placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors resize-none
+                           min-h-75 sm:min-h-112.5 leading-relaxed"
+              />
+            </div>
+
+            {/* Selected Exercises Section */}
+            {exercises && exercises.length > 0 && (
+              <div>
+                <label className="block text-xs text-stone-500 mb-4 tracking-wide uppercase">
+                  Selected Exercises ({exercises.length})
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {exercises.map((exercise) => (
+                    <div
+                      key={exercise.id}
+                      className="bg-stone-50 border border-stone-200 rounded-xl overflow-hidden hover:border-stone-900 transition-all flex flex-col"
+                    >
+                      {/* Exercise Media Preview */}
+                      <div className="w-full bg-stone-100 overflow-hidden aspect-video flex items-center justify-center">
+                        {exercise.gifUrl && exercise.gifUrl.trim() !== "" && !imageErrors.has(exercise.id) ? (
+                          <img
+                            src={exercise.gifUrl}
+                            alt={exercise.name}
+                            className="w-full h-full object-cover"
+                            onError={() => handleImageError(exercise.id)}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-stone-100">
+                            <div className="text-center">
+                              <p className="text-stone-400 text-2xl mb-1">🏋️</p>
+                              <p className="text-stone-400 text-xs uppercase tracking-wide font-medium">
+                                Exercise
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Exercise Details */}
+                      <div className="p-4 flex flex-col grow">
+                        <h4 className="font-['DM_Serif_Display'] text-base md:text-lg text-stone-900 mb-2 capitalize">
+                          {exercise.name}
+                        </h4>
+
+                        <div className="space-y-1 text-xs text-stone-500 mb-4 grow">
+                          {exercise.target && (
+                            <p>
+                              <span className="uppercase tracking-wide">Target:</span>{" "}
+                              <span className="text-stone-700 capitalize">{exercise.target}</span>
+                            </p>
+                          )}
+                          {exercise.equipment && (
+                            <p>
+                              <span className="uppercase tracking-wide">Equipment:</span>{" "}
+                              <span className="text-stone-700 capitalize">{exercise.equipment}</span>
+                            </p>
+                          )}
+                          {exercise.bodyPart && (
+                            <p>
+                              <span className="uppercase tracking-wide">Body Part:</span>{" "}
+                              <span className="text-stone-700 capitalize">{exercise.bodyPart}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleRemoveExercise(exercise.id)}
+                          className="text-xs text-stone-500 hover:text-stone-700 font-medium uppercase tracking-wide transition-colors"
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add Exercise Button */}
+            <button
+              onClick={handleAddExercise}
+              className="w-full bg-stone-100 text-stone-900 text-sm py-4 rounded-full hover:bg-stone-900 hover:text-white transition-all font-medium border border-stone-200 hover:border-stone-900 active:scale-95"
+            >
+              + Add Your Exercise
+            </button>
+
+            {/* Save Button */}
+            <button
+              onClick={handleSave}
+              className={`w-full text-sm py-4 rounded-full transition-all font-medium
+                         ${saved ? "bg-stone-700 text-stone-300" : "bg-stone-900 text-white hover:bg-stone-700 shadow-lg shadow-stone-200/50"}`}
+            >
+              {saved ? "Saved ✓" : "Save Workout"}
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
