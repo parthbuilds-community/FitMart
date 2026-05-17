@@ -6,6 +6,7 @@ const Product = require('../models/Product');
 const admin = require('../firebaseAdmin');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
+const { LOW_STOCK_THRESHOLD } = require('../constants/inventory');
 
 // ── Helper: resolve Firebase UID → { displayName, email } ─────────────────
 // Returns "—" gracefully if user is deleted or UID is invalid
@@ -64,9 +65,14 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     const totalCustomers = uniqueCustomers.length;
 
     // ── 3. KPI: Products Low on Stock ─────────────────────────────────────
-    const LOW_STOCK_THRESHOLD = 10;
     const lowStockCount = await Product.countDocuments({
-      stock: { $ne: null, $lt: LOW_STOCK_THRESHOLD },
+      stock: { $ne: null },
+      $expr: {
+        $lt: [
+          { $subtract: ['$stock', { $ifNull: ['$reserved', 0] }] },
+          LOW_STOCK_THRESHOLD,
+        ],
+      },
     });
 
     // ── 4. Chart: Revenue Over Time ───────────────────────────────────────
