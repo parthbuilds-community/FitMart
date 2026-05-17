@@ -3,23 +3,53 @@ const router = express.Router();
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const ensureOwnership = require('../middleware/ensureOwnership');
 
-// Helper: adjust product reserved count
+// Helper: atomically adjust product reserved count (avoids read-modify-write races)
 async function adjustReserved(productId, delta) {
-  const prod = await Product.findOne({ productId: Number(productId) });
-  if (!prod) throw new Error('Product not found');
-  prod.reserved = Math.max(0, (prod.reserved || 0) + delta);
-  await prod.save();
-  return prod;
-}
-
-// Helper: check that the token uid matches the userId in the route
-function checkOwnership(req, res) {
-  if (req.user.uid !== req.params.userId) {
-    res.status(403).json({ error: 'Forbidden — you can only access your own cart' });
-    return false;
+  const pid = Number(productId);
+  const change = Number(delta);
+  if (Number.isNaN(pid) || Number.isNaN(change) || change === 0) {
+    throw new Error('Invalid productId or delta');
   }
-  return true;
+
+  if (change > 0) {
+    const updated = await Product.findOneAndUpdate(
+      {
+        productId: pid,
+        $or: [
+          { stock: null },
+          {
+            $expr: {
+              $lte: [{ $add: [{ $ifNull: ['$reserved', 0] }, change] }, '$stock'],
+            },
+          },
+        ],
+      },
+      { $inc: { reserved: change } },
+      { new: true }
+    );
+    if (!updated) {
+      throw new Error('Reserved update failed (insufficient stock or product not found)');
+    }
+    return updated;
+  }
+
+  const absChange = Math.abs(change);
+  const updated = await Product.findOneAndUpdate(
+    { productId: pid, reserved: { $gte: absChange } },
+    { $inc: { reserved: change } },
+    { new: true }
+  );
+  if (updated) return updated;
+
+  const clamped = await Product.findOneAndUpdate(
+    { productId: pid },
+    { $set: { reserved: 0 } },
+    { new: true }
+  );
+  if (!clamped) throw new Error('Product not found');
+  return clamped;
 }
 
 /**
@@ -27,9 +57,7 @@ function checkOwnership(req, res) {
  * @desc    Get or create a cart for the given user
  * @access  Private
  */
-router.get('/:userId', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.get('/:userId', verifyFirebaseToken, ensureOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     let cart = await Cart.findOne({ userId });
@@ -47,9 +75,7 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
  * @desc    Add an item to the user's cart and reserve stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.post('/:userId/add', verifyFirebaseToken, ensureOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
@@ -89,9 +115,7 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
  * @desc    Remove an item (or reduce its quantity) from the user's cart and release reserved stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.post('/:userId/remove', verifyFirebaseToken, ensureOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
@@ -125,9 +149,7 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
  * @desc    Clear all items from the user's cart and release all reserved stock
  * @access  Private
  */
-router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.delete('/:userId', verifyFirebaseToken, ensureOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     const cart = await Cart.findOne({ userId });
