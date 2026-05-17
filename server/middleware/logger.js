@@ -50,12 +50,24 @@ const logger = (req, res, next) => {
 
     if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
       try {
-        const sensitiveKeys = ['password', 'token', 'secret', 'apiKey'];
+        const sensitiveKeys = [
+          "password",
+          "token",
+          "secret",
+          "apikey",
+          "api_key",
+          "authorization",
+          "credential",
+        ];
         const safeBody = { ...req.body };
 
-        sensitiveKeys.forEach((key) => {
-          if (safeBody[key]) {
-            safeBody[key] = '[REDACTED]';
+        Object.keys(safeBody).forEach((key) => {
+          if (
+            sensitiveKeys.some((sensitive) =>
+              key.toLowerCase().includes(sensitive),
+            )
+          ) {
+            safeBody[key] = "[REDACTED]";
           }
         });
 
@@ -64,7 +76,7 @@ const logger = (req, res, next) => {
         if (bodyStr.length < 1000) {
           console.log(`   Body: ${bodyStr}`);
         } else {
-          console.log(`   Body: [too large to log]`);
+          console.log(`   Body: [omitted — ${bodyStr.length} chars]`);
         }
       } catch (err) {
         console.log(`   Body: [error parsing body]`);
