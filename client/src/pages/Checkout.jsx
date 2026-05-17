@@ -179,10 +179,22 @@ export default function Checkout() {
                   </span>
                 </div>
               </div>
+
+              {/* Persistent error message when no address is selected */}
+              {!selectedAddress && (
+                <p className="text-xs text-red-500 mt-2 mb-2">
+                  Please <button onClick={() => navigate('/profile')} className="underline cursor-pointer">Add a Shipping Address</button> to continue.
+                </p>
+              )}
+
               <button
                 onClick={handleProceed}
-                className="w-full bg-white text-stone-900 text-sm px-8 py-3.5 rounded-full
-                           hover:bg-stone-100 transition-colors font-medium min-h-12"
+                disabled={!selectedAddress}
+                className={`w-full text-sm px-8 py-3.5 rounded-full
+                           transition-colors font-medium min-h-12 ${selectedAddress
+                    ? 'bg-white text-stone-900 hover:bg-stone-100'
+                    : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  }`}
               >
                 Proceed to Payment →
               </button>

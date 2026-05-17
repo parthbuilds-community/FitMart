@@ -4,6 +4,8 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const admin = require('../firebaseAdmin');
+const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const verifyAdmin = require('../middleware/verifyAdmin');
 
 // ── Helper: resolve Firebase UID → { displayName, email } ─────────────────
 // Returns "—" gracefully if user is deleted or UID is invalid
@@ -39,7 +41,8 @@ const getStartDate = (range) => {
 };
 
 // GET /api/dashboard?range=today|week|month
-router.get('/', async (req, res) => {
+// Admin-only dashboard metrics
+router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     const range = req.query.range || 'month';
     const startDate = getStartDate(range);

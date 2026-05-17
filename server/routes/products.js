@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const verifyAdmin = require('../middleware/verifyAdmin');
 
 /**
  * @route   GET /api/products
@@ -54,9 +56,9 @@ router.get('/:id', async (req, res) => {
 /**
  * @route   POST /api/products
  * @desc    Creates a new product; body: full product object including unique productId
- * @access  Public
+ * @access  Private (Admin)
  */
-router.post('/', async (req, res) => {
+router.post('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     const body = req.body;
     const existing = await Product.findOne({ productId: body.productId });
@@ -72,9 +74,9 @@ router.post('/', async (req, res) => {
 /**
  * @route   PUT /api/products/:id
  * @desc    Updates an existing product by productId; body: fields to update
- * @access  Public
+ * @access  Private (Admin)
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     const updated = await Product.findOneAndUpdate({ productId: Number(req.params.id) }, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'Product not found' });
@@ -87,9 +89,9 @@ router.put('/:id', async (req, res) => {
 /**
  * @route   DELETE /api/products/:id
  * @desc    Deletes a product by its productId
- * @access  Public
+ * @access  Private (Admin)
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     const deleted = await Product.findOneAndDelete({ productId: Number(req.params.id) });
     if (!deleted) return res.status(404).json({ error: 'Product not found' });

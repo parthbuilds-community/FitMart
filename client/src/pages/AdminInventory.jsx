@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
 
 const LOW_STOCK_THRESHOLD = 5;
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
@@ -123,7 +124,8 @@ export default function AdminInventory() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/products`);
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE}/products`, { headers });
       const data = await res.json();
       setProducts(data);
       setLoading(false);
@@ -199,9 +201,10 @@ export default function AdminInventory() {
         }
       }
 
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE}/products/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(payload),
       });
       if (!res.ok) {

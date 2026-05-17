@@ -1,8 +1,23 @@
 // server/routes/user.js
 const express = require("express");
+const multer = require("multer");
+const streamifier = require("streamifier");
+const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
+const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const router = express.Router();
+
+// Use memory storage for serverless environments
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB for profile photos
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/user/login
@@ -186,7 +201,7 @@ router.put("/profile/:userId", async (req, res) => {
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     const update = {};
-    const allowed = ["name", "phone", "addresses", "defaultAddressId"];
+    const allowed = ["name", "phone", "addresses", "defaultAddressId", "photoURL"];
     for (const k of allowed) {
       if (req.body[k] !== undefined) update[k] = req.body[k];
     }
@@ -200,6 +215,57 @@ router.put("/profile/:userId", async (req, res) => {
     res.json(profile);
   } catch (err) {
     console.error("user/profile PUT error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/user/upload-photo/:userId
+// Authenticated endpoint to upload profile photo to Cloudinary
+// Body: multipart form-data with 'photo' field
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo"), async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: "userId required" });
+
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: "Photo file is required" });
+    }
+
+    // Upload to Cloudinary using stream
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "fitmart/profile_photos",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+
+      const photoURL = result.secure_url || "";
+
+      // Update user profile with new photo URL
+      const profile = await UserProfile.findOneAndUpdate(
+        { userId },
+        { $set: { photoURL } },
+        { upsert: true, new: true }
+      );
+
+      res.json({ success: true, photoURL, profile });
+    } catch (uploadErr) {
+      console.error("Cloudinary upload failed:", uploadErr);
+      return res.status(500).json({ error: "Failed to upload photo" });
+    }
+  } catch (err) {
+    console.error("user/upload-photo error:", err);
     res.status(500).json({ error: err.message });
   }
 });

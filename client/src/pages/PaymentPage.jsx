@@ -32,6 +32,15 @@ export default function PaymentPage() {
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  if (!location.state?.items?.length) {
+    navigate("/checkout", { replace: true });
+    return null;
+  }
+
   const {
     items = [],
     total = 0,
@@ -41,14 +50,6 @@ export default function PaymentPage() {
     discountApplied = false,
     address = null,
   } = location.state || {};
-
-  useEffect(() => {
-    if (!items.length) navigate("/checkout");
-  }, [items, navigate]);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
 
   const finishOrder = async (userId, paymentId) => {
     try {

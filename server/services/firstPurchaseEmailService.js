@@ -100,7 +100,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     }
 
     // Generate email template
-    const appBaseUrl = process.env.APP_BASE_URL || "https://fitmart.com";
+    const appBaseUrl = process.env.APP_BASE_URL;
     const { subject, htmlTemplate, textTemplate } = generateFirstPurchaseEmail({
       customerName: displayName || "Friend",
       appBaseUrl,

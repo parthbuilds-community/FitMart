@@ -1,6 +1,7 @@
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminNavbar from "../components/AdminNavbar";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -141,7 +142,8 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/dashboard?range=${range}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/api/dashboard?range=${range}`, { headers });
         if (!res.ok) throw new Error("Failed to fetch dashboard data");
         setData(await res.json());
       } catch (err) {

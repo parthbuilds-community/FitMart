@@ -124,20 +124,22 @@ export default function AdminCustomers() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE}/customers`)
-      .then(res => res.json())
-      .then(json => {
+    (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/customers`, { headers });
+        const json = await res.json();
         if (!json.success) {
           throw new Error(json.error || "Failed to load customers");
         }
         setCustomers(json.data || []);
         setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("Customers fetch error:", err);
         setError(err.message || "Failed to load customers");
         setLoading(false);
-      });
+      }
+    })();
   }, []);
 
   // Send reminder email for a customer

@@ -103,6 +103,14 @@ export default function LandingPage() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [backendError, setBackendError] = useState(false);
 
+  const { stats: ghStats, loading: ghLoading } = useGithubStats();
+  const STATS = [
+    { value: formatStat(ghStats.stars, ghLoading), label: "GitHub Stars" },
+    { value: formatStat(ghStats.forks, ghLoading), label: "Forks" },
+    { value: formatStat(ghStats.contributors, ghLoading), label: "Contributors" },
+    { value: formatStat(ghStats.commits, ghLoading), label: "Commits" },
+  ];
+
   useEffect(() => {
     document.title = "FitMart - Fitness & Nutrition Store";
   }, []);

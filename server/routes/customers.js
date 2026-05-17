@@ -5,6 +5,7 @@ const Order = require('../models/Order');
 const UserProfile = require('../models/UserProfile');
 const admin = require('../firebaseAdmin');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const verifyAdmin = require('../middleware/verifyAdmin');
 const { sendInactivityReminderEmail } = require('../services/inactiveCustomerEmailService');
 
 // ── Helper: resolve Firebase UID → { displayName, email, photoURL } ───────
@@ -50,8 +51,9 @@ function calculateInactivityInfo(lastOrderDate) {
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/customers
 // All customers aggregated from orders, enriched with Firebase user info
+// Admin-only access to protect customer PII
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/', async (req, res) => {
+router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     console.log('[API] GET /customers request received');
 
@@ -133,8 +135,9 @@ router.get('/', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/customers/:userId
 // Single customer stats + order history, enriched with Firebase user info
+// Admin-only access to protect customer PII
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -194,16 +197,9 @@ router.get('/:userId', async (req, res) => {
 // Send inactivity reminder email to a customer
 // Admin-only endpoint: requires Firebase auth token from admin user
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:userId/send-reminder', verifyFirebaseToken, async (req, res) => {
+router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
-    const adminUid = process.env.VITE_ADMIN_UID || 'n5LtrXIGVSVjNktRn1PgDXZbHgq1';
-    const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
-
-    // Check if requester is admin (allow super admin as well)
-    if (req.user.uid !== adminUid && req.user.uid !== SUPER_ADMIN_UID) {
-      return res.status(403).json({ success: false, error: 'Forbidden — admin access required' });
-    }
 
     // Send the reminder email
     const result = await sendInactivityReminderEmail(userId);

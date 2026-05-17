@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { fmt } from "../utils/formatters";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
@@ -84,12 +85,20 @@ export default function AdminReports() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetch(`${API_BASE}/reports/sales?range=${range}`)
-      .then(res => res.json())
-      .then(json => { setData(json); setLoading(false); })
-      .catch(() => { setError("Failed to load report data"); setLoading(false); });
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/reports/sales?range=${range}`, { headers });
+        const json = await res.json();
+        setData(json);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load report data");
+        setLoading(false);
+      }
+    })();
   }, [range]);
 
   const { summary, revenueByDate, productPerformance } = data || {};

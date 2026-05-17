@@ -142,18 +142,20 @@ export default function AdminCustomerDetail() {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   useEffect(() => {
-    fetch(`${API_BASE}/customers/${userId}`)
-      .then(res => res.json())
-      .then(json => {
+    (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/customers/${userId}`, { headers });
+        const json = await res.json();
         if (!json.success) throw new Error(json.error || "Failed to load customer");
         setData(json.data);
         setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("Customer detail fetch error:", err);
         setError(err.message || "Customer not found");
         setLoading(false);
-      });
+      }
+    })();
   }, [userId]);
 
   // Fetch product details for all products referenced in orders (watch `data` to avoid TDZ)
@@ -178,7 +180,8 @@ export default function AdminCustomerDetail() {
       let profileAddrHtml = "";
       try {
         const root = API_BASE.replace(/\/api$/, "");
-        const res = await fetch(`${root}/api/user/profile/${userId}`, { credentials: 'include' });
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${root}/api/user/profile/${userId}`, { headers });
         if (res.ok) {
           const p = await res.json();
           const addr = (p?.addresses || []).find(a => a.id === p?.defaultAddressId) || (p?.addresses || [])[0];

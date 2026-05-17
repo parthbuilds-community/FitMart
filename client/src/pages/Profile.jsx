@@ -119,6 +119,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("profile");
   const fileInputRef = useRef();
   const [photoURL, setPhotoURL] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => { document.title = "Profile – FitMart"; }, []);
 
@@ -138,6 +140,10 @@ export default function Profile() {
           addresses: data.addresses || [],
           defaultAddressId: data.defaultAddressId,
         });
+        // Load saved photo URL from database
+        if (data.photoURL) {
+          setPhotoURL(data.photoURL);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -146,6 +152,32 @@ export default function Profile() {
     });
     return () => unsub();
   }, [navigate]);
+
+  // Fetch orders when orders tab is active
+  useEffect(() => {
+    if (activeTab !== "orders") return;
+    
+    const fetchOrders = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      setLoadingOrders(true);
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
+        if (!res.ok) throw new Error("Failed to load orders");
+        const data = await res.json();
+        setOrders(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError(err.message);
+        setOrders([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    fetchOrders();
+  }, [activeTab]);
 
   const handleSaveProfile = async () => {
     const user = auth.currentUser;
@@ -173,6 +205,50 @@ export default function Profile() {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    setError(null);
+    setSaving(true);
+
+    try {
+      // Upload photo via backend endpoint
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API}/api/user/upload-photo/${user.uid}`, {
+        method: "POST",
+        headers: {
+          "Authorization": headers.Authorization,
+        },
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to upload photo");
+      }
+
+      const data = await res.json();
+      const photoURL = data.photoURL;
+
+      // Update local state with returned photo URL
+      setPhotoURL(photoURL);
+      setToast("Profile photo updated successfully");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -211,6 +287,7 @@ export default function Profile() {
   const tabs = [
     { id: "profile", label: "Personal Info" },
     { id: "addresses", label: "Addresses" },
+    { id: "orders", label: "Orders" },
   ];
 
   if (loading) return (
@@ -244,7 +321,7 @@ export default function Profile() {
               >
                 ✎
               </button>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
             </div>
             <div className="flex-1">
               <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-1">Account</p>
@@ -393,6 +470,76 @@ export default function Profile() {
                     {saving ? "Saving…" : "Save Addresses"}
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── ORDERS TAB ── */}
+        {activeTab === "orders" && (
+          <div>
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5">Order history</p>
+
+            {loadingOrders ? (
+              <div className="flex items-center justify-center py-10">
+                <span className="text-sm text-stone-400">Loading orders…</span>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="bg-white border border-stone-200 rounded-2xl p-10 text-center">
+                <p className="text-2xl mb-3">📦</p>
+                <p className="text-sm text-stone-500 mb-1">No orders yet.</p>
+                <p className="text-xs text-stone-400 mb-5">Start shopping to see your order history here.</p>
+                <button
+                  onClick={() => navigate("/home")}
+                  className="bg-stone-900 text-white text-sm px-6 py-2.5 rounded-full hover:bg-stone-700 transition-colors"
+                >
+                  Shop now
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {orders.map((order) => (
+                  <div key={order._id} className="bg-white border border-stone-200 rounded-2xl p-5 hover:border-stone-300 hover:shadow-sm transition-all">
+                    <div className="flex justify-between items-start gap-4 mb-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-stone-900">
+                          {new Date(order.createdAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                        <p className="text-xs text-stone-400 mt-0.5">
+                          {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-stone-900">₹{order.total.toFixed(2)}</p>
+                          <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full ${
+                            order.status === 'paid' 
+                              ? 'bg-green-50 text-green-700' 
+                              : order.status === 'failed'
+                              ? 'bg-red-50 text-red-700'
+                              : 'bg-stone-100 text-stone-600'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Order items list */}
+                    <div className="pt-3 border-t border-stone-100 space-y-1.5">
+                      {order.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between text-xs text-stone-600">
+                          <span>Product ID {item.productId} × {item.quantity}</span>
+                          <span className="text-stone-900">₹{(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

@@ -1,6 +1,5 @@
 // server/routes/payment.js
 
-const axios = require("axios");
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
@@ -10,6 +9,7 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
+const { createOrder } = require("../services/orderService");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -93,27 +93,32 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
       return res.json({ success: true, message: "Order already created" });
     }
 
-    // STEP 2: Create order using existing route logic
-    const orderResponse = await axios.post(
-      "http://localhost:5000/api/orders",
-      { userId },
-      { headers: { Authorization: req.headers.authorization } }
-    );
+    // STEP 2: Create order using service logic
+    let order;
+    try {
+      order = await createOrder(userId);
+    } catch (createErr) {
+      return res.status(400).json({ error: createErr.message });
+    }
 
     //  STEP 3: Attach paymentId to order
-    await Order.findByIdAndUpdate(orderResponse.data._id, {
+    await Order.findByIdAndUpdate(order._id, {
       paymentId: razorpay_payment_id,
       status: "paid"
     });
 
+    // Update local object to reflect changes
+    order.paymentId = razorpay_payment_id;
+    order.status = "paid";
+
     // STEP 4: Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
-    sendFirstPurchaseEmail(userId, orderResponse.data).catch((err) => {
+    sendFirstPurchaseEmail(userId, order).catch((err) => {
       console.error("First-purchase email service error:", err.message);
       // Don't throw — email failure should not break payment success
     });
 
-    res.json({ success: true, order: orderResponse.data });
+    res.json({ success: true, order });
 
   } catch (err) {
     console.error("verify-payment error:", err);
@@ -160,54 +165,28 @@ router.post("/demo-success", async (req, res) => {
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
-    // Create an order from the user's cart (snapshot prices, deduct stock, finalize reservation)
+    
+    // Create an order from the user's cart using the shared service
     const Order = require("../models/Order");
-
-    const cart = await Cart.findOne({ userId });
-    if (!cart || !cart.items.length) {
-      // Still clear any empty cart just in case
-      await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { new: true });
-      return res.status(400).json({ error: "Cart is empty" });
-    }
-
-    const populated = [];
-    let total = 0;
-    for (const it of cart.items) {
-      const p = await Product.findOne({ productId: Number(it.productId) });
-      if (!p) return res.status(400).json({ error: `Product ${it.productId} not found` });
-      const reserved = Number(p.reserved || 0);
-      if (p.stock !== null) {
-        const available = Number(p.stock) - reserved;
-        if (available < it.quantity) {
-          return res.status(400).json({ error: `Insufficient stock for ${p.name}. Available: ${available}` });
-        }
+    let order;
+    try {
+      order = await createOrder(userId);
+    } catch (createErr) {
+      if (createErr.message === "Cart is empty") {
+         // Still clear any empty cart just in case
+         await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { new: true });
       }
-      populated.push({ productId: p.productId, quantity: it.quantity, price: p.price });
-      total += p.price * it.quantity;
+      return res.status(400).json({ error: createErr.message });
     }
 
-    const order = await Order.create({ userId, items: populated, total, paymentId: fakePaymentId, status: "paid" });
-
-    // Deduct stock and reserved for each item safely (avoid negative reserved)
-    for (const it of cart.items) {
-      const p = await Product.findOne({ productId: Number(it.productId) });
-      if (!p) continue;
-      const currentReserved = Number(p.reserved || 0);
-      const newReserved = Math.max(0, currentReserved - it.quantity);
-      const update = {};
-      if (p.stock !== null) {
-        update.stock = Number(p.stock) - it.quantity;
-      }
-      update.reserved = newReserved;
-
-      await Product.findOneAndUpdate(
-        { productId: p.productId },
-        { $set: update }
-      );
-    }
-
-    // Clear cart (purchasing finalizes reservation)
-    await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
+    // Attach paymentId to order
+    await Order.findByIdAndUpdate(order._id, {
+      paymentId: fakePaymentId,
+      status: "paid"
+    });
+    
+    order.paymentId = fakePaymentId;
+    order.status = "paid";
 
     // Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
