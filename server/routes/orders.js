@@ -2,7 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const ensureOwnership = require('../middleware/ensureOwnership');
 const { createOrder } = require('../services/orderService');
+
+const orderOwnership = ensureOwnership({
+  source: 'body',
+  message: 'Forbidden — you can only create orders for yourself',
+});
 
 /**
  * @route   POST /api/orders
@@ -11,15 +17,10 @@ const { createOrder } = require('../services/orderService');
  *          body: { userId, items?: [{ productId, quantity }] }
  * @access  Private
  */
-router.post('/', verifyFirebaseToken, async (req, res) => {
+router.post('/', verifyFirebaseToken, orderOwnership, async (req, res) => {
   const { userId, items } = req.body;
 
   if (!userId) return res.status(400).json({ error: 'userId required' });
-
-  // ownership check — token uid must match the userId in the body
-  if (req.user.uid !== userId) {
-    return res.status(403).json({ error: 'Forbidden — you can only create orders for yourself' });
-  }
 
   try {
     const order = await createOrder(userId, items);
