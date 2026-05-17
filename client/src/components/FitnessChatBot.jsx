@@ -1,7 +1,6 @@
 // src/components/FitnessChatBot.jsx
 import { useState, useEffect, useRef } from "react";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiFetch } from "../lib/apiClient";
 
 const WELCOME = {
   role: "bot",
@@ -47,7 +46,7 @@ export default function FitnessChatBot() {
     setInput("");
     setTyping(true);
     try {
-      const res = await fetch(`${API}/api/chat`, {
+      const res = await apiFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),

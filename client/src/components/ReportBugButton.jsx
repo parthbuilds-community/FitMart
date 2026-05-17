@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/useAuth';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { apiFetch } from '../lib/apiClient';
 
 const CATEGORIES = [
   { id: 'bug',     label: 'Bug' },
@@ -216,12 +215,6 @@ export default function ReportBugButton() {
     setErrors({});
     setLoading(true);
     try {
-      const headers = {};
-      if (user) {
-        const token = await user.getIdToken();
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       let body;
       if (screenshot?.file) {
         // Send as multipart so the image travels alongside the fields
@@ -236,8 +229,7 @@ export default function ReportBugButton() {
         fd.append('screenshot',    screenshot.file);
         body = fd;
       } else {
-        headers['Content-Type'] = 'application/json';
-        body = JSON.stringify({
+        body = {
           title:         `[${category.toUpperCase()}][${severity}] ${title.trim()}`,
           description:   description.trim(),
           steps:         steps.trim(),
@@ -245,10 +237,10 @@ export default function ReportBugButton() {
           browser:       getBrowserInfo(),
           reporterName:  user?.displayName || '',
           reporterEmail: user?.email || '',
-        });
+        };
       }
 
-      const res = await fetch(`${API}/api/bugs`, { method: 'POST', headers, body });
+      const res = await apiFetch('/api/bugs', { method: 'POST', auth: true, body });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || 'Server error. Please try again.');

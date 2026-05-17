@@ -3,9 +3,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const SEGMENT_STYLES = {
   "high-value": "bg-stone-900 text-white",
@@ -144,8 +143,7 @@ export default function AdminCustomerDetail() {
   useEffect(() => {
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers/${userId}`, { headers });
+        const res = await apiFetch(`/api/customers/${userId}`, { auth: true });
         const json = await res.json();
         if (!json.success) throw new Error(json.error || "Failed to load customer");
         setData(json.data);
@@ -166,7 +164,7 @@ export default function AdminCustomerDetail() {
     if (ids.length === 0) return;
     const map = {};
     Promise.all(ids.map(id =>
-      fetch(`${API_BASE}/products/${id}`).then(r => r.ok ? r.json() : null)
+      apiFetch(`/api/products/${id}`).then(r => r.ok ? r.json() : null)
         .then(p => { if (p) map[id] = p; })
         .catch(() => { })
     )).then(() => setProductMap(map));
@@ -179,9 +177,7 @@ export default function AdminCustomerDetail() {
       // Try to fetch saved profile/address for the user to include in invoice
       let profileAddrHtml = "";
       try {
-        const root = API_BASE.replace(/\/api$/, "");
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${root}/api/user/profile/${userId}`, { headers });
+        const res = await apiFetch(`/api/user/profile/${userId}`, { auth: true });
         if (res.ok) {
           const p = await res.json();
           const addr = (p?.addresses || []).find(a => a.id === p?.defaultAddressId) || (p?.addresses || [])[0];
@@ -245,10 +241,9 @@ export default function AdminCustomerDetail() {
     setSendingReminder(true);
     setReminderError(null);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/customers/${userId}/send-reminder`, {
+      const res = await apiFetch(`/api/customers/${userId}/send-reminder`, {
+        auth: true,
         method: "POST",
-        headers,
         credentials: "include",
       });
       const resData = await res.json();
