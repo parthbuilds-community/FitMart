@@ -24,6 +24,8 @@ import NonAdminRoute from "./components/NonAdminRoute";
 import WorkoutNotes from "./pages/NotesPage";
 import WorkoutTracker from "./pages/TrackerPage";
 import ExercisePage from "./pages/ExercisePage";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 export default function App() {
   return (
@@ -32,6 +34,8 @@ export default function App() {
         {/* Public routes (redirect admin users to admin dashboard) */}
         <Route path="/" element={<NonAdminRoute><LandingPage /></NonAdminRoute>} />
         <Route path="/auth" element={<Authentication />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/home" element={<NonAdminRoute><HomePage /></NonAdminRoute>} />
         <Route path="/product/:productId" element={<NonAdminRoute><ProductPage /></NonAdminRoute>} />
         <Route path="/checkout" element={<NonAdminRoute><Checkout /></NonAdminRoute>} />

@@ -8,6 +8,7 @@ import CartDrawer from "../components/CartDrawer";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessChatBot from "../components/FitnessChatBot";
+import LegalFooterLinks from "../components/LegalFooterLinks";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
 import BMICalculator from "../components/BMICalculator";
@@ -612,12 +613,7 @@ export default function HomePage() {
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
-            ))}
+            <LegalFooterLinks />
           </div>
         </div>
       </footer>

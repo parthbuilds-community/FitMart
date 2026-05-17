@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import LegalFooterLinks from "../components/LegalFooterLinks";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
@@ -188,12 +189,7 @@ export default function MuscleBuildingPlans() {
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
-            ))}
+            <LegalFooterLinks />
           </div>
         </div>
       </footer>
