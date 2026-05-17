@@ -4,10 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -29,13 +28,11 @@ export default function Checkout() {
       const userId = user.uid;
 
       try {
-        const headers = await getAuthHeaders();
-
         const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
-          fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
-          fetch(`${API}/api/products`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
-          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
+          apiFetch(`cart/${userId}`, { auth: true }),
+          apiFetch(`products`),
+          apiFetch(`user/discount-status/${userId}`, { credentials: "include" }),
+          apiFetch(`user/profile/${userId}`, { auth: true }),
         ]);
 
         if (!cartRes.ok) throw new Error("Failed to fetch cart");

@@ -3,10 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function Toast({ message, onClose }) {
   useEffect(() => {
@@ -130,8 +129,7 @@ export default function Profile() {
       setPhotoURL(user.photoURL);
       setLoading(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/profile/${user.uid}`, { headers, credentials: "include" });
+        const res = await apiFetch(`user/profile/${user.uid}`, { auth: true });
         if (!res.ok) throw new Error("Failed to load profile");
         const data = await res.json();
         setProfile({
@@ -163,8 +161,7 @@ export default function Profile() {
       
       setLoadingOrders(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
+        const res = await apiFetch(`orders/${user.uid}`, { auth: true });
         if (!res.ok) throw new Error("Failed to load orders");
         const data = await res.json();
         setOrders(Array.isArray(data) ? data : []);
@@ -185,11 +182,7 @@ export default function Profile() {
     setError(null);
     setSaving(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/profile/${user.uid}`, {
-        method: "PUT",
-        headers,
-        credentials: "include",
+      const res = await apiFetch(`user/profile/${user.uid}`, { auth: true, method: "PUT",
         body: JSON.stringify({
           name: profile.name,
           phone: profile.phone,
@@ -223,13 +216,9 @@ export default function Profile() {
       const formData = new FormData();
       formData.append("photo", file);
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/upload-photo/${user.uid}`, {
+      const res = await apiFetch(`/user/upload-photo/${user.uid}`, {
+        auth: true,
         method: "POST",
-        headers: {
-          "Authorization": headers.Authorization,
-        },
-        credentials: "include",
         body: formData,
       });
 

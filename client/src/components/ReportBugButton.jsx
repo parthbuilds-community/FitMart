@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/useAuth';
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const CATEGORIES = [
   { id: 'bug',     label: 'Bug' },
@@ -248,7 +248,7 @@ export default function ReportBugButton() {
         });
       }
 
-      const res = await fetch(`${API}/api/bugs`, { method: 'POST', headers, body });
+      const res = await apiFetch(`bugs`, { method: 'POST', headers, body });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || 'Server error. Please try again.');
