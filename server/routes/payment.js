@@ -45,6 +45,12 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
     if (!amount || !userId)
       return res.status(400).json({ error: "amount and userId are required" });
 
+    if (req.user.uid !== userId) {
+      return res.status(403).json({
+        error: "Forbidden — you can only create payment orders for your own account",
+      });
+    }
+
     // receipt must be ≤ 40 chars
     const shortId = userId.slice(-8);
     const shortTs = String(Date.now()).slice(-8);
