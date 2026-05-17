@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import AdminNavbar from '../components/AdminNavbar';
-import { useAuth } from '../auth/useAuth';
+import React, { useEffect, useState } from "react";
+import AdminNavbar from "../components/AdminNavbar";
+import { useAuth } from "../auth/useAuth";
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const SEGMENT_STYLES = {
   open: "bg-stone-900 text-white",
@@ -11,8 +11,10 @@ const SEGMENT_STYLES = {
 };
 
 const BugAvatar = ({ title }) => (
-  <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0
-                   bg-stone-200 flex items-center justify-center`}>
+  <div
+    className={`w-8 h-8 rounded-full overflow-hidden shrink-0
+                   bg-stone-200 flex items-center justify-center`}
+  >
     <span className="text-xs font-medium text-stone-600">
       {(title?.[0] || "!").toUpperCase()}
     </span>
@@ -23,8 +25,10 @@ const SkeletonRow = () => (
   <tr className="border-b border-stone-100">
     {[55, 20, 15, 20, 15, 15, 15].map((w, i) => (
       <td key={i} className="px-4 sm:px-6 py-4 sm:py-5">
-        <div className="h-3 bg-stone-100 rounded-full animate-pulse"
-          style={{ width: `${w}%`, margin: i > 0 ? "0 auto" : "0" }} />
+        <div
+          className="h-3 bg-stone-100 rounded-full animate-pulse"
+          style={{ width: `${w}%`, margin: i > 0 ? "0 auto" : "0" }}
+        />
       </td>
     ))}
   </tr>
@@ -35,7 +39,9 @@ const Empty = () => (
     <td colSpan={7} className="py-12 sm:py-16 text-center">
       <p className="text-3xl text-stone-200 mb-3">∅</p>
       <p className="text-sm text-stone-400 mb-1">No bug reports found</p>
-      <p className="text-xs text-stone-300">Bug reports will appear here when users submit them</p>
+      <p className="text-xs text-stone-300">
+        Bug reports will appear here when users submit them
+      </p>
     </td>
   </tr>
 );
@@ -46,33 +52,51 @@ const BugMobileCard = ({ bug, index, onClick, onStatusClick }) => (
     role="button"
     tabIndex={0}
     onClick={onClick}
-    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onClick();
+      }
+    }}
     onMouseDown={(e) => e.preventDefault()}
     className="select-none flex items-start gap-3 py-3.5 border-b border-stone-100 last:border-0
                cursor-pointer active:bg-stone-50 transition-colors"
   >
-    <span className="text-xs text-stone-300 w-5 shrink-0 text-center">{index + 1}</span>
+    <span className="text-xs text-stone-300 w-5 shrink-0 text-center">
+      {index + 1}
+    </span>
 
     <BugAvatar title={bug.title} />
 
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-0.5">
-        <p className="text-sm font-medium text-stone-700 truncate">{bug.title}</p>
+        <p className="text-sm font-medium text-stone-700 truncate">
+          {bug.title}
+        </p>
         <button
-          onClick={(e) => { e.stopPropagation(); onStatusClick && onStatusClick(bug); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStatusClick && onStatusClick(bug);
+          }}
           className={`px-2 py-0.5 rounded-full text-[10px] font-medium capitalize shrink-0 focus:outline-none
-                     ${SEGMENT_STYLES[bug.status] || 'bg-stone-100 text-stone-600'}`}
+                     ${SEGMENT_STYLES[bug.status] || "bg-stone-100 text-stone-600"}`}
         >
           {bug.status}
         </button>
       </div>
       <p className="text-xs text-stone-500 truncate">{bug.description}</p>
-      <p className="text-[10px] text-stone-400 mt-1">{new Date(bug.createdAt).toLocaleString()}</p>
-      <p className="text-[10px] text-stone-400 mt-1">{bug.reporterName || bug.reporterEmail || '—'}</p>
+      <p className="text-[10px] text-stone-400 mt-1">
+        {new Date(bug.createdAt).toLocaleString()}
+      </p>
+      <p className="text-[10px] text-stone-400 mt-1">
+        {bug.reporterName || bug.reporterEmail || "—"}
+      </p>
     </div>
 
     <div className="text-right shrink-0">
-      <p className="text-[10px] text-stone-400">{bug.pageUrl ? 'Has URL' : 'No URL'}</p>
+      <p className="text-[10px] text-stone-400">
+        {bug.pageUrl ? "Has URL" : "No URL"}
+      </p>
     </div>
   </div>
 );
@@ -100,35 +124,46 @@ export default function AdminBugs() {
   const handleMobileStatusChange = async (newStatus) => {
     if (!mobilePicker) return;
     const id = mobilePicker.id;
-    const prev = bugs.find(b => b._id === id)?.status;
+    const prev = bugs.find((b) => b._id === id)?.status;
     // optimistic update
-    setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: newStatus } : b)));
+    setBugs((cur) =>
+      cur.map((b) => (b._id === id ? { ...b, status: newStatus } : b)),
+    );
     try {
       const token = await user.getIdToken();
       const url = `${API}/api/bugs/${id}`;
       const res = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) {
         let body = null;
-        try { body = await res.json(); } catch (e) { body = await res.text(); }
-        console.error('PATCH failed', { url, status: res.status, body });
+        try {
+          body = await res.json();
+        } catch (e) {
+          body = await res.text();
+        }
+        console.error("PATCH failed", { url, status: res.status, body });
         throw new Error(`update failed (${res.status})`);
       }
       setMobilePicker(null);
     } catch (err) {
       console.error(err);
       // rollback
-      setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: prev } : b)));
-      alert('Failed to update status');
+      setBugs((cur) =>
+        cur.map((b) => (b._id === id ? { ...b, status: prev } : b)),
+      );
+      alert("Failed to update status");
     }
   };
 
   useEffect(() => {
     if (loading || !user) return;
-    
+
     let mounted = true;
     setLoadingBugs(true);
     (async () => {
@@ -138,21 +173,24 @@ export default function AdminBugs() {
           `${API}/api/bugs?status=${statusFilter}&search=${search}&page=${page}&limit=${limit}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
-        if (!res.ok) throw new Error('Failed to fetch');
+        if (!res.ok) throw new Error("Failed to fetch");
         const body = await res.json();
 
-        setBugs(body.bugs || []);
-        setTotalPages(body.pagination?.pages || 1);
-        if (mounted) setBugs(body.bugs || []);
+        if (mounted) {
+          setBugs(body.bugs || []);
+          setTotalPages(body.pagination?.pages || 1);
+        }
       } catch (err) {
         console.error(err);
-        setError('Unable to load bug reports');
+        setError("Unable to load bug reports");
       } finally {
         if (mounted) setLoadingBugs(false);
       }
     })();
-    return () => { mounted = false; };
-  }, [loading, user]);
+    return () => {
+      mounted = false;
+    };
+  }, [loading, user, statusFilter, search, page]);
 
   // Derived metrics for visualizations
   const statusCounts = bugs.reduce((acc, bug) => {
@@ -161,7 +199,7 @@ export default function AdminBugs() {
   }, {});
 
   // sort bugs: open -> in-progress -> resolved, then new -> old
-  const order = { open: 0, 'in-progress': 1, resolved: 2 };
+  const order = { open: 0, "in-progress": 1, resolved: 2 };
   const sortedBugs = [...bugs].sort((a, b) => {
     const oa = order[a.status] ?? 3;
     const ob = order[b.status] ?? 3;
@@ -210,6 +248,15 @@ export default function AdminBugs() {
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(1);
+              useEffect(() => {
+                const timer = setTimeout(() => {
+                  if (!loading && user) {
+                    fetchData(); // move API logic into function
+                  }
+                }, 400);
+
+                return () => clearTimeout(timer);
+              }, [search, statusFilter, page]);
             }}
             placeholder="Search bugs by title, reporter, URL..."
             className="w-full sm:w-1/2 px-4 py-2 border border-stone-200 rounded-xl text-sm"
@@ -238,7 +285,7 @@ export default function AdminBugs() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-5 mb-8 sm:mb-10">
           {[
-            { label: "Total Reports", value: bugs.length, icon: "◎" },
+            { label: "Total Reports", value: totalBugs, icon: "◎" },
             {
               label: "Open",
               value: bugs.filter((b) => b.status === "open").length,
