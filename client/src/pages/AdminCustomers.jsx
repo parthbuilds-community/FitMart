@@ -2,10 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import AdminNavbar from "../components/AdminNavbar";
+import { apiFetch } from "../lib/apiClient";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const SEGMENT_STYLES = {
   "high-value": "bg-stone-900 text-white",
@@ -126,8 +125,7 @@ export default function AdminCustomers() {
   useEffect(() => {
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers`, { headers });
+        const res = await apiFetch(`customers`, { auth: true });
         const json = await res.json();
         if (!json.success) {
           throw new Error(json.error || "Failed to load customers");
@@ -148,11 +146,7 @@ export default function AdminCustomers() {
     setSendingReminderId(customerId);
 
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/customers/${customerId}/send-reminder`, {
-        method: "POST",
-        headers,
-        credentials: "include",
+      const res = await apiFetch(`customers/${customerId}/send-reminder`, { auth: true, method: "POST",
       });
 
       const data = await res.json();

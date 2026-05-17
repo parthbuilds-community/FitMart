@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessCenterDetail from "./FitnessCenterDetail";
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function Stars({ rating = 0 }) {
   const full = Math.floor(rating || 0);
@@ -34,9 +33,8 @@ export default function NearbyFitnessCenters({ visible = true }) {
     (async () => {
       setLoading(true);
       try {
-        const headers = await getAuthHeaders();
         const q = filter && filter !== "all" ? `?type=${filter}` : "";
-        const res = await fetch(`${API}/api/fitness-centers/nearby${q}`, { headers, credentials: "include" });
+        const res = await apiFetch(`fitness-centers/nearby${q}`, { auth: true });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setCenters(data.slice(0, 5));

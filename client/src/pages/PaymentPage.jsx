@@ -2,10 +2,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 function useRazorpayScript() {
@@ -53,11 +52,7 @@ export default function PaymentPage() {
 
   const finishOrder = async (userId, paymentId) => {
     try {
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/payment/clear-cart`, {
-        method: "POST",
-        headers,
-        credentials: "include",
+      await apiFetch(`payment/clear-cart`, { auth: true, method: "POST",
         body: JSON.stringify({ userId }),
       });
     } catch (err) {
@@ -66,11 +61,7 @@ export default function PaymentPage() {
 
     if (discountApplied) {
       try {
-        const headers = await getAuthHeaders();
-        await fetch(`${API}/api/user/use-discount`, {
-          method: "POST",
-          headers,
-          credentials: "include",
+        await apiFetch(`user/use-discount`, { auth: true, method: "POST",
           body: JSON.stringify({ userId }),
         });
       } catch (err) {
@@ -89,10 +80,9 @@ export default function PaymentPage() {
     setBypassing(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/api/payment/demo-success`, {
+      const res = await apiFetch(`/payment/demo-success`, {
+        auth: true,
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ userId: user.uid }),
       });
       if (!res.ok) throw new Error("Demo order failed");
@@ -113,11 +103,7 @@ export default function PaymentPage() {
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
-      const orderRes = await fetch(`${API}/api/payment/create-order`, {
-        method: "POST",
-        headers,
-        credentials: "include",
+      const orderRes = await apiFetch(`payment/create-order`, { auth: true, method: "POST",
         body: JSON.stringify({ amount: total, currency: "INR", userId }),
       });
       if (!orderRes.ok) {
@@ -137,11 +123,7 @@ export default function PaymentPage() {
         theme: { color: "#1c1917" },
         handler: async (response) => {
           try {
-            const headers = await getAuthHeaders();
-            const verifyRes = await fetch(`${API}/api/payment/verify-payment`, {
-              method: "POST",
-              headers,
-              credentials: "include",
+            const verifyRes = await apiFetch(`payment/verify-payment`, { auth: true, method: "POST",
               body: JSON.stringify({ ...response, userId }),
             });
             if (!verifyRes.ok) throw new Error("Payment verification failed");
