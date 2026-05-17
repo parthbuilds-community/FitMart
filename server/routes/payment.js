@@ -77,6 +77,14 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
       return res.status(400).json({ error: "Missing required payment fields" });
 
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    if (req.user.uid !== userId) {
+      return res.status(403).json({
+        error: "Forbidden — you can only verify payments for your own account",
+      });
+    }
+
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
