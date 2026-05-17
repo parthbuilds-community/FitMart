@@ -20,4 +20,6 @@ const BugSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+BugSchema.index({ status: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Bug', BugSchema);

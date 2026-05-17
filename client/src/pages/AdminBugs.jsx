@@ -77,14 +77,39 @@ const BugMobileCard = ({ bug, index, onClick, onStatusClick }) => (
   </div>
 );
 
+const STATUS_FILTERS = [
+  { value: "", label: "All" },
+  { value: "open", label: "Open" },
+  { value: "in-progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+];
+
+const PAGE_SIZE = 20;
+
 export default function AdminBugs() {
   const { user, loading } = useAuth();
   const [bugs, setBugs] = useState([]);
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loadingBugs, setLoadingBugs] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [summary, setSummary] = useState({ open: 0, "in-progress": 0, resolved: 0 });
   // Mobile status picker state: { id, status }
   const [mobilePicker, setMobilePicker] = useState(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, debouncedSearch]);
 
   const openMobilePicker = (bug) => {
     setMobilePicker({ id: bug._id, status: bug.status });
@@ -125,28 +150,38 @@ export default function AdminBugs() {
     if (loading || !user) return;
     let mounted = true;
     setLoadingBugs(true);
+    setError(null);
     (async () => {
       try {
         const token = await user.getIdToken();
-        const res = await fetch(`${API}/api/bugs`, { headers: { Authorization: `Bearer ${token}` } });
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(PAGE_SIZE),
+        });
+        if (statusFilter) params.set("status", statusFilter);
+        if (debouncedSearch) params.set("search", debouncedSearch);
+
+        const res = await fetch(`${API}/api/bugs?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!res.ok) throw new Error('Failed to fetch');
         const body = await res.json();
-        if (mounted) setBugs(body.bugs || []);
+        if (!mounted) return;
+        setBugs(body.bugs || []);
+        setTotal(body.total ?? 0);
+        setTotalPages(body.totalPages ?? 1);
+        setSummary(body.summary || { open: 0, "in-progress": 0, resolved: 0 });
       } catch (err) {
         console.error(err);
-        setError('Unable to load bug reports');
+        if (mounted) setError('Unable to load bug reports');
       } finally {
         if (mounted) setLoadingBugs(false);
       }
     })();
     return () => { mounted = false; };
-  }, [loading, user]);
+  }, [loading, user, statusFilter, debouncedSearch, page]);
 
-  // Derived metrics for visualizations
-  const statusCounts = bugs.reduce((acc, bug) => {
-    acc[bug.status] = (acc[bug.status] || 0) + 1;
-    return acc;
-  }, {});
+  const statusCounts = summary;
 
   // sort bugs: open -> in-progress -> resolved, then new -> old
   const order = { open: 0, 'in-progress': 1, resolved: 2 };
@@ -184,12 +219,26 @@ export default function AdminBugs() {
           </div>
         )}
 
+        <p className="text-sm text-stone-500 mb-6 sm:mb-8">
+          {loadingBugs ? (
+            "Loading summary…"
+          ) : (
+            <>
+              <span className="font-medium text-stone-800">{summary.open}</span> open
+              {" / "}
+              <span className="font-medium text-stone-800">{summary["in-progress"]}</span> in progress
+              {" / "}
+              <span className="font-medium text-stone-800">{summary.resolved}</span> resolved
+            </>
+          )}
+        </p>
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-5 mb-8 sm:mb-10">
           {[
-            { label: "Total Reports", value: bugs.length, icon: "◎" },
-            { label: "Open", value: bugs.filter(b => b.status === "open").length, icon: "⭑" },
-            { label: "Resolved", value: bugs.filter(b => b.status === "resolved").length, icon: "✓" },
+            { label: "Total Reports", value: summary.open + summary["in-progress"] + summary.resolved, icon: "◎" },
+            { label: "Open", value: summary.open, icon: "⭑" },
+            { label: "Resolved", value: summary.resolved, icon: "✓" },
           ].map(({ label, value, icon }) => (
             <div key={label}
               className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7
@@ -218,7 +267,8 @@ export default function AdminBugs() {
             <div className="space-y-3">
               {['open', 'in-progress', 'resolved'].map(status => {
                 const count = statusCounts[status] || 0;
-                const pct = bugs.length ? Math.round((count / bugs.length) * 100) : 0;
+                const totalAll = summary.open + summary["in-progress"] + summary.resolved;
+                const pct = totalAll ? Math.round((count / totalAll) * 100) : 0;
                 return (
                   <div key={status} className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${status === 'open' ? 'bg-stone-900' : status === 'in-progress' ? 'bg-stone-100 border border-stone-300' : 'bg-stone-100'}`} />
@@ -261,15 +311,48 @@ export default function AdminBugs() {
         {/* Bug list card */}
         <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden
                         hover:border-stone-300 transition-all duration-300">
-          <div className="px-4 sm:px-7 py-4 sm:py-5 border-b border-stone-100
-                          flex justify-between items-center">
-            <div>
-              <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">Directory</p>
-              <h2 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-xl text-stone-900">
-                All Reports
-              </h2>
+          <div className="px-4 sm:px-7 py-4 sm:py-5 border-b border-stone-100 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">Directory</p>
+                <h2 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-xl text-stone-900">
+                  All Reports
+                </h2>
+              </div>
+              {!loadingBugs && (
+                <p className="text-xs text-stone-400">
+                  {total} report{total !== 1 ? "s" : ""}
+                  {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ""}
+                </p>
+              )}
             </div>
-            {!loadingBugs && <p className="text-xs text-stone-400">{bugs.length} reports</p>}
+
+            <div className="flex flex-wrap gap-2">
+              {STATUS_FILTERS.map(({ value, label }) => (
+                <button
+                  key={value || "all"}
+                  type="button"
+                  onClick={() => setStatusFilter(value)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    statusFilter === value
+                      ? "bg-stone-900 text-white"
+                      : "border border-stone-200 text-stone-600 hover:border-stone-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, reporter, or page URL…"
+              className="w-full sm:max-w-md px-3 py-2 text-sm border border-stone-200 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-stone-300"
+              aria-label="Search bug reports"
+            />
           </div>
 
           {/* Mobile card list */}
@@ -458,6 +541,30 @@ export default function AdminBugs() {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="px-4 sm:px-7 py-4 border-t border-stone-100 flex items-center justify-between gap-4">
+              <button
+                type="button"
+                disabled={page <= 1 || loadingBugs}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 text-xs border border-stone-200 rounded-lg disabled:opacity-40 hover:bg-stone-50"
+              >
+                Previous
+              </button>
+              <span className="text-xs text-stone-500">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalPages || loadingBugs}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="px-3 py-1.5 text-xs border border-stone-200 rounded-lg disabled:opacity-40 hover:bg-stone-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
