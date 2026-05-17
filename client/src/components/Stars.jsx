@@ -1,4 +1,5 @@
 import { useId } from "react";
+import PropTypes from "prop-types";
 
 const starPath = "M12 .587l3.668 7.431L24 9.748l-6 5.847L19.335 24 12 19.897 4.665 24 6 15.595 0 9.748l8.332-1.73L12 .587z";
 
@@ -36,3 +37,8 @@ export default function Stars({ rating = 0, size = "sm" }) {
     </span>
   );
 }
+
+Stars.propTypes = {
+  rating: PropTypes.number,
+  size: PropTypes.oneOf(["sm", "lg"]),
+};
