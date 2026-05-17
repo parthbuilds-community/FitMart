@@ -464,9 +464,16 @@ npm run dev
 ### Server — `server/.env`
 
 ```env
-# Required
+# Required — server exits if missing
 MONGO_URI=<your_mongodb_connection_string>
 PORT=5000
+
+# Required for authentication — provide inline Firebase vars OR a credentials file
+FIREBASE_PROJECT_ID=<your_firebase_project_id>
+FIREBASE_CLIENT_EMAIL=<your_firebase_client_email>
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+# Alternative to the three FIREBASE_* vars above:
+GOOGLE_APPLICATION_CREDENTIALS=./path/to/firebase-service-account.json
 
 # Optional — payment processing
 RAZORPAY_KEY_ID=<your_razorpay_key_id>
@@ -477,11 +484,6 @@ MONGO_DB=<your_database_name>
 
 # CORS
 ALLOWED_ORIGIN=http://localhost:5173    # comma-separate multiple origins
-
-# Firebase Admin SDK (required for auth middleware)
-FIREBASE_PROJECT_ID=<your_firebase_project_id>
-FIREBASE_CLIENT_EMAIL=<your_firebase_client_email>
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
 # Admin UID (used by bug routes to guard admin actions)
 ADMIN_UID=<firebase_uid_of_admin_account>
@@ -503,17 +505,16 @@ SMTP_FROM=noreply@fitmart.com
 APP_BASE_URL=http://localhost:5173
 ```
 
-> **Startup behaviour:** The server validates environment variables on startup. `MONGO_URI` is the only truly critical variable — the server will exit if it's missing. All other variables are optional; missing ones produce a warning and disable the corresponding feature gracefully.
+> **Startup behaviour:** The server validates environment variables on startup. `MONGO_URI` is required — the server exits if it is missing. Firebase credentials are required for auth: set all three `FIREBASE_*` variables **or** `GOOGLE_APPLICATION_CREDENTIALS` pointing at your service-account JSON. If neither is configured, startup continues but logs an error and auth-protected routes will not work. Other variables (Razorpay, SMTP, RapidAPI, etc.) are optional; missing ones produce a warning and disable the corresponding feature gracefully. See `server/.env.example` for the full list.
 
 #### Getting Firebase Admin Credentials
 
 1. Go to [Firebase Console](https://console.firebase.google.com) → **Project Settings** → **Service Accounts**
 2. Select **Node.js** and click **"Generate new private key"**
-3. A `.json` file downloads — copy these values:
-   - `project_id` → `FIREBASE_PROJECT_ID`
-   - `client_email` → `FIREBASE_CLIENT_EMAIL`
-   - `private_key` → `FIREBASE_PRIVATE_KEY` (wrap in double quotes, keep all `\n`)
-4. **Delete the `.json` file** — never commit it to GitHub
+3. A `.json` file downloads — either:
+   - Set `GOOGLE_APPLICATION_CREDENTIALS` to its path (recommended for local dev), **or**
+   - Copy values into `.env`: `project_id` → `FIREBASE_PROJECT_ID`, `client_email` → `FIREBASE_CLIENT_EMAIL`, `private_key` → `FIREBASE_PRIVATE_KEY` (wrap in double quotes, keep all `\n`)
+4. **Never commit** the service-account JSON to GitHub (it is listed in `.gitignore`)
 
 #### Getting a Gemini API Key
 

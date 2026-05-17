@@ -21,14 +21,16 @@ if (isDev) {
 // to avoid failing entirely in environments where optional services (Razorpay)
 // are intentionally not configured (for example: demo deployments on Vercel).
 const CRITICAL_ENV_VARS = ["MONGO_URI"];
+const FIREBASE_INLINE_VARS = [
+  "FIREBASE_PROJECT_ID",
+  "FIREBASE_CLIENT_EMAIL",
+  "FIREBASE_PRIVATE_KEY",
+];
 const OPTIONAL_ENV_VARS = [
   "RAZORPAY_KEY_ID",
   "RAZORPAY_KEY_SECRET",
   "MONGO_DB",
   "PORT",
-  "FIREBASE_PROJECT_ID",
-  "FIREBASE_CLIENT_EMAIL",
-  "FIREBASE_PRIVATE_KEY",
   "SMTP_HOST",
   "SMTP_PORT",
   "SMTP_USER",
@@ -36,6 +38,8 @@ const OPTIONAL_ENV_VARS = [
 ];
 
 const missingCritical = CRITICAL_ENV_VARS.filter((v) => !process.env[v]);
+const hasInlineFirebase = FIREBASE_INLINE_VARS.every((v) => process.env[v]);
+const hasGoogleAppCreds = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 const missingOptional = OPTIONAL_ENV_VARS.filter((v) => !process.env[v]);
 
 if (missingCritical.length > 0) {
@@ -46,6 +50,15 @@ if (missingCritical.length > 0) {
     "Server cannot start without these. Please set them in your environment.",
   );
   process.exit(1);
+}
+
+if (!hasInlineFirebase && !hasGoogleAppCreds) {
+  console.error(
+    "❌ Firebase Admin credentials missing. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY, or set GOOGLE_APPLICATION_CREDENTIALS to a service-account JSON path.",
+  );
+  console.error(
+    "Authentication and protected API routes will not work until Firebase is configured.",
+  );
 }
 
 if (missingOptional.length > 0) {
