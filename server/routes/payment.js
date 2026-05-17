@@ -7,6 +7,7 @@ const router = express.Router();
 
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const UserProfile = require("../models/UserProfile");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
 const { createOrder } = require("../services/orderService");
@@ -72,10 +73,33 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
  */
 router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      userId,
+      discountApplied,
+    } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
       return res.status(400).json({ error: "Missing required payment fields" });
+
+    if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    if (req.user.uid !== userId) {
+      return res.status(403).json({
+        error: "Forbidden — you can only verify payment for your own account",
+      });
+    }
+
+    if (discountApplied) {
+      const profile = await claimWelcomeDiscount(userId);
+      if (!profile) {
+        return res.status(400).json({
+          error: "Welcome discount already used or not available",
+        });
+      }
+    }
 
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -160,8 +184,17 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  */
 router.post("/demo-success", async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, discountApplied } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    if (discountApplied) {
+      const profile = await claimWelcomeDiscount(userId);
+      if (!profile) {
+        return res.status(400).json({
+          error: "Welcome discount already used or not available",
+        });
+      }
+    }
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
