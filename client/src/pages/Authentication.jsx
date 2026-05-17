@@ -12,7 +12,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { auth } from "../auth/firebase";
-import { useGithubStats } from "../utils/useGithubStats";
+import { fetchGithubStats } from "../utils/githubStats";
 
 const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
 const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
@@ -68,6 +68,20 @@ export default function Authentication() {
   }, [resendTimer]);
 
   // Poll for email verification if waiting on pending-verification screen
+  const [gitStats, setGitStats] = useState({
+    stars: "105",
+    forks: "144",
+    contributors: "20",
+    commits: "82+",
+  });
+
+  useEffect(() => {
+    (async () => {
+      const stats = await fetchGithubStats();
+      setGitStats(stats);
+    })();
+  }, []);
+
   useEffect(() => {
     let pollInterval = null;
     if (mode === "pending-verification" && auth.currentUser) {
@@ -244,10 +258,10 @@ export default function Authentication() {
 
         <div className="grid grid-cols-2 gap-4">
           {[
-            { v: formatStat(ghStats.stars, ghLoading), l: "Github Stars" },
-            { v: formatStat(ghStats.forks, ghLoading), l: "Forks" },
-            { v: formatStat(ghStats.contributors, ghLoading), l: "Contributors" },
-            { v: formatStat(ghStats.commits, ghLoading), l: "Commits" },
+            { v: gitStats.stars, l: "Github Stars" },
+            { v: gitStats.forks, l: "Forks" },
+            { v: gitStats.contributors, l: "Contributors" },
+            { v: gitStats.commits, l: "Commits" },
           ].map((s, i) => (
             <div key={i} className="bg-stone-800 rounded-xl p-4">
               <div className="font-['DM_Serif_Display'] text-2xl text-white">{s.v}</div>
