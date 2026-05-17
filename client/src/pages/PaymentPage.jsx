@@ -89,9 +89,10 @@ export default function PaymentPage() {
     setBypassing(true);
     setError(null);
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API}/api/payment/demo-success`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...headers, "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ userId: user.uid }),
       });

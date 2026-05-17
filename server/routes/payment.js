@@ -156,12 +156,22 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  * @route   POST /demo-success
  * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
  *          and returns success without creating an order
- * @access  Public (TESTING ONLY) - No authentication required
+ * @access  Private (dev/test) — requires Firebase token; uid must match body.userId
  */
-router.post("/demo-success", async (req, res) => {
+router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return res.status(404).json({ error: "Not found" });
+    }
+
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    if (req.user.uid !== userId) {
+      return res.status(403).json({
+        error: "Forbidden — you can only complete demo checkout for your own account",
+      });
+    }
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
