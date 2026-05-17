@@ -1,5 +1,6 @@
 // src/components/CartDrawer.jsx
 import { useEffect } from "react";
+import PropTypes from "prop-types";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
 
@@ -226,5 +227,24 @@ function CartDrawer({
     </>
   );
 }
+
+const cartItemShape = PropTypes.shape({
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  name: PropTypes.string,
+  brand: PropTypes.string,
+  image: PropTypes.string,
+  price: PropTypes.number,
+  qty: PropTypes.number,
+});
+
+CartDrawer.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  cart: PropTypes.arrayOf(cartItemShape).isRequired,
+  cartCount: PropTypes.number.isRequired,
+  cartTotal: PropTypes.number.isRequired,
+  updateQty: PropTypes.func.isRequired,
+  removeFromCart: PropTypes.func.isRequired,
+};
 
 export default CartDrawer;
