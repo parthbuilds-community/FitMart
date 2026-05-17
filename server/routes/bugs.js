@@ -91,11 +91,56 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
   }
 });
 
-// ── GET /api/bugs — admin only ────────────────────────────────────────────
-router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
+// ── GET /api/bugs — admin only (filter, search, pagination) ───────────────
+router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-    const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
-    res.json({ ok: true, bugs });
+    const status = req.query.status;
+    const search = String(req.query.search || '').trim();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+
+    const filter = {};
+    if (status && ['open', 'in-progress', 'resolved'].includes(status)) {
+      filter.status = status;
+    }
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(escaped, 'i');
+      filter.$or = [
+        { title: pattern },
+        { reporterName: pattern },
+        { pageUrl: pattern },
+      ];
+    }
+
+    const summaryFilter = search ? { $or: filter.$or } : {};
+    const [total, open, inProgress, resolved] = await Promise.all([
+      Bug.countDocuments(filter),
+      Bug.countDocuments({ ...summaryFilter, status: 'open' }),
+      Bug.countDocuments({ ...summaryFilter, status: 'in-progress' }),
+      Bug.countDocuments({ ...summaryFilter, status: 'resolved' }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const safePage = Math.min(page, totalPages);
+    const bugs = await Bug.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((safePage - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      ok: true,
+      bugs,
+      page: safePage,
+      limit,
+      total,
+      totalPages,
+      summary: {
+        open,
+        'in-progress': inProgress,
+        resolved,
+      },
+    });
   } catch (err) {
     console.error('Error fetching bugs:', err);
     res.status(500).json({ error: 'Failed to fetch bugs' });
