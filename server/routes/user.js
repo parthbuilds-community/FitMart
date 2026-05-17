@@ -6,7 +6,16 @@ const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const ensureOwnership = require("../middleware/ensureOwnership");
 const router = express.Router();
+
+const profileOwnership = ensureOwnership({
+  message: "Forbidden — you can only access your own profile",
+});
+const bodyUserOwnership = ensureOwnership({
+  source: "body",
+  message: "Forbidden — you can only modify your own account",
+});
 
 // Use memory storage for serverless environments
 const storage = multer.memoryStorage();
@@ -98,7 +107,7 @@ router.post("/login", async (req, res) => {
 // Called when user dismisses the welcome banner.
 // Flips isFirstLogin → false so it never shows again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/dismiss-banner", async (req, res) => {
+router.post("/dismiss-banner", verifyFirebaseToken, bodyUserOwnership, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -122,7 +131,7 @@ router.post("/dismiss-banner", async (req, res) => {
 // Called after a successful first order.
 // Flips discountUsed → true so it can't be used again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/use-discount", async (req, res) => {
+router.post("/use-discount", verifyFirebaseToken, bodyUserOwnership, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -150,7 +159,7 @@ router.post("/use-discount", async (req, res) => {
 // Returns current discount eligibility for a user.
 // Used by Checkout to decide whether to apply the 10% discount.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/discount-status/:userId", async (req, res) => {
+router.get("/discount-status/:userId", verifyFirebaseToken, profileOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     const profile = await UserProfile.findOne({ userId });
@@ -175,7 +184,7 @@ router.get("/discount-status/:userId", async (req, res) => {
 // GET /api/user/profile/:userId
 // Returns stored profile (including addresses) for a user
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/profile/:userId", async (req, res) => {
+router.get("/profile/:userId", verifyFirebaseToken, profileOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -195,7 +204,7 @@ router.get("/profile/:userId", async (req, res) => {
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", async (req, res) => {
+router.put("/profile/:userId", verifyFirebaseToken, profileOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -224,7 +233,12 @@ router.put("/profile/:userId", async (req, res) => {
 // Authenticated endpoint to upload profile photo to Cloudinary
 // Body: multipart form-data with 'photo' field
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo"), async (req, res) => {
+router.post(
+  "/upload-photo/:userId",
+  verifyFirebaseToken,
+  profileOwnership,
+  upload.single("photo"),
+  async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
