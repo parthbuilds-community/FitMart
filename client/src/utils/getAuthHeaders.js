@@ -1,6 +1,6 @@
 // src/utils/getAuthHeaders.js
 // Returns { Authorization: "Bearer <token>" } for authenticated API calls.
-// Import this wherever you make cart/user API requests.
+// This helper is consumed by src/lib/apiClient.js so auth header wiring stays centralized.
 
 import { auth } from "../auth/firebase";
 

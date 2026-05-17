@@ -3,10 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function Toast({ message, onClose }) {
   useEffect(() => {
@@ -130,8 +129,7 @@ export default function Profile() {
       setPhotoURL(user.photoURL);
       setLoading(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/profile/${user.uid}`, { headers, credentials: "include" });
+        const res = await apiFetch(`/api/user/profile/${user.uid}`, { auth: true, credentials: "include" });
         if (!res.ok) throw new Error("Failed to load profile");
         const data = await res.json();
         setProfile({
@@ -156,15 +154,14 @@ export default function Profile() {
   // Fetch orders when orders tab is active
   useEffect(() => {
     if (activeTab !== "orders") return;
-    
+
     const fetchOrders = async () => {
       const user = auth.currentUser;
       if (!user) return;
-      
+
       setLoadingOrders(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
+        const res = await apiFetch(`/api/orders/${user.uid}`, { auth: true, credentials: "include" });
         if (!res.ok) throw new Error("Failed to load orders");
         const data = await res.json();
         setOrders(Array.isArray(data) ? data : []);
@@ -185,17 +182,16 @@ export default function Profile() {
     setError(null);
     setSaving(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/profile/${user.uid}`, {
+      const res = await apiFetch(`/api/user/profile/${user.uid}`, {
+        auth: true,
         method: "PUT",
-        headers,
         credentials: "include",
-        body: JSON.stringify({
+        body: {
           name: profile.name,
           phone: profile.phone,
           addresses: profile.addresses,
           defaultAddressId: profile.defaultAddressId,
-        }),
+        },
       });
       if (!res.ok) throw new Error("Failed to save profile");
       const data = await res.json();
@@ -223,12 +219,9 @@ export default function Profile() {
       const formData = new FormData();
       formData.append("photo", file);
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/upload-photo/${user.uid}`, {
+      const res = await apiFetch(`/api/user/upload-photo/${user.uid}`, {
+        auth: true,
         method: "POST",
-        headers: {
-          "Authorization": headers.Authorization,
-        },
         credentials: "include",
         body: formData,
       });
@@ -503,10 +496,10 @@ export default function Profile() {
                     <div className="flex justify-between items-start gap-4 mb-3">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-stone-900">
-                          {new Date(order.createdAt).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
+                          {new Date(order.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
                           })}
                         </p>
                         <p className="text-xs text-stone-400 mt-0.5">
@@ -517,8 +510,8 @@ export default function Profile() {
                         <div className="text-right">
                           <p className="text-sm font-medium text-stone-900">₹{order.total.toFixed(2)}</p>
                           <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full ${
-                            order.status === 'paid' 
-                              ? 'bg-green-50 text-green-700' 
+                            order.status === 'paid'
+                              ? 'bg-green-50 text-green-700'
                               : order.status === 'failed'
                               ? 'bg-red-50 text-red-700'
                               : 'bg-stone-100 text-stone-600'

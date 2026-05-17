@@ -2,10 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 
 const LOW_STOCK_THRESHOLD = 5;
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const statusConfig = (p) => {
   const isUnavailable = p.stock === null;
@@ -124,8 +123,7 @@ export default function AdminInventory() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products`, { headers });
+      const res = await apiFetch(`/api/products`, { auth: true });
       const data = await res.json();
       setProducts(data);
       setLoading(false);
@@ -201,11 +199,10 @@ export default function AdminInventory() {
         }
       }
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products/${id}`, {
+      const res = await apiFetch(`/api/products/${id}`, {
+        auth: true,
         method: 'PUT',
-        headers,
-        body: JSON.stringify(payload),
+        body: payload,
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
