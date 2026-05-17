@@ -64,20 +64,6 @@ export default function PaymentPage() {
       console.error('clear-cart failed:', err);
     }
 
-    if (discountApplied) {
-      try {
-        const headers = await getAuthHeaders();
-        await fetch(`${API}/api/user/use-discount`, {
-          method: "POST",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({ userId }),
-        });
-      } catch (err) {
-        console.error("use-discount error:", err);
-      }
-    }
-
     navigate("/payment-confirmation", {
       state: { items, total, subtotal, discountAmt, discountPercent, discountApplied, paymentId, address },
     });
@@ -89,11 +75,12 @@ export default function PaymentPage() {
     setBypassing(true);
     setError(null);
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`${API}/api/payment/demo-success`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         credentials: "include",
-        body: JSON.stringify({ userId: user.uid }),
+        body: JSON.stringify({ userId: user.uid, discountApplied }),
       });
       if (!res.ok) throw new Error("Demo order failed");
       const data = await res.json();
@@ -142,7 +129,7 @@ export default function PaymentPage() {
               method: "POST",
               headers,
               credentials: "include",
-              body: JSON.stringify({ ...response, userId }),
+              body: JSON.stringify({ ...response, userId, discountApplied }),
             });
             if (!verifyRes.ok) throw new Error("Payment verification failed");
             await finishOrder(userId, response.razorpay_payment_id);
