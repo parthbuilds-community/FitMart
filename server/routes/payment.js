@@ -173,19 +173,28 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
 // POST /demo-success   ← DEV / TEST ONLY — disabled in production
 // Body: { userId }
 // Skips Razorpay entirely, fakes a payment ID, clears cart, returns success.
-// NOTE: This route does NOT require Firebase authentication for testing purposes
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * @route   POST /demo-success
  * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
  *          and returns success without creating an order
- * @access  Public (TESTING ONLY) - No authentication required
+ * @access  Private (dev/test) — requires Firebase token; uid must match body.userId
  */
-router.post("/demo-success", async (req, res) => {
+router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return res.status(404).json({ error: "Not found" });
+    }
+
     const { userId, discountApplied } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    if (req.user.uid !== userId) {
+      return res.status(403).json({
+        error: "Forbidden — you can only complete demo checkout for your own account",
+      });
+    }
 
     if (discountApplied) {
       const profile = await claimWelcomeDiscount(userId);
