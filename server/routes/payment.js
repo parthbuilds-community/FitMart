@@ -137,6 +137,12 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
+    if (req.user.uid !== userId) {
+      return res.status(403).json({
+        error: "Forbidden — you can only clear your own cart",
+      });
+    }
+
     await releaseAndClearCart(userId);
     res.json({ success: true });
   } catch (err) {
