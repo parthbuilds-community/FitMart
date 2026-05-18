@@ -189,6 +189,8 @@ export default function HomePage() {
   const [backendError, setBackendError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const feedbackRef = useRef(null);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
 
@@ -197,6 +199,8 @@ export default function HomePage() {
     debounceRef.current = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(debounceRef.current);
   }, [searchQuery]);
+
+  useEffect(() => () => clearTimeout(feedbackRef.current), []);
 
   useEffect(() => { document.title = "FitMart - Fitness & Nutrition Store"; }, []);
 
@@ -250,6 +254,12 @@ export default function HomePage() {
   const handleSignOut = async () => {
     await signOut(auth);
     navigate("/");
+  };
+
+  const showFeedback = (message) => {
+    clearTimeout(feedbackRef.current);
+    setFeedback(message);
+    feedbackRef.current = setTimeout(() => setFeedback(""), 2400);
   };
 
   const addToCart = async (product) => {
@@ -403,7 +413,9 @@ export default function HomePage() {
               Build something <em className="not-italic text-stone-400">stronger</em> today.
             </h1>
             <div className="flex flex-wrap gap-2 sm:gap-3">
-              <button className="text-sm bg-white text-stone-900 px-5 sm:px-6 py-2.5 rounded-full
+              <button
+                onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
+                className="text-sm bg-white text-stone-900 px-5 sm:px-6 py-2.5 rounded-full
                                  hover:bg-stone-100 transition-colors">
                 Shop Now
               </button>
@@ -422,7 +434,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-10 space-y-12 sm:space-y-16">
 
         {/* ── Products section ── */}
-        <section>
+        <section id="products">
           <div className={`fade-in d1 ${visible ? "show" : ""}
                            flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6`}>
             <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl text-stone-900">
@@ -552,7 +564,9 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+            <button
+              onClick={() => showFeedback("FitRewards details are coming soon.")}
+              className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
                                hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
                                text-center">
               Learn More
@@ -593,7 +607,9 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <button
+                  onClick={() => showFeedback(`${p.tier} memberships are coming soon.`)}
+                  className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
                                    transition-all self-start min-h-10">
                   {p.cta}
@@ -611,15 +627,32 @@ export default function HomePage() {
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
+            {[
+              { label: "Privacy", action: () => navigate("/privacy") },
+              { label: "Terms", action: () => navigate("/terms") },
+              { label: "Support", action: () => showFeedback("Support options are coming soon.") },
+            ].map(({ label, action }) => (
+              <button key={label}
+                onClick={action}
                 className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
+                {label}
               </button>
             ))}
           </div>
         </div>
       </footer>
+
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+        {feedback && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-stone-900 text-white text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-lg"
+          >
+            {feedback}
+          </div>
+        )}
+      </div>
 
       <CartDrawer
         isOpen={cartOpen} onClose={() => setCartOpen(false)}
