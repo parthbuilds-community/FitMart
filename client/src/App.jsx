@@ -29,7 +29,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        // Public routes (redirect admin users to admin dashboard)
+        {/* Public routes (redirect admin users to admin dashboard) */}
         <Route path="/" element={<NonAdminRoute><LandingPage /></NonAdminRoute>} />
         <Route path="/auth" element={<Authentication />} />
         <Route path="/home" element={<NonAdminRoute><HomePage /></NonAdminRoute>} />
@@ -103,7 +103,7 @@ export default function App() {
           }
         />
 
-        // Redirect unknown routes to NotFound
+        {/* Redirect unknown routes to NotFound */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
