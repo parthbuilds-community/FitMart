@@ -34,7 +34,7 @@ export default function Checkout() {
         const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
           fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
           fetch(`${API}/api/products`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
+          fetch(`${API}/api/user/discount-status/${userId}`, { headers, credentials: "include" }),
           fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
         ]);
 
@@ -110,10 +110,6 @@ export default function Checkout() {
 
   return (
     <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-      `}</style>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">
 
         {/* Back + heading */}
