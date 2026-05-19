@@ -2,10 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiRequest } from "../lib/apiClient";
 
 const LOW_STOCK_THRESHOLD = 5;
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const statusConfig = (p) => {
   const isUnavailable = p.stock === null;
@@ -124,9 +123,7 @@ export default function AdminInventory() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products`, { headers });
-      const data = await res.json();
+      const data = await apiRequest("/api/products", { auth: true });
       setProducts(data);
       setLoading(false);
     } catch (err) {
@@ -201,16 +198,12 @@ export default function AdminInventory() {
         }
       }
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products/${id}`, {
+      await apiRequest(`/api/products/${id}`, {
         method: 'PUT',
-        headers,
-        body: JSON.stringify(payload),
+        auth: true,
+        body: payload,
+        fallbackErrorMessage: 'Save failed',
       });
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || 'Save failed');
-      }
       // refresh full list from server to ensure consistency
       await fetchProducts();
       setSaving(false);
