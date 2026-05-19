@@ -4,15 +4,10 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
+import { useGithubStats } from "../utils/useGithubStats";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// ── Static data ────────────────────────────────────────────────────────────
-// Real repo stats from GitHub API
-const STATS = [
-  { value: "16", label: "GitHub Stars" },
-  { value: "21", label: "Forks" },
-  { value: "20", label: "Contributors" },
-  { value: "65+", label: "Commits" },
-];
+const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
 const CATEGORIES = [
   {
@@ -90,7 +85,7 @@ const InstagramIcon = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
-const GITHUB_REPO = "https://github.com/parthnarkar/FitMart";
+const GITHUB_REPO = "https://github.com/parthbuilds-community/FitMart";
 const INSTAGRAM = "https://instagram.com/parth.builds";
 
 export default function LandingPage() {
@@ -103,6 +98,17 @@ export default function LandingPage() {
   const categoriesRef = useRef(null);
   const programsRef = useRef(null);
   const aboutRef = useRef(null);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [backendError, setBackendError] = useState(false);
+
+  const { stats: ghStats, loading: ghLoading } = useGithubStats();
+  const STATS = [
+    { value: formatStat(ghStats.stars, ghLoading), label: "GitHub Stars" },
+    { value: formatStat(ghStats.forks, ghLoading), label: "Forks" },
+    { value: formatStat(ghStats.contributors, ghLoading), label: "Contributors" },
+    { value: formatStat(ghStats.commits, ghLoading), label: "Commits" },
+  ];
 
   useEffect(() => {
     document.title = "FitMart - Fitness & Nutrition Store";
@@ -118,6 +124,25 @@ export default function LandingPage() {
   useEffect(() => {
     const t = setInterval(() => setActiveTestimonial(p => (p + 1) % TESTIMONIALS.length), 4000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      setLoadingProducts(true);
+      setBackendError(false);
+      try {
+        const res = await fetch(`${API}/api/products`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setProducts(data.map(p => ({ ...p, id: p.productId || p.id })));
+      } catch (err) {
+        console.error("Error loading products:", err);
+        setBackendError(true);
+        setProducts([]);
+      } finally {
+        setLoadingProducts(false);
+      }
+    })();
   }, []);
 
   const navOpaque = scrollY > 60;
@@ -150,6 +175,8 @@ export default function LandingPage() {
         navOpaque={navOpaque}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
+        ghStats={ghStats}
+        ghLoading={ghLoading}
       />
 
       {/* ── HERO ── */}
@@ -202,7 +229,7 @@ export default function LandingPage() {
                 onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
                 className="bg-stone-900 text-white text-sm px-8 py-3.5 rounded-full
                            hover:bg-stone-700 transition-colors w-full sm:w-auto text-center
-                           min-h-[48px] active:scale-[0.98]"
+                           min-h-12 active:scale-[0.98]"
               >
                 Start Shopping
               </button>
@@ -215,14 +242,14 @@ export default function LandingPage() {
                 className="gh-star-btn flex items-center justify-center gap-2 text-sm px-6 py-3.5
                 rounded-full border border-stone-200 text-stone-600
                 hover:bg-stone-900 hover:text-white hover:border-stone-900
-                transition-all w-full sm:w-auto min-h-[48px] active:scale-[0.98]"
+                transition-all w-full sm:w-auto min-h-12 active:scale-[0.98]"
               >
                 <GithubIcon />
                 <StarIcon className="w-3.5 h-3.5" />
                 <span>Star on GitHub</span>
                 <span className="bg-stone-100 text-stone-700 text-xs px-2 py-0.5 rounded-full
-                                   font-medium min-w-[28px] text-center group-hover:bg-stone-800">
-                  16
+                                   font-medium min-w-7 text-center group-hover:bg-stone-800">
+                  {formatStat(ghStats.stars, ghLoading)}
                 </span>
               </a>
             </div>
@@ -296,7 +323,7 @@ export default function LandingPage() {
                 </div>
                 <button
                   className={`mt-6 sm:mt-8 self-start text-xs border px-5 py-2.5 rounded-full
-                                transition-colors ${c.btn} min-h-[40px] active:scale-[0.97]`}
+                                transition-colors ${c.btn} min-h-10 active:scale-[0.97]`}
                   onClick={e => {
                     e.stopPropagation();
                     navigate("/home", { state: { category: c.filter } });
@@ -307,6 +334,54 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+      {/* ── FEATURED PRODUCTS (first 4) ── */}
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+          <div className="mb-6 sm:mb-8">
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Featured</p>
+            <h2 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl text-stone-900">
+              Popular products
+            </h2>
+          </div>
+
+          {loadingProducts ? (
+            <div className="text-center py-12 text-stone-400">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4
+                              border-stone-300 border-t-stone-900 mb-4" />
+              <p className="text-sm">Loading products...</p>
+            </div>
+          ) : backendError ? (
+            <div className="text-center py-12 text-stone-400">
+              <p className="text-3xl mb-2">🔌</p>
+              <p className="text-sm mb-1">Cannot connect to the server</p>
+              <p className="text-xs">Make sure the backend is running on port 5000</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              {products.slice(0, 4).map((p) => (
+                <div key={p.productId || p.id}
+                  onClick={() => navigate(`/product/${p.productId || p.id}`)}
+                  className="bg-white border border-stone-100 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200">
+                  <div className="relative bg-stone-100 aspect-square flex items-center justify-center overflow-hidden">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
+                    ) : (
+                      <div className="text-4xl opacity-20 select-none">
+                        {p.category === "Nutrition" ? "🧴" : p.category === "Wearables" ? "⌚" : "🏋️"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 text-left">
+                    <p className="text-[10px] text-stone-400 mb-1 truncate">{p.brand}</p>
+                    <h3 className="text-sm font-medium text-stone-900 mb-1 line-clamp-2">{p.name}</h3>
+                    <div className="text-sm font-semibold text-stone-900">{fmt(p.price)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -338,7 +413,7 @@ export default function LandingPage() {
                 <p className="text-sm text-stone-600 leading-relaxed mb-5 sm:mb-6">{program.desc}</p>
                 <button className="text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                      rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                     transition-all min-h-[40px] active:scale-[0.97]">
+                                     transition-all min-h-10 active:scale-[0.97]">
                   Learn More →
                 </button>
               </div>
@@ -473,13 +548,13 @@ export default function LandingPage() {
                   {plan.perks.map((p, j) => (
                     <li key={j} className={`text-sm flex items-start gap-2
                                               ${plan.highlight ? "text-stone-300" : "text-stone-600"}`}>
-                      <span className="mt-0.5 text-stone-400 flex-shrink-0">─</span>{p}
+                      <span className="mt-0.5 text-stone-400 shrink-0">─</span>{p}
                     </li>
                   ))}
                 </ul>
                 <button
                   onClick={e => { e.stopPropagation(); navigate(auth.currentUser ? "/home" : "/auth"); }}
-                  className={`text-sm py-3 rounded-full transition-colors min-h-[44px]
+                  className={`text-sm py-3 rounded-full transition-colors min-h-11
                                 ${plan.highlight
                       ? "bg-white text-stone-900 hover:bg-stone-100"
                       : "border border-stone-300 text-stone-700 hover:bg-stone-50"
@@ -507,7 +582,7 @@ export default function LandingPage() {
             <button
               onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
               className="bg-white text-stone-900 text-sm px-8 sm:px-10 py-4 rounded-full
-                           hover:bg-stone-100 transition-colors min-h-[48px] w-full sm:w-auto
+                           hover:bg-stone-100 transition-colors min-h-12 w-full sm:w-auto
                            active:scale-[0.98]"
             >
               Create your account →
@@ -519,7 +594,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 text-sm px-8 py-4 rounded-full
               border border-stone-700 text-stone-400 hover:border-stone-500
-              hover:text-stone-200 transition-all min-h-[48px] w-full sm:w-auto
+              hover:text-stone-200 transition-all min-h-12 w-full sm:w-auto
               active:scale-[0.98]"
             >
               <GithubIcon />
@@ -530,13 +605,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <LandingFooter aboutRef={aboutRef} />
+      <LandingFooter aboutRef={aboutRef} ghStats={ghStats} ghLoading={ghLoading} />
     </div>
   );
 }
 
 // ── NavbarWithGithub — extends Navbar with a GitHub star button ────────────
-function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
+function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading }) {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
 
@@ -547,7 +622,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
   }, []);
 
   const isOpaque = navOpaque || scrollY > 60;
-  const textColor = isOpaque ? "text-stone-900" : "text-white";
+  const textColor = "text-stone-900";
   const mutedColor = isOpaque ? "text-stone-500" : "text-white/70";
   const borderColor = isOpaque ? "border-stone-200" : "border-white/20";
   const bgClass = isOpaque
@@ -576,7 +651,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
             target="_blank"
             rel="noopener noreferrer"
             className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full
-                          border transition-all min-h-[34px]
+                          border transition-all min-h-8.5
                           ${isOpaque
                 ? "border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900"
                 : "border-white/30 text-white/80 hover:bg-white/10"
@@ -587,7 +662,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
             <span>Star</span>
             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
                                 ${isOpaque ? "bg-stone-100 text-stone-700" : "bg-white/10 text-white/70"}`}>
-              16
+              {formatStat(ghStats.stars, ghLoading)}
             </span>
           </a>
 
@@ -595,7 +670,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
           <button
             onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
             className={`text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full transition-colors
-                           min-h-[36px] active:scale-[0.97]
+                           min-h-9 active:scale-[0.97]
                            ${isOpaque
                 ? "bg-stone-900 text-white hover:bg-stone-700"
                 : "bg-white text-stone-900 hover:bg-stone-100"
@@ -610,7 +685,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen }) {
 }
 
 // ── LandingFooter — rich footer with community + links ────────────────────
-function LandingFooter({ aboutRef }) {
+function LandingFooter({ aboutRef, ghStats, ghLoading }) {
   const navigate = useNavigate();
   const year = new Date().getFullYear();
 
@@ -648,8 +723,8 @@ function LandingFooter({ aboutRef }) {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 group"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-pink-500
-                                  to-orange-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 via-pink-500
+                                  to-orange-400 flex items-center justify-center shrink-0">
                   <InstagramIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -665,8 +740,8 @@ function LandingFooter({ aboutRef }) {
             {/* GitHub stats pills */}
             <div className="flex flex-wrap gap-2">
               {[
-                { icon: <StarIcon className="w-3 h-3" />, label: "16 stars" },
-                { icon: <GithubIcon className="w-3 h-3" />, label: "21 forks" },
+                { icon: <StarIcon className="w-3 h-3" />, label: `${formatStat(ghStats.stars, ghLoading)} stars` },
+                { icon: <GithubIcon className="w-3 h-3" />, label: `${formatStat(ghStats.forks, ghLoading)} forks` },
               ].map(({ icon, label }) => (
                 <a
                   key={label}

@@ -1,6 +1,6 @@
 // src/pages/HomePage.jsx
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
@@ -11,6 +11,13 @@ import FitnessChatBot from "../components/FitnessChatBot";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
 import BMICalculator from "../components/BMICalculator";
+import CalorieCalculator from "../components/CalorieCalculator";
+import NearbyFitnessCenters from "../components/NearbyFitnessCenters";
+import Stars from "../components/Stars";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
+import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+
+
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -27,44 +34,6 @@ const PLANS = [
   { name: "Mobility & Recovery", duration: "8 Weeks", desc: "Flexibility-first programming, ideal for desk workers", tag: null, route: "/plans/mobility-recovery" },
 ];
 
-const Stars = ({ rating = 0, size = "sm" }) => {
-  const full = Math.floor(rating || 0);
-  const half = (rating || 0) % 1 >= 0.5 ? 1 : 0;
-  const empty = 5 - full - half;
-  const starPath = "M12 .587l3.668 7.431L24 9.748l-6 5.847L19.335 24 12 19.897 4.665 24 6 15.595 0 9.748l8.332-1.73L12 .587z";
-  const sizeClass = size === "lg" ? "w-4 h-4" : "w-3 h-3";
-
-  return (
-    <span className={`inline-flex items-center gap-0.5 ${size === "lg" ? "text-base" : "text-xs"}`} aria-hidden>
-      {Array.from({ length: full }).map((_, i) => (
-        <svg key={`full-${i}`} className={`${sizeClass} text-stone-500`} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d={starPath} fill="currentColor" />
-        </svg>
-      ))}
-
-      {half ? (() => {
-        const id = `half-${Math.random().toString(36).slice(2)}`;
-        return (
-          <svg key="half" className={`${sizeClass} text-stone-500`} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <clipPath id={id}><rect x="0" y="0" width="12" height="24" /></clipPath>
-            </defs>
-            {/* faint empty star behind */}
-            <path d={starPath} fill="currentColor" className="text-stone-300" style={{ fill: 'currentColor', opacity: 0.28 }} />
-            {/* filled half */}
-            <path d={starPath} fill="currentColor" clipPath={`url(#${id})`} />
-          </svg>
-        );
-      })() : null}
-
-      {Array.from({ length: empty }).map((_, i) => (
-        <svg key={`empty-${i}`} className={`${sizeClass} text-stone-300`} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d={starPath} fill="currentColor" style={{ opacity: 0.28 }} />
-        </svg>
-      ))}
-    </span>
-  );
-};
 
 function mapCart(cartDoc, products) {
   return cartDoc.items.map(it => {
@@ -186,7 +155,7 @@ function ProductCard({ product, onAdd, cartItems = [], updateQty }) {
             ) : (
               <button
                 onClick={handleAdd}
-                className={`relative z-10 flex-shrink-0 w-full sm:w-auto mt-2 sm:mt-0 text-center text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2
+                className={`relative z-10 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 text-center text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2
                             rounded-full transition-all duration-200 whitespace-nowrap
                             ${added
                     ? "bg-stone-900 text-white"
@@ -207,18 +176,27 @@ function ProductCard({ product, onAdd, cartItems = [], updateQty }) {
 export default function HomePage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeCategory = searchParams.get("category") || "all";
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounceRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState([]);
   const [backendError, setBackendError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchQuery]);
 
   useEffect(() => { document.title = "FitMart - Fitness & Nutrition Store"; }, []);
 
@@ -324,20 +302,35 @@ export default function HomePage() {
 
   const filtered = products.filter(p => {
     const matchCat = activeCategory === "all" || p.category === activeCategory;
-    const matchSearch = !searchQuery
-      || p.name.toLowerCase().includes(searchQuery.toLowerCase())
-      || p.brand?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = !debouncedQuery
+      || p.name.toLowerCase().includes(debouncedQuery.toLowerCase())
+      || p.brand?.toLowerCase().includes(debouncedQuery.toLowerCase());
     return matchCat && matchSearch;
   });
 
   const renderProductGrid = () => {
-    if (loading) return (
-      <div className="text-center py-12 text-stone-400">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4
-                        border-stone-300 border-t-stone-900 mb-4" />
-        <p className="text-sm">Loading products...</p>
-      </div>
-    );
+  if (loading) return (
+  <>
+    {/* Skeleton category pills */}
+    <div className="flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+      {["w-12", "w-24", "w-20", "w-24"].map((w, i) => (
+        <div
+          key={i}
+          className={`bg-stone-200 animate-pulse h-8 ${w} rounded-full flex-shrink-0`}
+          style={{ animationDelay: `${i * 60}ms` }}
+        />
+      ))}
+    </div>
+
+    {/* Skeleton product grid */}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <ProductCardSkeleton key={i} index={i} />
+      ))}
+    </div>
+  </>
+);
+    
     if (backendError) return (
       <div className="text-center py-12 text-stone-400">
         <p className="text-3xl mb-2">🔌</p>
@@ -356,11 +349,17 @@ export default function HomePage() {
         <p className="text-sm">No products match your search.</p>
       </div>
     );
+
+    // Limit to 8 products if in "all" category and showAll is false
+    const displayedProducts = activeCategory === "all" && !showAll
+      ? filtered.slice(0, 8)
+      : filtered;
+
     return (
       // 2-col on mobile, 3-col on md, 4-col on lg
       <div className={`fade-in d3 ${visible ? "show" : ""}
                        grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5`}>
-        {filtered.map(p => (
+        {displayedProducts.map(p => (
           <ProductCard key={p.id} product={p} onAdd={addToCart} cartItems={cart} updateQty={updateQty} />
         ))}
       </div>
@@ -386,25 +385,12 @@ export default function HomePage() {
 
       <Navbar
         variant="home"
-        onSearchToggle={() => { setSearchOpen(p => !p); setSearchQuery(""); }}
         onCartOpen={() => setCartOpen(true)}
         cartCount={cartCount}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         onSignOut={handleSignOut}
       />
-
-      {/* Search bar */}
-      <div className={`search-expand ${searchOpen ? "open" : ""} border-t border-stone-100`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-3">
-          <input
-            autoFocus={searchOpen} type="text"
-            placeholder="Search products, brands…"
-            value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-            className="w-full text-sm text-stone-800 placeholder-stone-300 bg-transparent focus:outline-none"
-          />
-        </div>
-      </div>
 
       {/* Hero banner */}
       <section className="bg-stone-900 text-white">
@@ -439,13 +425,28 @@ export default function HomePage() {
         {/* ── Products section ── */}
         <section>
           <div className={`fade-in d1 ${visible ? "show" : ""}
-                           flex items-center justify-between mb-4 sm:mb-6`}>
+                           flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6`}>
             <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl text-stone-900">
               Featured Products
             </h2>
-            {!backendError && !loading && (
-              <span className="text-xs text-stone-400">{filtered.length} items</span>
-            )}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="relative flex-1 sm:flex-none">
+                <input
+                  type="text"
+                  placeholder="Search products, brands…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-64 text-sm text-stone-800 placeholder-stone-400 bg-white border border-stone-200 rounded-full px-4 py-2 pr-10 focus:outline-none focus:border-stone-900 transition-colors"
+                />
+                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m16.5 16.5 4 4" />
+                </svg>
+              </div>
+              {!backendError && !loading && (
+                <span className="text-xs text-stone-400 whitespace-nowrap">{filtered.length} items</span>
+              )}
+            </div>
           </div>
 
           {/* Category pills — horizontal scroll on mobile */}
@@ -454,8 +455,8 @@ export default function HomePage() {
                              flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1
                              scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap`}>
               {CATEGORIES.map(c => (
-                <button key={c.value} onClick={() => setActiveCategory(c.value)}
-                  className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap flex-shrink-0
+                <button key={c.value} onClick={() => { setSearchParams({ category: c.value }); setShowAll(false); setSearchQuery(""); }}
+                  className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap shrink-0
                               ${activeCategory === c.value
                       ? "bg-stone-900 text-white"
                       : "bg-white border border-stone-200 text-stone-600 hover:bg-stone-50"
@@ -467,7 +468,24 @@ export default function HomePage() {
             </div>
           )}
           {renderProductGrid()}
+
+          {/* "See More" button */}
+          {!backendError && !loading && activeCategory === "all" && !showAll && filtered.length > 8 && (
+            <div className="mt-8 sm:mt-10 flex justify-center">
+              <button
+                onClick={() => setShowAll(true)}
+                className="text-sm px-8 sm:px-10 py-3 rounded-full transition-all
+                           border border-stone-300 text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900
+                           font-medium"
+              >
+                See More Products
+              </button>
+            </div>
+          )}
         </section>
+
+        {/* Nearby fitness centers */}
+        <NearbyFitnessCenters visible={visible} />
 
         {/* ── Plans section ── */}
         <section id="plans">
@@ -494,11 +512,31 @@ export default function HomePage() {
                 <button onClick={() => navigate(plan.route)}
                   className="text-xs py-2.5 rounded-full transition-all mt-1 border border-stone-300
                              text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900
-                             min-h-[40px]">
+                             min-h-10">
                   View Plan →
                 </button>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── Workout Tracking section ── */}
+        <section id="tracking" className="py-12 sm:py-16 border-y border-stone-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 md:gap-12">
+            <div className="text-center md:text-left">
+              <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-stone-400 mb-3 font-medium">Personal Progress</p>
+              <h2 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl lg:text-5xl text-stone-900 leading-tight">
+                Track your fitness routine
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate("/tracker")}
+              className="bg-stone-900 text-white text-xs sm:text-sm px-8 sm:px-10 py-3.5 sm:py-4 rounded-full 
+                         hover:bg-stone-700 transition-all duration-300 font-medium
+                         shadow-lg shadow-stone-200/50 self-center md:self-auto w-full sm:w-auto"
+            >
+              Open Calendar →
+            </button>
           </div>
         </section>
 
@@ -528,6 +566,11 @@ export default function HomePage() {
           <BMICalculator />
         </section>
 
+        {/* ── Calorie Calculator ── */}
+        <section>
+          <CalorieCalculator />
+        </section>
+
         {/* ── Membership upgrade ── */}
         <section className="pb-6 sm:pb-8">
           <div className="mb-6 sm:mb-8">
@@ -553,7 +596,7 @@ export default function HomePage() {
                 </div>
                 <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                   transition-all self-start min-h-[40px]">
+                                   transition-all self-start min-h-10">
                   {p.cta}
                 </button>
               </div>
@@ -571,7 +614,7 @@ export default function HomePage() {
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
               <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-[36px] px-1">
+                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
                 {l}
               </button>
             ))}

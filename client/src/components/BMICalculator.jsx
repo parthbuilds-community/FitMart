@@ -83,7 +83,7 @@ const BMICalculator = () => {
                     type="button"
                     onClick={() => setFormData({ ...formData, gender: g })}
                     className={`flex-1 py-3 px-4 sm:px-8 rounded-full text-xs tracking-widest
-                                uppercase transition-all duration-300 border min-h-[44px]
+                                uppercase transition-all duration-300 border min-h-11
                                 active:scale-[0.98]
                                 ${formData.gender === g
                         ? "bg-stone-900 border-stone-900 text-white"
@@ -108,7 +108,7 @@ const BMICalculator = () => {
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
-                             focus:border-stone-900 transition-colors min-h-[44px]"
+                             focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 70.5"
                   value={formData.weight}
                   onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
@@ -124,7 +124,7 @@ const BMICalculator = () => {
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
-                             focus:border-stone-900 transition-colors min-h-[44px]"
+                             focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 175"
                   value={formData.height}
                   onChange={(e) => setFormData({ ...formData, height: e.target.value })}
@@ -140,7 +140,7 @@ const BMICalculator = () => {
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
-                             focus:border-stone-900 transition-colors min-h-[44px]"
+                             focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 28"
                   value={formData.age}
                   onChange={(e) => setFormData({ ...formData, age: e.target.value })}
@@ -154,7 +154,7 @@ const BMICalculator = () => {
                 <select
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 focus:outline-none focus:border-stone-900
-                             transition-colors appearance-none min-h-[44px]"
+                             transition-colors appearance-none min-h-11"
                   value={formData.activityLevel}
                   onChange={(e) =>
                     setFormData({ ...formData, activityLevel: e.target.value })
@@ -170,9 +170,9 @@ const BMICalculator = () => {
 
             <button
               type="submit"
-              className="w-full bg-stone-900 text-white text-sm tracking-[0.1em] uppercase
+              className="w-full bg-stone-900 text-white text-sm tracking-widest uppercase
                          py-4 rounded-full hover:bg-stone-700 transition-colors shadow-sm
-                         min-h-[52px] active:scale-[0.98]"
+                         min-h-13 active:scale-[0.98]"
             >
               Generate Analysis
             </button>
@@ -183,7 +183,7 @@ const BMICalculator = () => {
         <div className="lg:col-span-5">
           <div
             className={`rounded-2xl p-6 sm:p-8 lg:p-10 flex flex-col justify-center
-                        transition-all duration-500 min-h-[280px] sm:min-h-[320px] lg:h-full
+                        transition-all duration-500 min-h-70 sm:min-h-80 lg:h-full
                         ${result
                 ? "bg-stone-900 text-white"
                 : "bg-stone-100 border border-stone-200 text-stone-400"

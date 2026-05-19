@@ -8,10 +8,16 @@ import {
   GoogleAuthProvider,
   sendPasswordResetEmail,
   updateProfile,
+  sendEmailVerification,
+  signOut,
 } from "firebase/auth";
 import { auth } from "../auth/firebase";
+import { useGithubStats } from "../utils/useGithubStats";
 
 const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
+const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
+
+const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -45,9 +51,40 @@ export default function Authentication() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const { stats: ghStats, loading: ghLoading } = useGithubStats();
 
   useEffect(() => { document.title = "Login - FitMart"; }, []);
   useEffect(() => { setTimeout(() => setVisible(true), 80); }, []);
+  useEffect(() => {
+    let interval = null;
+    if (resendTimer > 0) {
+      interval = setInterval(() => setResendTimer((t) => t - 1), 1000);
+    } else {
+      setResendDisabled(false);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
+  // Poll for email verification if waiting on pending-verification screen
+  useEffect(() => {
+    let pollInterval = null;
+    if (mode === "pending-verification" && auth.currentUser) {
+      pollInterval = setInterval(async () => {
+        try {
+          await auth.currentUser.reload();
+          if (auth.currentUser.emailVerified || auth.currentUser.uid === SUPER_ADMIN_UID) {
+            clearInterval(pollInterval);
+            navigate(auth.currentUser.uid === ADMIN_UID || auth.currentUser.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+          }
+        } catch (err) {
+          console.error("Failed to reload user:", err);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(pollInterval);
+  }, [mode, navigate]);
 
   const handleChange = (e) => {
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -73,7 +110,13 @@ export default function Authentication() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
-      navigate(cred?.user?.uid === ADMIN_UID ? "/admin/dashboard" : "/home");
+      if (!cred.user.emailVerified && cred.user.uid !== SUPER_ADMIN_UID) {
+        // Keep user signed in so resend can use auth.currentUser
+        setError("");
+        setMode("pending-verification");
+        return;
+      }
+      navigate(cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
     } catch (err) {
       setError(parseError(err.code));
     } finally {
@@ -89,7 +132,11 @@ export default function Authentication() {
     try {
       const cred = await createUserWithEmailAndPassword(auth, form.email, form.password);
       if (form.name.trim()) await updateProfile(cred.user, { displayName: form.name.trim() });
-      navigate(cred?.user?.uid === ADMIN_UID ? "/admin/dashboard" : "/home");
+      await sendEmailVerification(cred.user);
+      // Keep user signed in so resend can use auth.currentUser
+      setResendDisabled(true);
+      setResendTimer(60);
+      setMode("pending-verification");
     } catch (err) {
       setError(parseError(err.code));
     } finally {
@@ -102,9 +149,37 @@ export default function Authentication() {
     try {
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
-      navigate(cred?.user?.uid === ADMIN_UID ? "/admin/dashboard" : "/home");
+      navigate(cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
     } catch (err) {
       setError(parseError(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (resendDisabled) return;
+    setLoading(true);
+    setError("");
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        // Fallback: sign in if session was lost (e.g. page refresh)
+        const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
+        await sendEmailVerification(cred.user);
+      } else {
+        await sendEmailVerification(user);
+      }
+      setResendDisabled(true);
+      setResendTimer(60);
+    } catch (err) {
+      if (err.code === "auth/too-many-requests") {
+        setError("Firebase is rate-limiting requests. Please wait a few minutes before trying again.");
+        setResendDisabled(true);
+        setResendTimer(120);
+      } else {
+        setError(parseError(err.code));
+      }
     } finally {
       setLoading(false);
     }
@@ -125,10 +200,16 @@ export default function Authentication() {
   };
 
   const switchMode = (m) => {
+    // Sign out when leaving pending-verification screen
+    if (mode === "pending-verification" && m !== "pending-verification") {
+      signOut(auth);
+    }
     setMode(m);
     setError("");
     setResetSent(false);
-    setForm({ name: "", email: "", password: "", confirm: "" });
+    if (m !== "pending-verification") {
+      setForm({ name: "", email: "", password: "", confirm: "" });
+    }
   };
 
   return (
@@ -163,10 +244,10 @@ export default function Authentication() {
 
         <div className="grid grid-cols-2 gap-4">
           {[
-            { v: "16", l: "Github Stars" },
-            { v: "21", l: "Forks" },
-            { v: "20", l: "Contributors" },
-            { v: "65+", l: "Commits" },
+            { v: formatStat(ghStats.stars, ghLoading), l: "Github Stars" },
+            { v: formatStat(ghStats.forks, ghLoading), l: "Forks" },
+            { v: formatStat(ghStats.contributors, ghLoading), l: "Contributors" },
+            { v: formatStat(ghStats.commits, ghLoading), l: "Commits" },
           ].map((s, i) => (
             <div key={i} className="bg-stone-800 rounded-xl p-4">
               <div className="font-['DM_Serif_Display'] text-2xl text-white">{s.v}</div>
@@ -185,7 +266,7 @@ export default function Authentication() {
           FitMart
         </button>
         <a
-          href="https://github.com/parthnarkar/FitMart"
+          href="https://github.com/parthbuilds-community/FitMart"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-sm text-white border border-stone-600 px-3 py-1 rounded-md hover:border-white transition"
@@ -201,14 +282,14 @@ export default function Authentication() {
         <div className={`auth-panel ${visible ? "visible" : ""} w-full max-w-sm`}>
 
           {/* Mode Tabs */}
-          {mode !== "reset" && (
+          {mode !== "reset" && mode !== "pending-verification" && (
             <div className="flex border-b border-stone-200 mb-6 sm:mb-8">
               {["signin", "signup"].map((m) => (
                 <button
                   key={m}
                   onClick={() => switchMode(m)}
                   className={`mode-tab flex-1 py-3 text-sm font-medium border-b-2 -mb-px
-                              transition-all min-h-[44px]
+                              transition-all min-h-11
                               ${mode === m
                       ? "border-stone-900 text-stone-900"
                       : "border-transparent text-stone-400 hover:text-stone-600"
@@ -240,7 +321,7 @@ export default function Authentication() {
                   <label className="text-xs text-stone-500 tracking-wide uppercase">Password</label>
                   <button
                     type="button" onClick={() => switchMode("reset")}
-                    className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-[32px] px-1"
+                    className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-8 px-1"
                   >
                     Forgot password?
                   </button>
@@ -261,7 +342,7 @@ export default function Authentication() {
 
               <button type="submit" disabled={loading}
                 className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
-                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-[48px]">
+                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-12">
                 {loading ? "Signing in…" : "Sign In"}
               </button>
 
@@ -274,7 +355,7 @@ export default function Authentication() {
               <button type="button" onClick={handleGoogle} disabled={loading}
                 className="w-full flex items-center justify-center gap-2.5 border border-stone-200
                            bg-white text-stone-700 text-sm py-3 rounded-lg hover:bg-stone-50
-                           transition-colors disabled:opacity-50 min-h-[48px]">
+                           transition-colors disabled:opacity-50 min-h-12">
                 <GoogleIcon />
                 Continue with Google
               </button>
@@ -336,7 +417,7 @@ export default function Authentication() {
 
               <button type="submit" disabled={loading}
                 className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
-                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-[48px]">
+                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-12">
                 {loading ? "Creating account…" : "Create Account"}
               </button>
 
@@ -349,15 +430,29 @@ export default function Authentication() {
               <button type="button" onClick={handleGoogle} disabled={loading}
                 className="w-full flex items-center justify-center gap-2.5 border border-stone-200
                            bg-white text-stone-700 text-sm py-3 rounded-lg hover:bg-stone-50
-                           transition-colors disabled:opacity-50 min-h-[48px]">
+                           transition-colors disabled:opacity-50 min-h-12">
                 <GoogleIcon />
                 Continue with Google
               </button>
 
               <p className="text-[11px] text-stone-400 text-center leading-relaxed">
                 By creating an account you agree to our{" "}
-                <span className="underline cursor-pointer">Terms</span> and{" "}
-                <span className="underline cursor-pointer">Privacy Policy</span>.
+                <button
+                  type="button"
+                  onClick={() => navigate("/terms")}
+                  className="underline cursor-pointer"
+                >
+                  Terms
+                </button>
+                {" "}and{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/privacy-policy")}
+                  className="underline cursor-pointer"
+                >
+                  Privacy Policy
+                </button>
+                .
               </p>
             </form>
           )}
@@ -368,7 +463,7 @@ export default function Authentication() {
               <button
                 onClick={() => switchMode("signin")}
                 className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600
-                           transition-colors mb-6 min-h-[36px]"
+                           transition-colors mb-6 min-h-9"
               >
                 ← Back to Sign In
               </button>
@@ -388,7 +483,7 @@ export default function Authentication() {
                   </p>
                   <button
                     onClick={() => switchMode("signin")}
-                    className="mt-4 text-xs text-stone-500 underline min-h-[36px]"
+                    className="mt-4 text-xs text-stone-500 underline min-h-9"
                   >
                     Back to Sign In
                   </button>
@@ -415,11 +510,49 @@ export default function Authentication() {
 
                   <button type="submit" disabled={loading}
                     className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
-                               hover:bg-stone-700 transition-colors disabled:opacity-50 min-h-[48px]">
+                               hover:bg-stone-700 transition-colors disabled:opacity-50 min-h-12">
                     {loading ? "Sending…" : "Send Reset Link"}
                   </button>
                 </form>
               )}
+            </div>
+          )}
+
+          {/* ── PENDING VERIFICATION ── */}
+          {mode === "pending-verification" && (
+            <div>
+              <button
+                onClick={() => switchMode("signin")}
+                className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600
+                           transition-colors mb-6 min-h-9"
+              >
+                ← Back to Sign In
+              </button>
+
+              <h3 className="font-['DM_Serif_Display'] text-2xl text-stone-900 mb-2">
+                Verify your email
+              </h3>
+              <p className="text-sm text-stone-500 mb-6 sm:mb-7 leading-relaxed">
+                We've sent a verification link to <span className="font-medium">{form.email}</span>.
+                Please verify your email address to continue.
+              </p>
+
+              <div className="bg-stone-100 border border-stone-200 rounded-xl px-5 py-5 text-center">
+                <p className="text-sm text-stone-700 font-medium mb-3">Didn't receive the email?</p>
+                {error && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3 text-left">
+                    {error}
+                  </p>
+                )}
+                <button
+                  onClick={handleResendVerification}
+                  disabled={loading || resendDisabled}
+                  className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
+                             hover:bg-stone-700 transition-colors disabled:opacity-50 min-h-12"
+                >
+                  {loading ? "Sending..." : resendDisabled ? `Resend in ${resendTimer}s` : "Resend Verification Email"}
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -14,8 +14,10 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-// Try using gemini-1.5-flash which has better free tier limits
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+// Gemini Config
+const modelName = process.env.GEMINI_MODEL_NAME
+const model = genAI.getGenerativeModel({ model: modelName });
 
 const PRODUCT_KEYWORDS = ["protein", "supplement", "muscle", "gain", "whey", "creatine", "mass"];
 

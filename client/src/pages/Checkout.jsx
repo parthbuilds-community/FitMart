@@ -17,6 +17,8 @@ export default function Checkout() {
   const [error, setError] = useState(null);
   const [discountEligible, setDiscountEligible] = useState(false);
   const [discountPercent, setDiscountPercent] = useState(10);
+  const [profile, setProfile] = useState(null);
+  const [selectedAddress, setSelectedAddress] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => { document.title = "My Cart - FitMart"; }, []);
@@ -29,10 +31,11 @@ export default function Checkout() {
       try {
         const headers = await getAuthHeaders();
 
-        const [cartRes, prodRes, discountRes] = await Promise.all([
+        const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
           fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
           fetch(`${API}/api/products`),
           fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
+          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
         ]);
 
         if (!cartRes.ok) throw new Error("Failed to fetch cart");
@@ -45,6 +48,13 @@ export default function Checkout() {
           const d = await discountRes.json();
           setDiscountEligible(d.eligible);
           setDiscountPercent(d.discountPercent ?? 10);
+        }
+
+        if (profileRes && profileRes.ok) {
+          const p = await profileRes.json();
+          setProfile(p);
+          const def = p?.defaultAddressId ? (p.addresses || []).find(a => a.id === p.defaultAddressId) : null;
+          setSelectedAddress(def || (p?.addresses && p.addresses[0]) || null);
         }
 
         if (!cart.items?.length) { setItems([]); setLoading(false); return; }
@@ -75,6 +85,7 @@ export default function Checkout() {
         items, total, subtotal, discountAmt,
         discountPercent: discountEligible ? discountPercent : 0,
         discountApplied: discountEligible,
+        address: selectedAddress,
       },
     });
   };
@@ -134,6 +145,15 @@ export default function Checkout() {
             <div className="bg-stone-900 rounded-2xl p-6 sm:p-8 lg:sticky lg:top-24">
               <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5 sm:mb-6">Summary</p>
               <div className="space-y-3 mb-5 sm:mb-6">
+                {selectedAddress && (
+                  <div className="bg-stone-800 text-white rounded-lg p-3">
+                    <div className="text-sm font-medium">Shipping to</div>
+                    <div className="text-sm">{selectedAddress.label} — {selectedAddress.line1}{selectedAddress.line2 ? `, ${selectedAddress.line2}` : ''}</div>
+                    <div className="text-sm text-stone-200">{selectedAddress.city}{selectedAddress.state ? `, ${selectedAddress.state}` : ''} {selectedAddress.zip}</div>
+                    <div className="text-xs mt-2"><button onClick={() => navigate('/profile')} className="underline">Edit addresses</button></div>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-sm text-stone-300">
                   <span>Subtotal ({items.length} item{items.length > 1 ? "s" : ""})</span>
                   <span>{fmt(subtotal)}</span>
@@ -159,10 +179,22 @@ export default function Checkout() {
                   </span>
                 </div>
               </div>
+
+              {/* Persistent error message when no address is selected */}
+              {!selectedAddress && (
+                <p className="text-xs text-red-500 mt-2 mb-2">
+                  Please <button onClick={() => navigate('/profile')} className="underline cursor-pointer">Add a Shipping Address</button> to continue.
+                </p>
+              )}
+
               <button
                 onClick={handleProceed}
-                className="w-full bg-white text-stone-900 text-sm px-8 py-3.5 rounded-full
-                           hover:bg-stone-100 transition-colors font-medium min-h-[48px]"
+                disabled={!selectedAddress}
+                className={`w-full text-sm px-8 py-3.5 rounded-full
+                           transition-colors font-medium min-h-12 ${selectedAddress
+                    ? 'bg-white text-stone-900 hover:bg-stone-100'
+                    : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  }`}
               >
                 Proceed to Payment →
               </button>
@@ -182,7 +214,7 @@ export default function Checkout() {
                 {/* Product image — smaller on mobile */}
                 <img
                   src={product.image} alt={product.name}
-                  className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl flex-shrink-0 bg-stone-100"
+                  className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl shrink-0 bg-stone-100"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-stone-400 mb-1">
@@ -214,7 +246,7 @@ export default function Checkout() {
                 </div>
 
                 {/* Desktop-only right-aligned price */}
-                <div className="text-right flex-shrink-0 hidden sm:block">
+                <div className="text-right shrink-0 hidden sm:block">
                   <p className="text-xs text-stone-400 mb-1">Qty {quantity}</p>
                   <p
                     style={{ fontFamily: "'DM Serif Display', serif" }}
@@ -235,7 +267,7 @@ export default function Checkout() {
             {discountEligible && (
               <div className="bg-stone-100 border border-stone-200 rounded-2xl px-4 sm:px-6 py-4
                               flex items-center gap-3 sm:gap-4">
-                <span className="text-stone-900 text-lg flex-shrink-0">✓</span>
+                <span className="text-stone-900 text-lg shrink-0">✓</span>
                 <div>
                   <p className="text-sm font-medium text-stone-900">Welcome discount applied</p>
                   <p className="text-xs text-stone-500 mt-0.5">
@@ -272,7 +304,7 @@ function Spinner() {
 function ErrorMsg({ msg }) {
   return (
     <div className="max-w-md mx-auto mt-16 sm:mt-24 bg-red-50 border border-red-100
-                    rounded-2xl p-6 sm:p-8 text-center mx-4 sm:mx-auto">
+                    rounded-2xl p-6 sm:p-8 text-center sm:mx-auto">
       <p className="text-red-600 text-sm">{msg}</p>
     </div>
   );
@@ -286,7 +318,7 @@ function EmptyCart({ navigate }) {
       <button
         onClick={() => navigate("/home")}
         className="bg-stone-900 text-white text-sm px-8 py-3 rounded-full
-                   hover:bg-stone-700 transition-colors min-h-[44px]"
+                   hover:bg-stone-700 transition-colors min-h-11"
       >
         Continue Shopping
       </button>
