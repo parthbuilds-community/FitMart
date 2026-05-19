@@ -108,9 +108,6 @@ export default function Checkout() {
 
   return (
     <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-      `}</style>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">
 

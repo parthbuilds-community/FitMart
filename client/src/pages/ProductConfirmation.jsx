@@ -216,7 +216,6 @@ export default function ProductConfirmation() {
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
         .fade-up {
           opacity: 0;
           transform: translateY(28px);

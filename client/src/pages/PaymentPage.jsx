@@ -178,7 +178,6 @@ export default function PaymentPage() {
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
       />
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}</style>
 
       <div className="max-w-xl mx-auto px-4 sm:px-5 py-10 sm:py-16">
         <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2 sm:mb-3">
