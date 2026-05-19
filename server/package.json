@@ -6,7 +6,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "seed": "node seed.js",
-    "seed:fitness": "node seedFitnessCenters.js"
+    "seed:fitness": "node seedFitnessCenters.js",
+    "test": "jest --verbose"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
