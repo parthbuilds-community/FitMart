@@ -6,7 +6,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import CartDrawer from "../components/CartDrawer";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 import FitnessChatBot from "../components/FitnessChatBot";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
@@ -17,9 +17,6 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
 
-
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const CATEGORIES = [
   { name: "All", value: "all" },
@@ -214,7 +211,7 @@ export default function HomePage() {
       setLoading(true);
       setBackendError(false);
       try {
-        const res = await fetch(`${API}/api/products`);
+        const res = await apiFetch("/api/products");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setProducts(data.map(p => ({ ...p, id: p.productId || p.id })));
@@ -232,8 +229,7 @@ export default function HomePage() {
     if (!user || !products.length) return;
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
+        const res = await apiFetch(`/api/cart/${user.uid}`, { auth: true, credentials: "include" });
         if (!res.ok) return;
         const cartDoc = await res.json();
         setCart(mapCart(cartDoc, products));
@@ -255,10 +251,11 @@ export default function HomePage() {
   const addToCart = async (product) => {
     if (!user) return;
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/add`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
+      const res = await apiFetch(`/api/cart/${user.uid}/add`, {
+        auth: true,
+        method: "POST",
+        credentials: "include",
+        body: { productId: product.productId || product.id, quantity: 1 },
       });
       if (!res.ok) throw new Error("Failed to add to cart");
       const cartDoc = await res.json();
@@ -270,10 +267,11 @@ export default function HomePage() {
     if (!user) return;
     try {
       const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
+      const res = await apiFetch(`/api/cart/${user.uid}/remove`, {
+        auth: true,
+        method: "POST",
+        credentials: "include",
+        body: { productId: id, quantity: existing?.qty || 1 },
       });
       if (!res.ok) throw new Error("Failed to remove");
       const cartDoc = await res.json();
@@ -285,12 +283,13 @@ export default function HomePage() {
     if (!user) return;
     try {
       const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
+      await apiFetch(`/api/cart/${user.uid}/${url}`, {
+        auth: true,
+        method: "POST",
+        credentials: "include",
+        body: { productId: id, quantity: Math.abs(delta) },
       });
-      const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
+      const res = await apiFetch(`/api/cart/${user.uid}`, { auth: true, credentials: "include" });
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
     } catch (err) { console.error("Update qty failed:", err); }
@@ -330,7 +329,7 @@ export default function HomePage() {
     </div>
   </>
 );
-    
+
     if (backendError) return (
       <div className="text-center py-12 text-stone-400">
         <p className="text-3xl mb-2">🔌</p>
@@ -369,7 +368,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif]">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
         .fade-in { opacity:0; transform:translateY(16px); transition:opacity .5s ease,transform .5s ease; }
         .fade-in.show { opacity:1; transform:translateY(0); }
         .d1{transition-delay:.05s} .d2{transition-delay:.15s} .d3{transition-delay:.25s}
@@ -531,7 +529,7 @@ export default function HomePage() {
             </div>
             <button
               onClick={() => navigate("/tracker")}
-              className="bg-stone-900 text-white text-xs sm:text-sm px-8 sm:px-10 py-3.5 sm:py-4 rounded-full 
+              className="bg-stone-900 text-white text-xs sm:text-sm px-8 sm:px-10 py-3.5 sm:py-4 rounded-full
                          hover:bg-stone-700 transition-all duration-300 font-medium
                          shadow-lg shadow-stone-200/50 self-center md:self-auto w-full sm:w-auto"
             >

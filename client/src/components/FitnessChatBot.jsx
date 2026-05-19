@@ -1,7 +1,6 @@
 // src/components/FitnessChatBot.jsx
 import { useState, useEffect, useRef } from "react";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiFetch } from "../lib/apiClient";
 
 const WELCOME = {
   role: "bot",
@@ -47,7 +46,7 @@ export default function FitnessChatBot() {
     setInput("");
     setTyping(true);
     try {
-      const res = await fetch(`${API}/api/chat`, {
+      const res = await apiFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
@@ -130,7 +129,6 @@ export default function FitnessChatBot() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
         .fm-chat-window {
           transform-origin: bottom right;
           transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);

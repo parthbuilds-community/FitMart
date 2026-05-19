@@ -1,8 +1,7 @@
 // src/auth/useWelcomeDiscount.js
 import { useState, useEffect, useRef } from "react";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export function useWelcomeDiscount(user) {
   const [showBanner, setShowBanner] = useState(false);
@@ -16,10 +15,9 @@ export function useWelcomeDiscount(user) {
 
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/login`, {
+        const res = await apiFetch("/api/user/login", {
+          auth: true,
           method: "POST",
-          headers,
           credentials: "include",
           body: JSON.stringify({ userId: user.uid }),
         });
@@ -40,10 +38,9 @@ export function useWelcomeDiscount(user) {
     setShowBanner(false);
     if (!user) return;
     try {
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/user/dismiss-banner`, {
+      await apiFetch("/api/user/dismiss-banner", {
+        auth: true,
         method: "POST",
-        headers,
         credentials: "include",
         body: JSON.stringify({ userId: user.uid }),
       });

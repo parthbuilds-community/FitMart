@@ -2,10 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 import AdminNavbar from "../components/AdminNavbar";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const SEGMENT_STYLES = {
   "high-value": "bg-stone-900 text-white",
@@ -126,8 +125,7 @@ export default function AdminCustomers() {
   useEffect(() => {
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers`, { headers });
+                const res = await apiFetch(`/api/customers`, { auth: true });
         const json = await res.json();
         if (!json.success) {
           throw new Error(json.error || "Failed to load customers");
@@ -148,10 +146,9 @@ export default function AdminCustomers() {
     setSendingReminderId(customerId);
 
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/customers/${customerId}/send-reminder`, {
+            const res = await apiFetch(`/api/customers/${customerId}/send-reminder`, {
+        auth: true,
         method: "POST",
-        headers,
         credentials: "include",
       });
 
@@ -193,9 +190,6 @@ export default function AdminCustomers() {
 
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-      `}</style>
 
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 

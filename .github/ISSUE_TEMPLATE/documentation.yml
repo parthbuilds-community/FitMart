@@ -1,0 +1,38 @@
+name: Documentation improvement
+description: Suggest a README, guide, or inline documentation update.
+title: "docs: "
+labels: [documentation]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Documentation improvements are welcome, including setup clarity, examples, typo fixes, and screenshots.
+  - type: input
+    id: document
+    attributes:
+      label: Document or section
+      description: Which file or section needs an update?
+      placeholder: "Example: README.md Quick Start, docs/CONTRIBUTING.md Style Guide"
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What should be improved?
+      description: Explain what is unclear, missing, outdated, or incorrect.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested-change
+    attributes:
+      label: Suggested change
+      description: If you already know the wording or structure, share it here.
+    validations:
+      required: false
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a pull request for this documentation update.
+          required: false

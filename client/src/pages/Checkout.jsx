@@ -4,10 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -29,13 +28,12 @@ export default function Checkout() {
       const userId = user.uid;
 
       try {
-        const headers = await getAuthHeaders();
 
         const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
-          fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
-          fetch(`${API}/api/products`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
-          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
+          apiFetch(`/api/cart/${userId}`, { auth: true, credentials: "include" }),
+          apiFetch(`/api/products`),
+          apiFetch(`/api/user/discount-status/${userId}`, { credentials: "include" }),
+          apiFetch(`/api/user/profile/${userId}`, { auth: true, credentials: "include" }),
         ]);
 
         if (!cartRes.ok) throw new Error("Failed to fetch cart");
@@ -110,9 +108,6 @@ export default function Checkout() {
 
   return (
     <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-      `}</style>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">
 

@@ -3,9 +3,8 @@ import { useState, useEffect } from "react";
 import { fmt } from "../utils/formatters";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const RANGE_LABELS = {
   daily: "Last 24 Hours",
@@ -89,8 +88,7 @@ export default function AdminReports() {
       setLoading(true);
       setError(null);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/reports/sales?range=${range}`, { headers });
+                const res = await apiFetch(`/api/reports/sales?range=${range}`, { auth: true });
         const json = await res.json();
         setData(json);
         setLoading(false);
@@ -110,7 +108,7 @@ export default function AdminReports() {
     if (ids.length === 0) return;
     const map = {};
     Promise.all(ids.map(id =>
-      fetch(`${API_BASE}/products/${id}`).then(r => r.ok ? r.json() : null)
+      apiFetch(`/api/products/${id}`).then(r => r.ok ? r.json() : null)
         .then(p => { if (p) map[id] = p; })
         .catch(() => { })
     )).then(() => setProductMap(map));
@@ -119,7 +117,6 @@ export default function AdminReports() {
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
         .fade-in { animation: fmFade 0.5s ease forwards; }
         @keyframes fmFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
       `}</style>

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { apiFetch, apiUrl } from '../lib/apiClient';
 
 const SEGMENT_STYLES = {
   open: "bg-stone-900 text-white",
@@ -99,12 +98,11 @@ export default function AdminBugs() {
     // optimistic update
     setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: newStatus } : b)));
     try {
-      const token = await user.getIdToken();
-      const url = `${API}/api/bugs/${id}`;
-      const res = await fetch(url, {
+      const url = `/api/bugs/${id}`;
+      const res = await apiFetch(url, {
+        auth: true,
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status: newStatus }),
+        body: { status: newStatus },
       });
       if (!res.ok) {
         let body = null;
@@ -127,8 +125,7 @@ export default function AdminBugs() {
     setLoadingBugs(true);
     (async () => {
       try {
-        const token = await user.getIdToken();
-        const res = await fetch(`${API}/api/bugs`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await apiFetch('/api/bugs', { auth: true });
         if (!res.ok) throw new Error('Failed to fetch');
         const body = await res.json();
         if (mounted) setBugs(body.bugs || []);
@@ -159,9 +156,6 @@ export default function AdminBugs() {
 
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-      `}</style>
 
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
@@ -383,16 +377,15 @@ export default function AdminBugs() {
                             bug.status = newStatus;
                             setBugs((cur) => cur.map(b => (b._id === bug._id ? { ...b, status: newStatus } : b)));
                             try {
-                              const token = await user.getIdToken();
-                              const res = await fetch(`${API}/api/bugs/${bug._id}`, {
+                              const res = await apiFetch(`/api/bugs/${bug._id}`, {
+                                auth: true,
                                 method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ status: newStatus }),
+                                body: { status: newStatus },
                               });
                               if (!res.ok) {
                                 let body = null;
                                 try { body = await res.json(); } catch (e) { body = await res.text(); }
-                                console.error('PATCH failed', { url: `${API}/api/bugs/${bug._id}`, status: res.status, body });
+                                console.error('PATCH failed', { url: apiUrl(`/api/bugs/${bug._id}`), status: res.status, body });
                                 throw new Error(`update failed (${res.status})`);
                               }
                             } catch (err) {
@@ -431,8 +424,7 @@ export default function AdminBugs() {
                     <td className="px-6 py-5 text-center">
                       {(bug.screenshotUrl || bug.screenshot) ? (
                         (() => {
-                          const api = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                          const url = bug.screenshotUrl ? bug.screenshotUrl : `${api}${bug.screenshot}`;
+                          const url = bug.screenshotUrl ? bug.screenshotUrl : apiUrl(bug.screenshot);
                           return (
                             <a
                               href={url}
