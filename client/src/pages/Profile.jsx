@@ -3,11 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+import { apiClient } from "../lib/apiClient";
 function Toast({ message, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3500);
@@ -123,35 +121,41 @@ export default function Profile() {
   const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => { document.title = "Profile – FitMart"; }, []);
+useEffect(() => {
+  const unsub = onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) { navigate("/auth"); return; }
-      setPhotoURL(user.photoURL);
-      setLoading(true);
-      try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/profile/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load profile");
-        const data = await res.json();
-        setProfile({
-          name: data.name || user.displayName || "",
-          phone: data.phone || "",
-          addresses: data.addresses || [],
-          defaultAddressId: data.defaultAddressId,
-        });
-        // Load saved photo URL from database
-        if (data.photoURL) {
-          setPhotoURL(data.photoURL);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+    setPhotoURL(user.photoURL);
+    setLoading(true);
+
+    try {
+      const data = await apiClient.get(`/api/user/profile/${user.uid}`, {
+        auth: true,
+      });
+
+      setProfile({
+        name: data.name || user.displayName || "",
+        phone: data.phone || "",
+        addresses: data.addresses || [],
+        defaultAddressId: data.defaultAddressId,
+      });
+
+      // Load saved photo URL from database
+      if (data.photoURL) {
+        setPhotoURL(data.photoURL);
       }
-    });
-    return () => unsub();
-  }, [navigate]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  return () => unsub();
+}, [navigate]);
 
   // Fetch orders when orders tab is active
   useEffect(() => {
@@ -163,17 +167,17 @@ export default function Profile() {
       
       setLoadingOrders(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load orders");
-        const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message);
-        setOrders([]);
-      } finally {
-        setLoadingOrders(false);
-      }
+          const data = await apiClient.get(`/api/orders/${user.uid}`, {
+          auth: true,
+        });
+
+          setOrders(Array.isArray(data) ? data : []);
+        } catch (err) {
+          setError(err.message);
+          setOrders([]);
+        } finally {
+          setLoadingOrders(false);
+        }
     };
 
     fetchOrders();
@@ -185,72 +189,55 @@ export default function Profile() {
     setError(null);
     setSaving(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/profile/${user.uid}`, {
-        method: "PUT",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({
-          name: profile.name,
-          phone: profile.phone,
-          addresses: profile.addresses,
-          defaultAddressId: profile.defaultAddressId,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to save profile");
-      const data = await res.json();
-      setProfile((prev) => ({ ...prev, ...data }));
-      setToast("Profile updated successfully");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+  const data = await apiClient.put(
+    `/api/user/profile/${user.uid}`,
+    {
+      name: profile.name,
+      phone: profile.phone,
+      addresses: profile.addresses,
+      defaultAddressId: profile.defaultAddressId,
+    },
+    { auth: true }
+  );
+
+  setProfile((prev) => ({ ...prev, ...data }));
+  setToast("Profile updated successfully");
+} catch (err) {
+  setError(err.message);
+} finally {
+  setSaving(false);
+}
   };
 
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handlePhotoChange = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    const user = auth.currentUser;
-    if (!user) return;
+  const user = auth.currentUser;
+  if (!user) return;
 
-    setError(null);
-    setSaving(true);
+  setError(null);
+  setSaving(true);
 
-    try {
-      // Upload photo via backend endpoint
-      const formData = new FormData();
-      formData.append("photo", file);
+  try {
+    const formData = new FormData();
+    formData.append("photo", file);
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/upload-photo/${user.uid}`, {
-        method: "POST",
-        headers: {
-          "Authorization": headers.Authorization,
-        },
-        credentials: "include",
-        body: formData,
-      });
+    const data = await apiClient.post(
+      `/api/user/upload-photo/${user.uid}`,
+      formData,
+      { auth: true }
+    );
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to upload photo");
-      }
-
-      const data = await res.json();
-      const photoURL = data.photoURL;
-
-      // Update local state with returned photo URL
-      setPhotoURL(photoURL);
-      setToast("Profile photo updated successfully");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
+    setPhotoURL(data.photoURL);
+    setToast("Profile photo updated successfully");
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setSaving(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+};
 
   const addAddress = () => {
     setEditingAddress({

@@ -2,13 +2,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+import { apiClient } from "../lib/apiClient";
 const FEATURE_MAP = {
   Equipment: ["Free shipping", "Assembly guide included", "2-year warranty", "Returns within 30 days"],
   Nutrition: ["Lab tested", "100% authentic", "FSSAI certified", "Free shipping above ₹999"],
@@ -16,20 +15,20 @@ const FEATURE_MAP = {
 };
 
 async function apiAddToCart(userId, productId, quantity) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}/add`, {
-    method: "POST", headers, credentials: "include",
-    body: JSON.stringify({ productId, quantity }),
-  });
-  if (!res.ok) throw new Error("Failed to add to cart");
-  return res.json();
+  return await apiClient.post(
+    `/api/cart/${userId}/add`,
+    {
+      productId,
+      quantity,
+    },
+    { auth: true }
+  );
 }
 
 async function apiGetCart(userId) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch cart");
-  return res.json();
+  return await apiClient.get(`/api/cart/${userId}`, {
+    auth: true,
+  });
 }
 
 function enrichCart(cartDoc, products) {
@@ -75,16 +74,7 @@ export default function ProductPage() {
   ];
   const busy = adding || buyingNow;
 
-  const refreshCart = async (productsList = products) => {
-    const user = auth.currentUser;
-    if (!user || !productsList.length) return;
-    try {
-      const cartDoc = await apiGetCart(user.uid);
-      setCart(enrichCart(cartDoc, productsList));
-    } catch (err) {
-      console.error("refreshCart error:", err);
-    }
-  };
+  
 
   useEffect(() => {
     setVisible(false);
@@ -97,9 +87,7 @@ export default function ProductPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API}/api/products`);
-        if (!res.ok) throw new Error("Failed to load products");
-        const all = res.ok ? await res.json() : [];
+        const all = await apiClient.get("/api/products");
         const normalised = all.map(p => ({ ...p, id: p.productId }));
         setProducts(normalised);
         const found = normalised.find(p => String(p.productId) === String(productId));
@@ -161,36 +149,42 @@ export default function ProductPage() {
     const user = auth.currentUser;
     if (!user) return;
     try {
-      const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
-      });
-      if (!res.ok) throw new Error("Failed to remove");
-      const cartDoc = await res.json();
-      setCart(enrichCart(cartDoc, products));
-    } catch (err) {
-      console.error("removeFromCart error:", err);
-    }
+  const existing = cart.find((i) => i.id === id);
+
+  const cartDoc = await apiClient.post(
+    `/api/cart/${user.uid}/remove`,
+    {
+      productId: id,
+      quantity: existing?.qty || 1,
+    },
+    { auth: true }
+  );
+
+  setCart(enrichCart(cartDoc, products));
+} catch (err) {
+  console.error("removeFromCart error:", err);
+}
   };
 
   const updateQty = async (id, delta) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
-      const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
-      });
-      if (!res.ok) throw new Error("Failed to update qty");
-      const cartDoc = await res.json();
-      setCart(enrichCart(cartDoc, products));
-    } catch (err) {
-      console.error("updateQty error:", err);
-    }
+  const url = delta > 0 ? "add" : "remove";
+
+  const cartDoc = await apiClient.post(
+    `/api/cart/${user.uid}/${url}`,
+    {
+      productId: id,
+      quantity: Math.abs(delta),
+    },
+    { auth: true }
+  );
+
+  setCart(enrichCart(cartDoc, products));
+} catch (err) {
+  console.error("updateQty error:", err);
+}
   };
 
   if (loading) return (
