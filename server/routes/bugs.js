@@ -8,8 +8,6 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const admin = require('../firebaseAdmin');
 
-
-
 // Use memory storage so serverless environments (Vercel) work correctly
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -30,7 +28,6 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
     if (!title || !description)
       return res.status(400).json({ error: 'Title and description are required' });
 
-    // Prefer authenticated name/email from token if present
     try {
       const authHeader = req.headers.authorization;
       if (authHeader?.startsWith('Bearer ')) {
@@ -49,19 +46,14 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
       try {
         const result = await new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
-            {
-              folder: 'fitmart/bugs',
-              resource_type: 'image',
-            },
+            { folder: 'fitmart/bugs', resource_type: 'image' },
             (error, result) => {
               if (error) return reject(error);
               resolve(result);
             }
           );
-
           streamifier.createReadStream(req.file.buffer).pipe(stream);
         });
-
         screenshotUrl = result.secure_url || '';
         screenshotPublicId = result.public_id || '';
       } catch (uploadErr) {
@@ -71,16 +63,9 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
     }
 
     const bug = new Bug({
-      title,
-      description,
-      steps,
-      pageUrl,
-      browser,
-      reporterName,
-      reporterEmail,
-      screenshot: '',
-      screenshotUrl,
-      screenshotPublicId,
+      title, description, steps, pageUrl, browser,
+      reporterName, reporterEmail,
+      screenshot: '', screenshotUrl, screenshotPublicId,
     });
 
     await bug.save();
@@ -91,11 +76,42 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
   }
 });
 
-// ── GET /api/bugs — admin only ────────────────────────────────────────────
-router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
+// ── GET /api/bugs — admin only, with pagination + filters ─────────────────
+router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-    const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
-    res.json({ ok: true, bugs });
+    const { status, search, page = 1, limit = 20 } = req.query;
+
+    // Build filter dynamically
+    const filter = {};
+
+    if (status && status !== 'all') {
+      filter.status = status; // 'open' | 'in-progress' | 'resolved'
+    }
+
+    if (search) {
+      filter.$or = [
+        { title:        { $regex: search, $options: 'i' } },
+        { reporterName: { $regex: search, $options: 'i' } },
+        { pageUrl:      { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Run all three queries in parallel
+    const [bugs, total, statusCounts] = await Promise.all([
+      Bug.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Bug.countDocuments(filter),
+      Bug.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+    ]);
+
+    // Shape into { open: 14, 'in-progress': 6, resolved: 22 }
+    const summary = statusCounts.reduce((acc, { _id, count }) => {
+      acc[_id] = count;
+      return acc;
+    }, {});
+
+    res.json({ ok: true, bugs, total, page: Number(page), limit: Number(limit), summary });
   } catch (err) {
     console.error('Error fetching bugs:', err);
     res.status(500).json({ error: 'Failed to fetch bugs' });
@@ -105,7 +121,6 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
 // ── PATCH /api/bugs/:id — admin only ─────────────────────────────────────
 router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-
     const { status } = req.body;
     if (!['open', 'in-progress', 'resolved'].includes(status))
       return res.status(400).json({ error: 'Invalid status' });
