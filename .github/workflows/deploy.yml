@@ -1,0 +1,19 @@
+name: Deploy FitMart
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-client:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Client Deployment
+        run: curl -X POST "${{ secrets.VERCEL_CLIENT_DEPLOY_HOOK }}"
+
+  deploy-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Server Deployment
+        run: curl -X POST "${{ secrets.VERCEL_SERVER_DEPLOY_HOOK }}"

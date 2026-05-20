@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { fmt } from "../utils/formatters";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
@@ -54,22 +55,26 @@ const RevenueMobileCard = ({ row }) => (
 );
 
 // ── Mobile card for product-performance row ───────────────────────────────
-const ProductMobileCard = ({ p, index }) => (
-  <div className="flex items-center gap-3 py-3.5 border-b border-stone-100 last:border-0">
-    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs
-                      font-medium flex-shrink-0
+const ProductMobileCard = ({ p, index, productMap }) => {
+  const prod = productMap?.[p.productId] || {};
+  const name = prod.name || `Product #${p.productId}`;
+  return (
+    <div className="flex items-center gap-3 py-3.5 border-b border-stone-100 last:border-0">
+      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs
+                      font-medium shrink-0
                       ${index === 0 ? "bg-stone-900 text-white" : "border border-stone-200 text-stone-400"}`}>
-      {index + 1}
-    </span>
-    <div className="flex-1 min-w-0">
-      <p className="text-sm text-stone-700 font-medium truncate">Product #{p.productId}</p>
-      <p className="text-xs text-stone-400 mt-0.5">{p.totalQuantitySold} units sold</p>
+        {index + 1}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-stone-700 font-medium truncate">{name}</p>
+        <p className="text-xs text-stone-400 mt-0.5">{p.totalQuantitySold} units sold</p>
+      </div>
+      <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-900 shrink-0">
+        {fmt(p.totalRevenue)}
+      </span>
     </div>
-    <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-900 flex-shrink-0">
-      {fmt(p.totalRevenue)}
-    </span>
-  </div>
-);
+  );
+};
 
 export default function AdminReports() {
   const navigate = useNavigate();
@@ -80,15 +85,36 @@ export default function AdminReports() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetch(`${API_BASE}/reports/sales?range=${range}`)
-      .then(res => res.json())
-      .then(json => { setData(json); setLoading(false); })
-      .catch(() => { setError("Failed to load report data"); setLoading(false); });
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/reports/sales?range=${range}`, { headers });
+        const json = await res.json();
+        setData(json);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load report data");
+        setLoading(false);
+      }
+    })();
   }, [range]);
 
   const { summary, revenueByDate, productPerformance } = data || {};
+  const [productMap, setProductMap] = useState({});
+
+  useEffect(() => {
+    if (!productPerformance || productPerformance.length === 0) return;
+    const ids = [...new Set(productPerformance.map(p => p.productId).filter(Boolean))];
+    if (ids.length === 0) return;
+    const map = {};
+    Promise.all(ids.map(id =>
+      fetch(`${API_BASE}/products/${id}`).then(r => r.ok ? r.json() : null)
+        .then(p => { if (p) map[id] = p; })
+        .catch(() => { })
+    )).then(() => setProductMap(map));
+  }, [productPerformance]);
 
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -276,7 +302,7 @@ export default function AdminReports() {
                 <p className="text-center text-sm text-stone-400 py-10">No product data for this period</p>
               )}
               {!loading && productPerformance?.map((p, index) => (
-                <ProductMobileCard key={p.productId} p={p} index={index} />
+                <ProductMobileCard key={p.productId} p={p} index={index} productMap={productMap} />
               ))}
             </div>
 
@@ -300,30 +326,34 @@ export default function AdminReports() {
                   {!loading && productPerformance?.length === 0 && (
                     <Empty message="No product data for this period" />
                   )}
-                  {!loading && productPerformance?.map((p, index) => (
-                    <tr key={p.productId} className="hover:bg-stone-50 transition-colors">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center
-                                            text-xs font-medium flex-shrink-0
-                                            ${index === 0 ? "bg-stone-900 text-white" : "border border-stone-200 text-stone-400"}`}>
-                            {index + 1}
+                  {!loading && productPerformance?.map((p, index) => {
+                    const prod = productMap?.[p.productId] || {};
+                    const name = prod.name || `Product #${p.productId}`;
+                    return (
+                      <tr key={p.productId} className="hover:bg-stone-50 transition-colors">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center
+                                              text-xs font-medium shrink-0
+                                              ${index === 0 ? "bg-stone-900 text-white" : "border border-stone-200 text-stone-400"}`}>
+                              {index + 1}
+                            </span>
+                            <span className="text-stone-700 font-medium">{name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-700">
+                            {p.totalQuantitySold}
                           </span>
-                          <span className="text-stone-700 font-medium">Product #{p.productId}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-center">
-                        <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-700">
-                          {p.totalQuantitySold}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-900">
-                          {fmt(p.totalRevenue)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <span style={{ fontFamily: "'DM Serif Display', serif" }} className="text-lg text-stone-900">
+                            {fmt(p.totalRevenue)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

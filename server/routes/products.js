@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const verifyAdmin = require('../middleware/verifyAdmin');
+const validateRequest = require('../middleware/validateRequest');
+const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
 
 /**
  * @route   GET /api/products
@@ -42,8 +46,14 @@ router.get('/low-stock', async (req, res) => {
  */
 // GET /api/products/:id - get product by productId
 router.get('/:id', async (req, res) => {
+  const productId = Number(req.params.id);
+
+  if (isNaN(productId)) {
+    return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
+  }
+
   try {
-    const product = await Product.findOne({ productId: Number(req.params.id) });
+    const product = await Product.findOne({ productId });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
   } catch (err) {
@@ -54,9 +64,9 @@ router.get('/:id', async (req, res) => {
 /**
  * @route   POST /api/products
  * @desc    Creates a new product; body: full product object including unique productId
- * @access  Public
+ * @access  Private (Admin)
  */
-router.post('/', async (req, res) => {
+router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProductSchema), async (req, res) => {
   try {
     const body = req.body;
     const existing = await Product.findOne({ productId: body.productId });
@@ -72,11 +82,17 @@ router.post('/', async (req, res) => {
 /**
  * @route   PUT /api/products/:id
  * @desc    Updates an existing product by productId; body: fields to update
- * @access  Public
+ * @access  Private (Admin)
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProductSchema), async (req, res) => {
+  const productId = Number(req.params.id);
+
+  if (isNaN(productId)) {
+    return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
+  }
+  
   try {
-    const updated = await Product.findOneAndUpdate({ productId: Number(req.params.id) }, req.body, { new: true });
+    const updated = await Product.findOneAndUpdate({ productId }, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'Product not found' });
     res.json(updated);
   } catch (err) {
@@ -87,12 +103,17 @@ router.put('/:id', async (req, res) => {
 /**
  * @route   DELETE /api/products/:id
  * @desc    Deletes a product by its productId
- * @access  Public
+ * @access  Private (Admin)
  */
-router.delete('/:id', async (req, res) => {
+
+router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+  const productId = Number(req.params.id);
+
+  if (isNaN(productId)) {
+    return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
+  }
   try {
-    const deleted = await Product.findOneAndDelete({ productId: Number(req.params.id) });
-    if (!deleted) return res.status(404).json({ error: 'Product not found' });
+    const deleted = await Product.findOneAndDelete({ productId });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

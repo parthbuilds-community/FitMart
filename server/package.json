@@ -5,21 +5,29 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "seed:fitness": "node seedFitnessCenters.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "dotenv": "^16.0.0",
     "express": "^4.18.2",
     "express-rate-limit": "^8.3.1",
-    "firebase-admin": "^13.7.0",
+    "firebase-admin": "^13.9.0",
     "helmet": "^8.1.0",
     "mongoose": "^7.0.0",
-    "razorpay": "^2.9.6"
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.6",
+    "razorpay": "^2.9.6",
+    "streamifier": "^0.1.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
+  },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1"
   }
 }

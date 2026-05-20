@@ -15,7 +15,7 @@ const NotFound = () => {
         to="/"
         className="mt-8 px-8 py-3 bg-black text-white text-sm sm:text-base rounded-full
                    hover:bg-gray-800 active:scale-95 transition-all duration-200
-                   min-h-[44px] flex items-center justify-center"
+                   min-h-11 flex items-center justify-center"
       >
         Go to Home
       </Link>

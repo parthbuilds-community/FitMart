@@ -1,7 +1,7 @@
 <div align="center">
 
 <img 
-  src="https://raw.githubusercontent.com/parthnarkar/FitMart/main/client/public/logo.png" 
+  src="https://raw.githubusercontent.com/parthbuilds-community/FitMart/main/client/public/logo.png" 
   alt="FitMart" 
   width="100"
 />
@@ -10,7 +10,7 @@
 
 ### *Your All-in-One Fitness & Nutrition E-Commerce Platform*
 
-> A full-stack MERN e-commerce application combining premium fitness gear, nutrition products, and seamless payments — built for learning, collaboration, and real-world use.
+> A full-stack MERN e-commerce application combining premium fitness gear, nutrition products, workout tracking, and seamless payments — built for learning, collaboration, and real-world use.
 
 <br/>
 
@@ -20,16 +20,17 @@
 [![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-Payments-0C2A5E?style=flat-square)](https://razorpay.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+[![Gemini AI](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange?style=flat-square)]()
-[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
+[![Status](https://img.shields.io/badge/Status-Active%20Development-orange?style=flat-square)]()
+[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square)](docs/CONTRIBUTING.md)
 
 <br/>
 
-[![GitHub Stars](https://img.shields.io/github/stars/parthnarkar/FitMart?style=for-the-badge&logo=github)](https://github.com/parthnarkar/FitMart/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/parthnarkar/FitMart?style=for-the-badge&logo=github)](https://github.com/parthnarkar/FitMart/network/members)
-[![GitHub Issues](https://img.shields.io/github/issues/parthnarkar/FitMart?style=for-the-badge&logo=github)](https://github.com/parthnarkar/FitMart/issues)
-[![GitHub PRs](https://img.shields.io/github/issues-pr/parthnarkar/FitMart?style=for-the-badge&logo=github)](https://github.com/parthnarkar/FitMart/pulls)
+[![GitHub Stars](https://img.shields.io/github/stars/parthbuilds-community/FitMart?style=for-the-badge&logo=github)](https://github.com/parthbuilds-community/FitMart/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/parthbuilds-community/FitMart?style=for-the-badge&logo=github)](https://github.com/parthbuilds-community/FitMart/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/parthbuilds-community/FitMart?style=for-the-badge&logo=github)](https://github.com/parthbuilds-community/FitMart/issues)
+[![GitHub PRs](https://img.shields.io/github/issues-pr/parthbuilds-community/FitMart?style=for-the-badge&logo=github)](https://github.com/parthbuilds-community/FitMart/pulls)
 
 </div>
 
@@ -69,10 +70,18 @@ The project covers end-to-end functionality including:
 - 🛒 Cart management with real-time stock reservation logic
 - 💳 Secure payments via Razorpay (with HMAC signature verification)
 - 📦 Order management with price snapshotting at purchase time
-- 🤖 AI-powered Fitness Chatbot assistant
+- 🤖 AI-powered Fitness Chatbot powered by **Google Gemini 2.5 Flash**
 - 🧮 BMI & TDEE Calculator with personalized product recommendations
-- 👑 Full Admin Panel with dashboard, inventory, reports, and customer management
+- 🔥 Calorie Calculator for weight loss and muscle gain targets
+- 🏋️ Workout Tracker with a FullCalendar-based fitness calendar
+- 📓 Workout Notes with exercise logging and GIF previews (via ExerciseDB API)
+- 📍 Nearby Fitness Centers discovery based on user's saved address
+- 👤 User Profile with editable addresses and shipping management
+- 🐛 In-app Bug Reporting system accessible to all users
+- 📧 Automated transactional emails (first purchase welcome, inactivity re-engagement)
+- 👑 Full Admin Panel with dashboard, inventory, reports, marketing strategies, customer management, and bug tracker
 - 🎯 Welcome discount system for first-time buyers
+- 🛡️ Rate limiting, Helmet security headers, and request logging middleware
 
 Whether you're a beginner learning full-stack development or an experienced developer looking to contribute — **FitMart is built for you.**
 
@@ -82,13 +91,13 @@ Whether you're a beginner learning full-stack development or an experienced deve
 
 <p align="center">
   <a href="https://fitmart-omega.vercel.app/" target="_blank">
-    <img src="https://img.shields.io/badge/Launch%20FitMart-Live%20Now-black?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Launch%20FitMart-Live%20Now-black?style=for-the-badge" alt="Launch FitMart Live Demo" />
   </a>
 </p>
 
 🔗 https://fitmart-omega.vercel.app/
 
-> 💡 Try exploring products, cart, and the admin panel for full experience.
+> 💡 Try exploring products, the workout tracker, the AI chatbot, and the admin panel for the full experience.
 
 ---
 
@@ -105,9 +114,16 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | 💳 Razorpay Payments | Secure order creation & HMAC payment verification |
 | 🔐 Firebase Auth | Email/password and Google Sign-In |
 | 🎁 Welcome Discount | 10% off automatically applied for first-time buyers |
-| 🤖 Fitness Chatbot | AI-powered assistant for workout and nutrition queries |
+| 🤖 Fitness Chatbot | AI-powered assistant (Gemini 2.5 Flash) for workout and nutrition queries |
 | 🧮 BMI Calculator | Body metrics tool with TDEE calculation and product recommendations |
+| 🔥 Calorie Calculator | Weight loss and weight gain daily calorie targets |
+| 🏋️ Workout Tracker | FullCalendar-based fitness calendar to plan and visualize sessions |
+| 📓 Workout Notes | Log exercises per session with animated GIFs from ExerciseDB |
+| 📍 Nearby Fitness Centers | Discover gyms, yoga studios, and fitness centers near you |
+| 👤 User Profile | Manage personal info, shipping addresses, and default address |
 | 🏋️ Fitness Plans | Weight Loss, Muscle Building, and Mobility & Recovery plans |
+| 🐛 Bug Reporter | In-app bug reporting widget available to all signed-in users |
+| 📧 Welcome Email | Automated first-purchase congratulations email |
 | 📱 PWA Ready | Progressive Web App support for mobile installation |
 
 ### Admin-Facing
@@ -119,6 +135,8 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | 👥 Customers | Customer directory with segments (new / returning / high-value) |
 | 🔍 Customer Detail | Full order history and spend analytics per customer |
 | 📈 Reports | Sales reports with daily, weekly, and monthly breakdowns |
+| 📣 Marketing | Curated digital marketing strategies tailored to FitMart |
+| 🐛 Bug Tracker | View, manage, and update status of all user-submitted bug reports |
 
 ---
 
@@ -133,6 +151,8 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | **React Router v7** | Client-side routing |
 | **Firebase (client)** | Authentication |
 | **Recharts** | Admin dashboard charts (AreaChart, BarChart) |
+| **Framer Motion** | Smooth animations & transitions |
+| **FullCalendar** | Interactive workout calendar (`@fullcalendar/react`) |
 
 ### Backend
 
@@ -142,6 +162,10 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | **Mongoose** | MongoDB ODM |
 | **Firebase Admin SDK** | Server-side auth token verification |
 | **Razorpay SDK** | Payment order creation and HMAC verification |
+| **Nodemailer** | Transactional email delivery via SMTP |
+| **Helmet** | HTTP security headers |
+| **express-rate-limit** | API and payment endpoint rate limiting |
+| **Google Gemini 2.5 Flash** | AI chatbot via `@google/generative-ai` |
 
 ### Database & Services
 
@@ -150,6 +174,8 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | **MongoDB** (Atlas or local) | Primary database |
 | **Firebase** | Authentication provider |
 | **Razorpay** | Payment processing |
+| **ExerciseDB (RapidAPI)** | Exercise library with animated GIFs |
+| **SMTP Provider** | Transactional email (Gmail or any SMTP service) |
 
 ---
 
@@ -168,32 +194,47 @@ FitMart/
 │   │   │   ├── AdminNavbar.jsx    # Admin panel navigation bar
 │   │   │   ├── AdminRoute.jsx     # Admin-only route guard
 │   │   │   ├── BMICalculator.jsx  # BMI/TDEE calculator widget
+│   │   │   ├── CalorieCalculator.jsx  # Daily calorie target calculator
 │   │   │   ├── CartDrawer.jsx     # Slide-in cart panel
-│   │   │   ├── FitnessChatBot.jsx # Floating AI chatbot
+│   │   │   ├── FitnessCenterDetail.jsx  # Fitness center detail modal
+│   │   │   ├── FitnessChatBot.jsx # Floating AI chatbot (Gemini)
 │   │   │   ├── Navbar.jsx         # Main navigation bar
+│   │   │   ├── NearbyFitnessCenters.jsx  # Nearby gym/studio discovery
 │   │   │   ├── NonAdminRoute.jsx  # Redirects admin away from customer pages
-│   │   │   └── WelcomeBanner.jsx  # First-visit discount banner
+│   │   │   ├── ReportBugButton.jsx  # Floating bug report widget
+│   │   │   ├── WelcomeBanner.jsx  # First-visit discount banner
+│   │   │   └── WorkoutCalendar.jsx  # FullCalendar workout calendar
 │   │   ├── pages/
+│   │   │   ├── AdminBugs.jsx              # Admin bug tracker
 │   │   │   ├── AdminCustomerDetail.jsx
 │   │   │   ├── AdminCustomers.jsx
 │   │   │   ├── AdminDashboard.jsx
 │   │   │   ├── AdminInventory.jsx
+│   │   │   ├── AdminMarketing.jsx         # Marketing strategy panel
 │   │   │   ├── AdminReports.jsx
 │   │   │   ├── Authentication.jsx
 │   │   │   ├── Checkout.jsx
+│   │   │   ├── ExercisePage.jsx           # Browse exercises by muscle group
 │   │   │   ├── HomePage.jsx
 │   │   │   ├── LandingPage.jsx
 │   │   │   ├── MobilityRecoveryPlans.jsx
 │   │   │   ├── MuscleBuildingPlans.jsx
 │   │   │   ├── NotFound.jsx
+│   │   │   ├── NotesPage.jsx              # Workout logging / notes
 │   │   │   ├── PaymentPage.jsx
+│   │   │   ├── PrivacyPolicy.jsx          # Privacy policy page
 │   │   │   ├── ProductConfirmation.jsx
 │   │   │   ├── ProductPage.jsx
+│   │   │   ├── Profile.jsx                # User profile & addresses
+│   │   │   ├── TermsAndConditions.jsx     # Terms of service page
+│   │   │   ├── TrackerPage.jsx            # Workout tracker (calendar view)
 │   │   │   └── WeightLossPlans.jsx
 │   │   ├── utils/
-│   │   │   ├── formatters.js      # Currency formatter (INR)
-│   │   │   ├── getAuthHeaders.js  # Firebase token → Authorization header
-│   │   │   └── healthUtils.js     # BMI, BMR, TDEE calculations
+│   │   │   ├── formatters.js       # Currency formatter (INR)
+│   │   │   ├── getAuthHeaders.js   # Firebase token → Authorization header
+│   │   │   ├── healthUtils.js      # BMI, BMR, TDEE, calorie calculations
+│   │   │   ├── normalizeProduct.js # Normalizes productId/id field across responses
+│   │   │   └── workoutStorage.js   # LocalStorage helpers for workout data
 │   │   ├── App.jsx                # Root router
 │   │   ├── index.css              # Tailwind import
 │   │   └── main.jsx               # React entry point
@@ -203,25 +244,46 @@ FitMart/
 │   └── vite.config.js
 │
 ├── server/                        # Node.js + Express Backend
+│   ├── middleware/
+│   │   ├── logger.js              # Colored request/response logger
+│   │   ├── verifyAdmin.js         # Admin UID authorization middleware
+│   │   └── verifyFirebaseToken.js # Firebase Bearer token middleware
 │   ├── models/
-│   │   ├── Product.js             # Product schema
+│   │   ├── Bug.js                 # Bug report schema
 │   │   ├── Cart.js                # Cart schema
-│   │   └── Order.js               # Order schema
+│   │   ├── FitnessCenter.js       # Fitness center schema
+│   │   ├── Order.js               # Order schema
+│   │   ├── Product.js             # Product schema
+│   │   └── UserProfile.js         # Extended user profile schema
 │   ├── routes/
-│   │   ├── products.js            # CRUD for products
+│   │   ├── bugs.js                # Bug reporting & admin management
 │   │   ├── cart.js                # Cart management + stock reservation
+│   │   ├── chat.js                # Gemini AI chatbot endpoint
+│   │   ├── customers.js           # Customer management
+│   │   ├── dashboard.js           # Admin dashboard data
+│   │   ├── exercises.js           # ExerciseDB proxy (RapidAPI)
+│   │   ├── fitnessCenters.js      # Nearby fitness center discovery
 │   │   ├── orders.js              # Order creation and retrieval
 │   │   ├── payment.js             # Razorpay integration
-│   │   ├── chat.js                # AI chatbot endpoint
-│   │   ├── dashboard.js           # Admin dashboard data
+│   │   ├── products.js            # CRUD for products
 │   │   ├── reports.js             # Sales reports
-│   │   ├── customers.js           # Customer management
-│   │   └── user.js                # Welcome discount & user management
+│   │   └── user.js                # Profile, discount, address management
+│   ├── services/
+│   │   ├── emailService.js              # Nodemailer SMTP transporter
+│   │   ├── emailTemplates.js            # HTML/text email templates
+│   │   ├── firstPurchaseEmailService.js # First-purchase welcome email logic
+│   │   └── inactiveCustomerEmailService.js  # Re-engagement email service
 │   ├── db.js                      # MongoDB connection
+│   ├── firebaseAdmin.js           # Firebase Admin SDK setup
 │   ├── index.js                   # Server entry point
-│   └── seed.js                    # DB seed script
+│   ├── seed.js                    # Product DB seed script
+│   └── seedFitnessCenters.js      # Fitness center DB seed script
 │
-├── CONTRIBUTING.md
+├── docs/
+│   ├── CONTRIBUTING.md
+│   ├── FIRST_PURCHASE_EMAIL_SETUP.md  # Email feature setup guide
+│   └── SECURITY.md                    # Responsible disclosure policy
+│
 └── README.md
 ```
 
@@ -235,15 +297,21 @@ FitMart/
 |---|---|---|
 | `/` | `LandingPage` | Marketing homepage with hero, categories, plans, testimonials |
 | `/auth` | `Authentication` | Sign In, Sign Up, and Password Reset |
-| `/home` | `HomePage` | Product catalog with search, cart, BMI calculator, plans |
+| `/home` | `HomePage` | Product catalog with search, cart, BMI/calorie calculators, plans |
 | `/product/:productId` | `ProductPage` | Individual product detail page |
 | `/checkout` | `Checkout` | Order review with discount summary |
 | `/payment` | `PaymentPage` | Razorpay payment flow + demo bypass |
 | `/payment-confirmation` | `ProductConfirmation` | Post-payment success screen |
+| `/profile` | `Profile` | User profile, name, phone, saved addresses |
+| `/tracker` | `WorkoutTracker` | FullCalendar fitness calendar for planning sessions |
+| `/notes` | `NotesPage` | Log workout details and add exercises for a chosen date |
+| `/exercises` | `ExercisePage` | Browse exercises by muscle group with animated GIFs |
 | `/plans/weight-loss` | `WeightLossPlans` | Weight loss program listing |
 | `/plans/muscle-building` | `MuscleBuildingPlans` | Muscle building program listing |
 | `/plans/mobility-recovery` | `MobilityRecoveryPlans` | Mobility & recovery program listing |
 | `*` | `NotFound` | 404 fallback |
+
+> **Note:** Privacy Policy and Terms & Conditions pages are also included and linked from the app footer.
 
 ### Admin Routes (guarded — admin UID only)
 
@@ -254,6 +322,8 @@ FitMart/
 | `/admin/customers` | `AdminCustomers` | All customers with segment tagging |
 | `/admin/customers/:userId` | `AdminCustomerDetail` | Customer profile + full order history |
 | `/admin/reports` | `AdminReports` | Sales reports (daily / weekly / monthly) |
+| `/admin/marketing` | `AdminMarketing` | Curated digital marketing strategy cards |
+| `/admin/bugs` | `AdminBugs` | View and manage user-submitted bug reports |
 
 > **Route Guards:** `AdminRoute` redirects non-admins to `/home`. `NonAdminRoute` redirects the admin account to `/admin/dashboard`.
 
@@ -262,22 +332,34 @@ FitMart/
 ## 🧩 Components
 
 ### `Navbar`
-Dual-variant navigation bar (`landing` / `home`). Landing variant is transparent and becomes opaque on scroll. Home variant is sticky with search, cart icon (with badge), and user avatar dropdown.
+Dual-variant navigation bar (`landing` / `home`). Landing variant is transparent and becomes opaque on scroll. Home variant is sticky with search, cart icon (with badge), user avatar dropdown, and links to Profile, Workout Tracker, and Exercises.
 
 ### `CartDrawer`
 Slide-in panel from the right showing cart items with quantity controls, remove buttons, subtotal, and a checkout CTA. Closes on `Escape` key or overlay click. Locks body scroll when open.
 
 ### `FitnessChatBot`
-Floating chat widget (FAB in bottom-right corner) backed by the `/api/chat` endpoint. Supports markdown-style bold text rendering, typing indicator, and auto-scroll. Full-screen on mobile.
+Floating chat widget (FAB in bottom-right corner) backed by the `/api/chat` endpoint powered by **Google Gemini 2.5 Flash**. Supports markdown-style bold text rendering, typing indicator, and auto-scroll. Full-screen on mobile. Falls back to curated static responses when the API is unavailable.
 
 ### `BMICalculator`
 Form-based calculator that computes BMI and TDEE from user inputs (weight, height, age, gender, activity level). Displays results with a product category recommendation that links to the store.
+
+### `CalorieCalculator`
+Computes daily calorie targets for weight loss and muscle gain using the Mifflin-St Jeor BMR formula. Displays maintenance, weight loss (−500 kcal), and weight gain (+500 kcal) targets side by side.
+
+### `WorkoutCalendar`
+Interactive fitness calendar built on **FullCalendar** (`@fullcalendar/react`). Displays logged workout sessions as calendar events. Clicking a date navigates to the Notes page for that day.
+
+### `NearbyFitnessCenters`
+Fetches gyms, yoga studios, pilates studios, and fitness centers from the backend and displays them ranked by proximity to the user's saved address. Clicking a card opens a detail modal.
+
+### `ReportBugButton`
+Floating bug report widget visible to authenticated users. Opens a modal form that posts directly to `/api/bugs`. Automatically attaches the user's name, email, and current page URL.
 
 ### `WelcomeBanner`
 Top-of-page animated banner shown to first-time users. Displays the 10% welcome discount and dismisses via a POST to `/api/user/dismiss-banner`.
 
 ### `AdminNavbar`
-Admin-specific sticky navbar with range selector buttons (Today / Week / Month), brand link, and user avatar dropdown with sign out.
+Admin-specific sticky navbar with range selector buttons (Today / Week / Month), brand link, navigation to all admin pages, and user avatar dropdown with sign out.
 
 ### `AdminRoute` / `NonAdminRoute`
 React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin and customer routes respectively.
@@ -295,13 +377,34 @@ Make sure you have the following installed:
 - A [MongoDB](https://www.mongodb.com/atlas) connection (Atlas or local)
 - A [Firebase](https://firebase.google.com/) project (for auth)
 - A [Razorpay](https://razorpay.com/) account (for payments)
+- A [Google Gemini API key](https://ai.google.dev/) (for the AI chatbot)
+- A [RapidAPI](https://rapidapi.com/justin-thewebdev/api/exercisedb) account with ExerciseDB access (for the exercises feature)
+- An SMTP provider (e.g., Gmail) for transactional emails *(optional)*
+
+---
+
+### 🐳 Local Database via Docker (Optional)
+
+If you don't have a MongoDB Atlas account or prefer to run a local database, you can use the included Docker configuration. This will spin up a local MongoDB instance.
+
+1.  Make sure [Docker](https://www.docker.com/products/docker-desktop/) is installed and running.
+2.  Run the following command in the project root:
+
+```bash
+docker-compose up -d
+```
+
+3.  In your `server/.env`, set `MONGO_URI` to:
+```env
+MONGO_URI=mongodb://localhost:27017
+```
 
 ---
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/parthnarkar/FitMart.git
+git clone https://github.com/parthbuilds-community/FitMart.git
 cd FitMart
 ```
 
@@ -312,7 +415,7 @@ cd server
 npm install
 ```
 
-Create a `.env` file in the `server/` folder:
+Create a `.env` file in the `server/` folder (see [Environment Variables](#-environment-variables) below):
 
 ```bash
 cp .env.example .env   # if available, or create manually
@@ -322,6 +425,12 @@ Seed the database with sample products:
 
 ```bash
 npm run seed
+```
+
+Optionally seed fitness center data:
+
+```bash
+npm run seed:fitness
 ```
 
 Start the backend dev server:
@@ -355,18 +464,46 @@ npm run dev
 ### Server — `server/.env`
 
 ```env
+# Required
 MONGO_URI=<your_mongodb_connection_string>
-MONGO_DB=<your_database_name>           # optional
 PORT=5000
-ALLOWED_ORIGIN=http://localhost:5173    # allowed frontend origin for CORS
+
+# Optional — payment processing
 RAZORPAY_KEY_ID=<your_razorpay_key_id>
 RAZORPAY_KEY_SECRET=<your_razorpay_key_secret>
+
+# Optional — database name override
+MONGO_DB=<your_database_name>
+
+# CORS
+ALLOWED_ORIGIN=http://localhost:5173    # comma-separate multiple origins
 
 # Firebase Admin SDK (required for auth middleware)
 FIREBASE_PROJECT_ID=<your_firebase_project_id>
 FIREBASE_CLIENT_EMAIL=<your_firebase_client_email>
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# Admin UID (used by bug routes to guard admin actions)
+ADMIN_UID=<firebase_uid_of_admin_account>
+
+# AI Chatbot — Google Gemini
+GEMINI_API_KEY=<your_gemini_api_key>
+
+# Exercise library — RapidAPI ExerciseDB
+RAPIDAPI_KEY=<your_rapidapi_key>
+RAPIDAPI_HOST=exercisedb.p.rapidapi.com
+
+# Transactional email — SMTP (optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=noreply@fitmart.com
+APP_BASE_URL=http://localhost:5173
 ```
+
+> **Startup behaviour:** The server validates environment variables on startup. `MONGO_URI` is the only truly critical variable — the server will exit if it's missing. All other variables are optional; missing ones produce a warning and disable the corresponding feature gracefully.
 
 #### Getting Firebase Admin Credentials
 
@@ -377,6 +514,22 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
    - `client_email` → `FIREBASE_CLIENT_EMAIL`
    - `private_key` → `FIREBASE_PRIVATE_KEY` (wrap in double quotes, keep all `\n`)
 4. **Delete the `.json` file** — never commit it to GitHub
+
+#### Getting a Gemini API Key
+
+1. Visit [Google AI Studio](https://aistudio.google.com/)
+2. Sign in and click **"Get API key"**
+3. Copy the key and add it as `GEMINI_API_KEY`
+
+#### Getting a RapidAPI Key (ExerciseDB)
+
+1. Create a free account at [RapidAPI](https://rapidapi.com/)
+2. Subscribe to the [ExerciseDB API](https://rapidapi.com/justin-thewebdev/api/exercisedb) (free tier available)
+3. Copy your `X-RapidAPI-Key` and set it as `RAPIDAPI_KEY`
+
+#### Setting Up Transactional Email (Optional)
+
+See [`docs/FIRST_PURCHASE_EMAIL_SETUP.md`](docs/FIRST_PURCHASE_EMAIL_SETUP.md) for full instructions, including Gmail app password setup.
 
 ### Client — `client/.env`
 
@@ -401,6 +554,8 @@ VITE_FIREBASE_MEASUREMENT_ID=
 
 ## 🌱 Seeding the Database
 
+### Products
+
 The seed script populates your MongoDB with sample fitness products across all categories (Equipment, Nutrition, Wearables):
 
 ```bash
@@ -409,6 +564,15 @@ npm run seed
 ```
 
 Each seeded product includes: `productId`, `name`, `brand`, `category`, `price`, `originalPrice`, `rating`, `reviews`, `badge`, `image`, `stock`, and `reserved`.
+
+### Fitness Centers
+
+A separate seed script populates the `FitnessCenter` collection with sample gyms, yoga studios, pilates studios, and fitness centers:
+
+```bash
+cd server
+npm run seed:fitness
+```
 
 ---
 
@@ -434,72 +598,105 @@ cd client && npm run build
 cd server && npm start
 ```
 
+> **Tip:** The client is pre-configured for Vercel deployment (`client/vercel.json` is included). The server can be deployed to Railway, Render, or any Node.js host.
+
 ---
 
 ## 📡 API Reference
 
 **Base URL:** `http://localhost:5000` (or your `VITE_API_URL`)
 
+> All authenticated endpoints require an `Authorization: Bearer <firebase_id_token>` header.
+
 ### 🛍️ Products
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/products` | List all products (sorted by `productId`) |
-| `GET` | `/api/products/:id` | Get product by `productId` |
-| `POST` | `/api/products` | Create a new product |
-| `PUT` | `/api/products/:id` | Update product by `productId` |
-| `DELETE` | `/api/products/:id` | Delete product by `productId` |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/products` | — | List all products (sorted by `productId`) |
+| `GET` | `/api/products/:id` | — | Get product by `productId` |
+| `POST` | `/api/products` | ✅ Admin | Create a new product |
+| `PUT` | `/api/products/:id` | ✅ Admin | Update product by `productId` |
+| `DELETE` | `/api/products/:id` | ✅ Admin | Delete product by `productId` |
 
 ### 🛒 Cart
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/cart/:userId` | Get or create a user's cart |
-| `POST` | `/api/cart/:userId/add` | Add item — body: `{ productId, quantity }` |
-| `POST` | `/api/cart/:userId/remove` | Remove item — body: `{ productId, quantity }` |
-| `DELETE` | `/api/cart/:userId` | Clear cart and release reserved stock |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/cart/:userId` | — | Get or create a user's cart |
+| `POST` | `/api/cart/:userId/add` | — | Add item — body: `{ productId, quantity }` |
+| `POST` | `/api/cart/:userId/remove` | — | Remove item — body: `{ productId, quantity }` |
+| `DELETE` | `/api/cart/:userId` | — | Clear cart and release reserved stock |
 
 ### 📦 Orders
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/orders` | Create order — body: `{ userId, items? }` |
-| `GET` | `/api/orders/:userId` | List all orders for a user |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/orders` | — | Create order — body: `{ userId, items? }` |
+| `GET` | `/api/orders/:userId` | — | List all orders for a user |
 
 ### 💳 Payments
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/payment/create-order` | Create a Razorpay order |
-| `POST` | `/api/payment/verify-payment` | Verify HMAC signature |
-| `POST` | `/api/payment/clear-cart` | Release stock & clear cart — body: `{ userId }` |
-| `POST` | `/api/payment/demo-success` | Simulate successful payment (testing only) |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/payment/create-order` | — | Create a Razorpay order |
+| `POST` | `/api/payment/verify-payment` | — | Verify HMAC signature + trigger first-purchase email |
+| `POST` | `/api/payment/clear-cart` | — | Release stock & clear cart — body: `{ userId }` |
+| `POST` | `/api/payment/demo-success` | — | Simulate successful payment (testing only) |
 
 > **Security:** Payment verification uses HMAC-SHA256 on `razorpay_order_id|razorpay_payment_id` with `RAZORPAY_KEY_SECRET`. Never expose this key to the client.
 
 ### 🤖 Chat
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/chat` | Send a message — body: `{ message }` — returns `{ reply }` |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/chat` | — | Send a message — body: `{ message }` — returns `{ reply }` (powered by Gemini 2.5 Flash) |
 
 ### 👤 User
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/user/login` | Register login + check welcome discount eligibility |
-| `GET` | `/api/user/discount-status/:userId` | Get discount eligibility and percent |
-| `POST` | `/api/user/use-discount` | Mark welcome discount as used |
-| `POST` | `/api/user/dismiss-banner` | Dismiss the welcome banner |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/user/login` | — | Register login, sync Firebase email, check welcome discount |
+| `GET` | `/api/user/discount-status/:userId` | — | Get discount eligibility and percent |
+| `POST` | `/api/user/use-discount` | — | Mark welcome discount as used |
+| `POST` | `/api/user/dismiss-banner` | — | Dismiss the welcome banner |
+| `GET` | `/api/user/profile/:userId` | ✅ | Get user profile (name, phone, addresses) |
+| `PUT` | `/api/user/profile/:userId` | ✅ | Update user profile |
+| `POST` | `/api/user/profile/:userId/addresses` | ✅ | Add a shipping address |
+| `PUT` | `/api/user/profile/:userId/addresses/:addressId` | ✅ | Update a shipping address |
+| `DELETE` | `/api/user/profile/:userId/addresses/:addressId` | ✅ | Delete a shipping address |
+| `PUT` | `/api/user/profile/:userId/default-address` | ✅ | Set default shipping address |
+
+### 🏋️ Exercises
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/exercises?category=<name>` | — | Fetch exercises by muscle group from ExerciseDB |
+
+Supported `category` values: `chest`, `back`, `shoulders`, `cardio`, `abs`, `arms`, `legs`
+
+### 📍 Fitness Centers
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/fitness-centers/nearby` | ✅ | Get fitness centers ranked by proximity to user's address |
+| `GET` | `/api/fitness-centers/nearby?type=<type>` | ✅ | Filter by type: `gym`, `yoga`, `pilates`, `fitness_studio` |
+
+### 🐛 Bugs
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/bugs` | — | Submit a bug report (auth optional; enriches reporter info if token present) |
+| `GET` | `/api/bugs` | ✅ Admin | List all bug reports |
+| `PATCH` | `/api/bugs/:id/status` | ✅ Admin | Update bug status: `open`, `in-progress`, `resolved` |
 
 ### 📊 Admin
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/dashboard?range=today\|week\|month` | Dashboard KPIs, charts, recent orders |
-| `GET` | `/api/reports/sales?range=daily\|weekly\|monthly` | Sales summary + revenue by date + product performance |
-| `GET` | `/api/customers` | All customers with order counts, spend, and segment |
-| `GET` | `/api/customers/:userId` | Single customer profile + order history |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/dashboard?range=today\|week\|month` | ✅ Admin | Dashboard KPIs, charts, recent orders |
+| `GET` | `/api/reports/sales?range=daily\|weekly\|monthly` | ✅ Admin | Sales summary + revenue by date + product performance |
+| `GET` | `/api/customers` | ✅ Admin | All customers with order counts, spend, and segment |
+| `GET` | `/api/customers/:userId` | ✅ Admin | Single customer profile + order history |
 
 ---
 
@@ -556,6 +753,71 @@ cd server && npm start
 }
 ```
 
+### UserProfile
+
+```js
+{
+  userId:                   String  (unique, Firebase UID),
+  isFirstLogin:             Boolean,
+  discountUsed:             Boolean,
+  discountPercent:          Number,   // default: 10
+  email:                    String,   // synced from Firebase on login
+  firstPurchaseEmailSentAt: Date,     // prevents duplicate welcome emails
+  lastReminderEmailSentAt:  Date,     // tracks re-engagement emails
+  name:                     String,
+  phone:                    String,
+  addresses: [{
+    id:        String,
+    label:     String,
+    line1:     String,
+    line2:     String,
+    city:      String,
+    state:     String,
+    zip:       String,
+    country:   String,
+    phone:     String
+  }],
+  defaultAddressId: String,
+  createdAt:        Date,
+  updatedAt:        Date
+}
+```
+
+### Bug
+
+```js
+{
+  title:         String  (required),
+  description:   String  (required),
+  steps:         String,
+  pageUrl:       String,
+  browser:       String,
+  reporterName:  String,
+  reporterEmail: String,
+  status:        String,  // "open" | "in-progress" | "resolved"
+  createdAt:     Date,
+  updatedAt:     Date
+}
+```
+
+### FitnessCenter
+
+```js
+{
+  name:     String  (required),
+  type:     String, // "gym" | "yoga" | "pilates" | "fitness_studio"
+  address:  String,
+  city:     String,
+  state:    String,
+  lat:      Number,
+  lng:      Number,
+  rating:   Number, // 0–5
+  imageUrl: String,
+  contact:  String,
+  isOpen:   Boolean
+}
+```
+
 ---
 
 ## 🎨 Design System
@@ -578,6 +840,11 @@ FitMart uses a **luxury refined minimalism** design language — clean, editoria
 
 - **Headings:** `DM Serif Display`
 - **Body / UI:** `DM Sans`
+
+### Animations
+- Page transitions powered by **Framer Motion**
+- Micro-interactions for buttons, modals, and cart drawer
+- Entrance animations for product cards and sections
 
 ### Key Component Patterns
 
@@ -605,7 +872,7 @@ The admin panel is accessible only to the account whose Firebase UID matches `VI
 - Top 5 selling products (horizontal Bar chart)
 - Recent orders table with customer info and status badges
 - Time range filter: Today / Week / Month
-- Quick navigation cards to Inventory, Customers, Reports
+- Quick navigation cards to Inventory, Customers, Reports, Marketing, and Bugs
 
 **Inventory (`/admin/inventory`)**
 - Real-time stock levels for all products
@@ -629,16 +896,31 @@ The admin panel is accessible only to the account whose Firebase UID matches `VI
 - Product performance ranking
 - Time range: Daily / Weekly / Monthly
 
+**Marketing (`/admin/marketing`)**
+- Curated digital marketing strategy cards tailored to FitMart's e-commerce context
+- Each card covers: strategy overview, how it applies to FitMart, and key benefits
+
+**Bug Tracker (`/admin/bugs`)**
+- Table of all user-submitted bug reports
+- Columns: title, reporter, page URL, browser, status, submission date
+- One-click status transitions: `open` → `in-progress` → `resolved`
+- Mobile-responsive card layout for small screens
+
 ---
 
 ## 📝 Notes & Recommendations
 
-- **API URL consistency** — Some client files still use the hardcoded `http://localhost:5000`. Standardize everything on `VITE_API_URL`. This is a great first contribution!
+- **API URL consistency** — Use `VITE_API_URL` consistently across all client files. Replacing any remaining hardcoded `http://localhost:5000` references is a great first contribution!
 - **Cart reservation** — `Product.reserved` increments on cart add and decrements on cart remove/clear. Orders finalize the reservation but don't re-release it — this is intentional.
 - **Razorpay** — Always verify payments server-side with HMAC. Never expose `RAZORPAY_KEY_SECRET` to the client.
 - **Firebase** — Only client-facing Firebase config keys go in the Vite `.env`. Never put service account credentials in the client `.env`.
 - **Demo payment** — A "Simulate Success" bypass button is available on the payment page for testing without a real Razorpay transaction. Remove or guard this in production.
 - **Admin UID** — The admin guard is purely UID-based. For production, consider role-based access control stored in your database.
+- **Gemini chatbot** — The chatbot falls back to curated static responses when `GEMINI_API_KEY` is unset or the API is unavailable, so the widget is never broken for end users.
+- **Email service** — The email service is fully optional. If SMTP variables are missing, emails are silently skipped and the rest of the purchase flow is unaffected.
+- **Workout data** — Workout notes and calendar events are stored in `localStorage`. They are device-local and not synced to the server.
+- **Security** — To report a vulnerability responsibly, see [`docs/SECURITY.md`](docs/SECURITY.md).
+- **Rate limiting** — General API routes are limited to 100 requests per 15 minutes. Payment endpoints have a stricter limit of 20 requests per 15 minutes.
 
 ---
 
@@ -646,13 +928,13 @@ The admin panel is accessible only to the account whose Firebase UID matches `VI
 
 We love contributions! FitMart is an open-source, community-driven project and contributions of all kinds are welcome — from fixing typos to building new features.
 
-Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** for a full guide on:
+Please read **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** for a full guide on:
 - Setting up your development environment
 - Picking and working on issues
 - Submitting a Pull Request
 - Code style and commit conventions
 
-**New to open source?** Look for issues labelled [`good first issue`](https://github.com/parthnarkar/FitMart/labels/good%20first%20issue) — they're perfect starting points! 🌱
+**New to open source?** Look for issues labelled [`good first issue`](https://github.com/parthbuilds-community/FitMart/labels/good%20first%20issue) — they're perfect starting points! 🌱
 
 ---
 
@@ -660,8 +942,8 @@ Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** for a full guide on:
 
 Thanks to everyone who has contributed to FitMart.
 
-<a href="https://github.com/parthnarkar/FitMart/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=parthnarkar/FitMart" alt="FitMart contributors" />
+<a href="https://github.com/parthbuilds-community/FitMart/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=parthbuilds-community/FitMart" alt="FitMart contributors" />
 </a>
 
 ---
