@@ -1,5 +1,6 @@
 // src/components/CartDrawer.jsx
 import { useEffect } from "react";
+import PropTypes from "prop-types";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
 
@@ -228,3 +229,12 @@ function CartDrawer({
 }
 
 export default CartDrawer;
+CartDrawer.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  cart: PropTypes.array.isRequired,
+  cartCount: PropTypes.number.isRequired,
+  cartTotal: PropTypes.number.isRequired,
+  updateQty: PropTypes.func.isRequired,
+  removeFromCart: PropTypes.func.isRequired,
+};
