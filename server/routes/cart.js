@@ -3,6 +3,10 @@ const router = express.Router();
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const ensureOwnership = require('../middleware/ownership');
+const validateRequest = require('../middleware/validateRequest');
+const { cartAddSchema, cartRemoveSchema } = require('../validation/requestSchemas');
+const ensureCartOwnership = ensureOwnership('Forbidden — you can only access your own cart');
 
 // Helper: adjust product reserved count
 async function adjustReserved(productId, delta) {
@@ -13,23 +17,12 @@ async function adjustReserved(productId, delta) {
   return prod;
 }
 
-// Helper: check that the token uid matches the userId in the route
-function checkOwnership(req, res) {
-  if (req.user.uid !== req.params.userId) {
-    res.status(403).json({ error: 'Forbidden — you can only access your own cart' });
-    return false;
-  }
-  return true;
-}
-
 /**
  * @route   GET /api/cart/:userId
  * @desc    Get or create a cart for the given user
  * @access  Private
  */
-router.get('/:userId', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.get('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     let cart = await Cart.findOne({ userId });
@@ -47,8 +40,7 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
  * @desc    Add an item to the user's cart and reserve stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
+router.post('/:userId/add', verifyFirebaseToken, ensureCartOwnership, validateRequest(cartAddSchema), async (req, res) => {
 
   try {
     const { userId } = req.params;
@@ -89,8 +81,7 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
  * @desc    Remove an item (or reduce its quantity) from the user's cart and release reserved stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
+router.post('/:userId/remove', verifyFirebaseToken, ensureCartOwnership, validateRequest(cartRemoveSchema), async (req, res) => {
 
   try {
     const { userId } = req.params;
@@ -125,9 +116,7 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
  * @desc    Clear all items from the user's cart and release all reserved stock
  * @access  Private
  */
-router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
-  if (!checkOwnership(req, res)) return;
-
+router.delete('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     const cart = await Cart.findOne({ userId });

@@ -1,3 +1,6 @@
+Here's the updated `DesignSystem.md` file with Framer Motion integrated throughout:
+
+```markdown
 # FitMart — Design System Reference
 
 Use this file as context whenever designing or building any UI component, page, or screen for FitMart.
@@ -221,7 +224,208 @@ Use this file as context whenever designing or building any UI component, page, 
 
 ## Animation & Motion
 
-### Standard Fade-Up (page load)
+### Framer Motion (Primary Animation Library)
+
+**FitMart uses [Framer Motion](https://www.framer.com/motion/) as the primary animation library** for all interactive animations, page transitions, and micro-interactions. CSS animations are used only for simple, passive entrance animations.
+
+### Installation & Setup
+
+```bash
+# Already installed in the project
+npm install framer-motion
+```
+
+```jsx
+// Import in any component that needs animations
+import { motion, AnimatePresence } from 'framer-motion';
+```
+
+### Common Animation Variants
+
+```jsx
+// Reusable variants object
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 }
+};
+
+const scaleOnHover = {
+  scale: 1.02
+};
+
+const slideInRight = {
+  hidden: { opacity: 0, x: 100 },
+  visible: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: 100 }
+};
+```
+
+### Standard Animation Patterns
+
+#### 1. Page Entrance (Fade Up)
+```jsx
+import { motion } from 'framer-motion';
+
+<motion.div
+  initial="hidden"
+  animate="visible"
+  variants={{
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0 }
+  }}
+  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+>
+  {/* Page content */}
+</motion.div>
+```
+
+#### 2. Staggered Children (List/Grid Items)
+```jsx
+<motion.div
+  initial="hidden"
+  animate="visible"
+  variants={{
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }}
+>
+  {items.map(item => (
+    <motion.div
+      key={item.id}
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+      }}
+      transition={{ duration: 0.4 }}
+    >
+      {item.content}
+    </motion.div>
+  ))}
+</motion.div>
+```
+
+#### 3. Card Hover Effects
+```jsx
+<motion.div
+  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+  className="bg-white border border-stone-200 rounded-2xl p-7"
+>
+  {/* Card content */}
+</motion.div>
+```
+
+#### 4. Modal / Drawer with Exit Animation
+```jsx
+import { AnimatePresence } from 'framer-motion';
+
+<AnimatePresence>
+  {isOpen && (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/30 z-40"
+        onClick={onClose}
+      />
+      
+      {/* Drawer */}
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="fixed right-0 top-0 h-full w-full max-w-md bg-white z-50 shadow-xl"
+      >
+        {/* Drawer content */}
+      </motion.div>
+    </>
+  )}
+</AnimatePresence>
+```
+
+#### 5. Button Tap Effect
+```jsx
+<motion.button
+  whileTap={{ scale: 0.97 }}
+  whileHover={{ scale: 1.02 }}
+  transition={{ duration: 0.1 }}
+  className="bg-stone-900 text-white px-8 py-3 rounded-full"
+>
+  Click Me
+</motion.button>
+```
+
+#### 6. Loading Skeleton Pulse
+```jsx
+<motion.div
+  animate={{ opacity: [0.5, 1, 0.5] }}
+  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+  className="bg-stone-100 rounded-lg h-32"
+/>
+```
+
+#### 7. Scroll-Triggered Animations
+```jsx
+import { useInView } from 'framer-motion';
+import { useRef } from 'react';
+
+function AnimatedSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Section content */}
+    </motion.div>
+  );
+}
+```
+
+### Animation Guidelines
+
+| Animation Type | Duration | Easing |
+|---|---|---|
+| Page entrance | 0.5-0.7s | `[0.16, 1, 0.3, 1]` (custom cubic-bezier) |
+| Card hover | 0.2-0.3s | `easeOut` |
+| Modal/drawer | 0.3-0.4s | `spring` or `[0.16, 1, 0.3, 1]` |
+| Button tap | 0.1s | `easeOut` |
+| Micro-interaction | 0.15-0.2s | `easeInOut` |
+| Stagger children | 0.05-0.1s delay between items | `easeOut` |
+
+### Rules
+
+- **Use Framer Motion for all interactive animations** (hover, tap, entrance, exit)
+- **Use CSS animations only for passive entrance animations** (fade-up, slide-up) when Framer Motion might be overkill
+- **Keep animations subtle** — no bouncing, elastic, or highly exaggerated motions
+- **Always include exit animations** when components unmount using `AnimatePresence`
+- **Prefer `transform` and `opacity` animations** for best performance (avoid layout-triggering properties like `width`, `height`, `top`, `left`)
+- **Use `whileHover`, `whileTap`, `whileFocus`** for interactive elements instead of CSS `:hover`
+- **Set `transition` explicitly** — never rely on defaults
+- **Add `useInView` for scroll-triggered animations** to improve perceived performance
+- **Don't animate everything** — only add motion when it serves a purpose (guiding attention, providing feedback, improving flow)
+
+### Legacy CSS Animations (Use Sparingly)
+
+Keep these only for simple, non-interactive entrance animations:
+
+#### Standard Fade-Up (page load)
 ```css
 .fade-up {
   opacity: 0;
@@ -234,7 +438,7 @@ Use this file as context whenever designing or building any UI component, page, 
 .delay-3 { transition-delay: 0.4s; }
 ```
 
-### Hero Text Reveal
+#### Hero Text Reveal
 ```css
 .hero-line { overflow: hidden; }
 .slide-up {
@@ -245,30 +449,7 @@ Use this file as context whenever designing or building any UI component, page, 
 .slide-up.visible { transform: translateY(0); }
 ```
 
-### Drawer / Slide-In Panel
-```css
-.slide-panel {
-  transform: translateX(100%);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.slide-panel.open { transform: translateX(0); }
-```
-
-### Backdrop Overlay
-```css
-.overlay {
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-.overlay.show { opacity: 1; pointer-events: auto; }
-/* Apply: bg-black/30 */
-```
-
-### Rules
-- All `transition-colors` on interactive elements (buttons, links)
-- All `transition-all duration-300` on cards
-- Use `useEffect` + `setTimeout(fn, 80)` to trigger visibility state for entrance animations
-- Prefer CSS animations over JS where possible
+> **Note:** For new components, prefer Framer Motion over CSS animations. CSS animations are only for maintaining consistency with existing code.
 
 ---
 
@@ -317,6 +498,7 @@ No icon libraries. Use minimal inline SVGs or plain Unicode symbols:
 
 | ✅ Do | ❌ Don't |
 |---|---|
+| Use Framer Motion for interactive animations | Use CSS for hover/tap/exit animations |
 | Use `stone-*` exclusively | Use any other color family |
 | `rounded-full` on buttons | `rounded` or `rounded-md` on buttons |
 | `rounded-2xl` on cards | `rounded-xl` or less on cards |
@@ -327,3 +509,27 @@ No icon libraries. Use minimal inline SVGs or plain Unicode symbols:
 | Generous whitespace | Cramped layouts |
 | Lowercase `text-xs tracking-[0.2em] uppercase` for labels | Bold or large labels |
 | `text-stone-400` for muted/secondary info | Black text for everything |
+| `AnimatePresence` for mount/unmount animations | Missing exit animations |
+| `whileHover` + `whileTap` on interactive elements | Only using CSS `:hover` |
+| `useInView` for scroll-triggered animations | Animating everything on page load |
+
+---
+
+## Performance Tips
+
+1. **Use `layout` prop sparingly** — it's powerful but expensive
+2. **Prefer `transform` animations** over layout properties
+3. **Set `position: relative` on animated elements** to prevent layout shifts
+4. **Use `will-change` only for continuous animations** (rare in FitMart)
+5. **Batch animations with `staggerChildren`** instead of individual delays
+6. **Remove animations on mobile** if they cause jank (use `@media (prefers-reduced-motion)`)
+
+---
+
+## Resources
+
+- [Framer Motion Documentation](https://www.framer.com/motion/)
+- [Framer Motion Examples](https://www.framer.com/motion/examples/)
+- [Custom Easing Curves](https://easings.net/)
+- [React Spring vs Framer Motion comparison](https://react-spring.io/comparison)
+```

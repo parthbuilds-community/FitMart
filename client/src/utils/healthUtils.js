@@ -46,3 +46,37 @@ export const getRecommendedCategory = (bmi) => {
   if (bmi >= 25) return "Equipment";   // Focus on Cardio/Fat burning tools
   return "Nutrition";                 // General wellness/Maintenance
 };
+
+/**
+ * Calculate calorie targets for weight loss scenarios
+ * Multipliers:
+ * - 0.25 kg/week = maintenance +/- 250 kcal/day
+ * - 0.5 kg/week = maintenance +/- 500 kcal/day
+ * - 1 kg/week = maintenance +/- 1000 kcal/day
+ */
+export const calculateWeightLossCalories = (tdee) => {
+  if (!tdee) return { mild: 0, moderate: 0, extreme: 0 };
+  
+  return {
+    mild: Math.round(tdee - 250),         // 0.25 kg/week loss
+    moderate: Math.round(tdee - 500),     // 0.5 kg/week loss
+    extreme: Math.round(tdee - 1000),     // 1 kg/week loss
+  };
+};
+
+/**
+ * Calculate calorie targets for weight gain scenarios
+ * Multipliers:
+ * - 0.25 kg/week = maintenance +/- 250 kcal/day
+ * - 0.5 kg/week = maintenance +/- 500 kcal/day
+ * - 1 kg/week = maintenance +/- 1000 kcal/day
+ */
+export const calculateWeightGainCalories = (tdee) => {
+  if (!tdee) return { mild: 0, moderate: 0, fast: 0 };
+  
+  return {
+    mild: Math.round(tdee + 250),         // 0.25 kg/week gain
+    moderate: Math.round(tdee + 500),     // 0.5 kg/week gain
+    fast: Math.round(tdee + 1000),        // 1 kg/week gain
+  };
+};

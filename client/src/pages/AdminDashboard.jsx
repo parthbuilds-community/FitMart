@@ -1,6 +1,7 @@
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminNavbar from "../components/AdminNavbar";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -48,10 +49,10 @@ const KPICard = ({ label, value, sub, icon }) => (
     </p>
     <div className="flex items-end justify-between">
       <p style={{ fontFamily: "'DM Serif Display', serif" }}
-        className="text-2xl sm:text-3xl md:text-4xl text-stone-900 leading-none break-words min-w-0">
+        className="text-2xl sm:text-3xl md:text-4xl text-stone-900 leading-none wrap-break-word min-w-0">
         {value}
       </p>
-      <div className="text-xl sm:text-2xl opacity-40 mb-0.5 flex-shrink-0 ml-2">
+      <div className="text-xl sm:text-2xl opacity-40 mb-0.5 shrink-0 ml-2">
         {typeof icon === 'string' ? <span>{icon}</span> : icon}
       </div>
     </div>
@@ -84,7 +85,7 @@ const Empty = () => (
 );
 
 const CustomerAvatar = ({ name, photoURL }) => (
-  <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0
+  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0
                   bg-stone-200 flex items-center justify-center">
     {photoURL ? (
       <img src={photoURL} alt={name || "avatar"}
@@ -104,7 +105,7 @@ const OrderMobileCard = ({ order }) => (
     <div className="flex items-center justify-between mb-1.5">
       <div className="flex items-center gap-2">
         <CustomerAvatar name={order.customerName} photoURL={order.customerPhoto} />
-        <span className="text-xs font-medium text-stone-700 truncate max-w-[100px]">
+        <span className="text-xs font-medium text-stone-700 truncate max-w-25">
           {order.customerName && order.customerName !== "—"
             ? order.customerName
             : order.userId?.slice(0, 10) + "…"}
@@ -141,7 +142,8 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/api/dashboard?range=${range}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/api/dashboard?range=${range}`, { headers });
         if (!res.ok) throw new Error("Failed to fetch dashboard data");
         setData(await res.json());
       } catch (err) {
@@ -174,7 +176,7 @@ export default function AdminDashboard() {
             Command Centre
           </h1>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {[
               {
                 href: "/admin/inventory", title: "Inventory",
@@ -209,6 +211,28 @@ export default function AdminDashboard() {
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                       d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/admin/marketing", title: "Marketing",
+                desc: "Manage marketing campaigns, promotions, and customer communications.",
+                cta: "View marketing →",
+                icon: (
+                  <svg className="w-6 h-6 text-stone-600 group-hover:text-white transition-colors duration-300"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                      d="M3 3v16a2 2 0 002 2h16M7 16l3-4 3 3 5-6" />
+                  </svg>
+                ),
+              },
+              {
+                href: "/admin/bugs", title: "Bug Reports",
+                desc: "View and triage bug reports submitted by users.",
+                cta: "View bug reports →",
+                icon: (
+                  <svg className="w-6 h-6 text-stone-600 group-hover:text-white transition-colors duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2v2M6.2 4.2l1.4 1.4M2 12h2M4.2 17.8l1.4-1.4M12 20v2M17.8 19.8l-1.4-1.4M20 12h2M19.8 6.2l-1.4 1.4M7 11a5 5 0 1010 0 5 5 0 00-10 0z" />
                   </svg>
                 ),
               },

@@ -10,7 +10,7 @@ export default function ProductConfirmation() {
   const [visible, setVisible] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  const { items = [], total = 0, paymentId = "" } = location.state || {};
+  const { items = [], total = 0, paymentId = "", address = null } = location.state || {};
 
   useEffect(() => {
     document.title = "FitMart";
@@ -46,6 +46,18 @@ export default function ProductConfirmation() {
     const user = auth.currentUser;
     const userName = user?.displayName || user?.email || "Valued Customer";
     const userEmail = user?.email || "";
+
+    const addr = address;
+    const addrHtml = addr ? `
+      <div class="billing-block">
+        <h3>Shipping Address</h3>
+        <p>${addr.label || ''}</p>
+        <p>${addr.line1 || ''}${addr.line2 ? `, ${addr.line2}` : ''}</p>
+        <p>${[addr.city, addr.state, addr.zip].filter(Boolean).join(', ')}</p>
+        ${addr.country ? `<p>${addr.country}</p>` : ''}
+        ${addr.phone ? `<p>${addr.phone}</p>` : ''}
+      </div>
+    ` : '';
 
     const invoiceHTML = `
 <!DOCTYPE html>
@@ -146,6 +158,7 @@ export default function ProductConfirmation() {
       <p>${userName}</p>
       ${userEmail ? `<p>${userEmail}</p>` : ""}
     </div>
+    ${addrHtml}
     <div class="billing-block">
       <h3>Sold By</h3>
       <p>FitMart India Pvt. Ltd.</p>
