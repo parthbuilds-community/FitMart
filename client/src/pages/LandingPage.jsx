@@ -625,9 +625,9 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading
   const textColor = "text-stone-900";
   const mutedColor = isOpaque ? "text-stone-500" : "text-white/70";
   const borderColor = isOpaque ? "border-stone-200" : "border-white/20";
-  const bgClass = isOpaque
+   const bgClass = isOpaque
     ? "bg-white/95 backdrop-blur-sm border-b border-stone-200 shadow-sm"
-    : "bg-transparent";
+    : "bg-stone-900"; // We changed this from "bg-transparent"
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${bgClass}`}>
