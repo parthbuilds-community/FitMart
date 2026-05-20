@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
+import PropTypes from "prop-types";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -325,3 +326,7 @@ function EmptyCart({ navigate }) {
     </div>
   );
 }
+PageShell.propTypes = {
+  children: PropTypes.node.isRequired,
+  menuOpen: PropTypes.bool,
+};

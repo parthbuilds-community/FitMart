@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/useAuth';
+import PropTypes from "prop-types";
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -573,3 +574,12 @@ export default function ReportBugButton() {
     </>
   );
 }
+Toast.propTypes = {
+  type: PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
+  onDismiss: PropTypes.func.isRequired,
+};
+
+FieldError.propTypes = {
+  msg: PropTypes.string.isRequired,
+};
