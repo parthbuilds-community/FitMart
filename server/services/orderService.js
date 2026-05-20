@@ -57,13 +57,23 @@ async function createOrder(userId, items = null) {
       const currentReserved = Number(p.reserved || 0);
       const newReserved = Math.max(0, currentReserved - it.quantity);
       
-      await Product.findOneAndUpdate(
-        { productId: p.productId },
+      const updated = await Product.findOneAndUpdate(
+        { productId: p.productId, stock: { $gte: it.quantity } },
         { 
           $inc: { stock: -it.quantity },
           $set: { reserved: newReserved }
-        }
+        },
+        { new: true }
       );
+
+      if (!updated) {
+        // Stock went below requested quantity between check and update (race condition).
+        // Roll back the order to avoid overselling.
+        await Order.findByIdAndDelete(order._id);
+        throw new Error(
+          `Insufficient stock for ${p.name} (concurrent order may have depleted it)`
+        );
+      }
     }
   }
 
