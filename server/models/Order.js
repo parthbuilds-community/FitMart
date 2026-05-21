@@ -23,13 +23,11 @@ const OrderSchema = new mongoose.Schema(
       default: 'created'
     },
 
-    // ✅ ADD THIS
+
     paymentId: {
       type: String,
-      unique: true,
-      sparse: true // allows null values safely
-    }
-
+      unique: true
+    },
   },
   { timestamps: true }
 );
