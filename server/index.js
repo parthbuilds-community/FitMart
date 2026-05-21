@@ -95,8 +95,8 @@ app.use(
 );
 
 app.use(helmet());
-app.use(express.json({ limit: "10kb" }));
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
 
@@ -146,6 +146,12 @@ app.get("/", (req, res) => res.send("FitMart server running"));
 
 // ── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
+  if (err && (err.type === "entity.too.large" || err.status === 413)) {
+    return res.status(413).json({
+      error: "Payload too large. Maximum request size is 1MB.",
+    });
+  }
+
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     return res.status(400).json({ error: "Invalid JSON payload" });
   }
