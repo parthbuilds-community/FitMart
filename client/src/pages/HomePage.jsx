@@ -16,7 +16,7 @@ import NearbyFitnessCenters from "../components/NearbyFitnessCenters";
 import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
-
+import toast from "react-hot-toast";
 
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -555,7 +555,8 @@ export default function HomePage() {
             </div>
             <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
                                hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
-                               text-center">
+                               text-center"
+              onClick={() => alert("Loyalty program details coming soon!")}>
               Learn More
             </button>
           </div>
@@ -599,6 +600,11 @@ export default function HomePage() {
                                    transition-all self-start min-h-10">
                   {p.cta}
                 </button>
+                <button
+  onClick={() => toast("Pro membership coming soon!")}
+>
+  Upgrade to Pro
+</button>
               </div>
             ))}
           </div>
@@ -617,6 +623,17 @@ export default function HomePage() {
                 className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
                 {l}
               </button>
+      <button onClick={() => alert("Privacy policy coming soon!")}>
+  Privacy
+</button>
+
+<button onClick={() => alert("Terms & conditions coming soon!")}>
+  Terms
+</button>
+
+<button onClick={() => alert("Support page coming soon!")}>
+  Support
+</button>
             ))}
           </div>
         </div>
