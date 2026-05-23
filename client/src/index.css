@@ -1,16 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
 @import "tailwindcss";
 
+/* Accessibility focus ring */
 :focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
-/* Remove default browser outline only when using mouse */
+/* Remove default outline when using mouse */
 :focus:not(:focus-visible) {
   outline: none;
 }
 
+/* Hide scrollbar utility */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
