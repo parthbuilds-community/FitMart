@@ -1,5 +1,6 @@
 // server/index.js
 require("dotenv").config();
+const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -158,6 +159,8 @@ app.use("/api/bugs", require("./routes/bugs"));
 //                POST /verify-payment
 //                POST /clear-cart
 app.use("/api/payment", require("./routes/payment"));
+// FitRewards loyalty points routes
+app.use("/api/rewards", require("./routes/rewards"));
 
 // Nearby fitness centers
 app.use("/api/fitness-centers", require("./routes/fitnessCenters"));

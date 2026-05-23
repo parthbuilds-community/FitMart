@@ -1,6 +1,24 @@
 version: "3.8"
 
+# ──────────────────────────────────────────────────────────────────────────────
+# FitMart — Full-Stack Docker Compose
+#
+# Services:  mongodb | server | client
+#
+# Usage:
+#   1. Copy server/.env.example → server/.env and fill in your values.
+#      NEVER commit .env files or serviceAccountKey.json to git.
+#   2. Run: docker compose up --build
+#   3. Open http://localhost (client) and http://localhost:5000 (API)
+#
+# Secrets:
+#   Firebase credentials and Razorpay keys are read from server/.env at
+#   runtime — they are never baked into the image.
+# ──────────────────────────────────────────────────────────────────────────────
+
 services:
+
+  # ── MongoDB ────────────────────────────────────────────────────────────────
   mongodb:
     image: mongo:7
     container_name: fitmart-mongodb
@@ -9,6 +27,79 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - fitmart-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
+  # ── Node / Express API ─────────────────────────────────────────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: fitmart-server
+    restart: on-failure
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env          # Copy server/.env.example → server/.env first
+    environment:
+      # Override MONGO_URI so the server reaches the mongodb container by name.
+      # All other variables (Firebase, Razorpay, SMTP, etc.) come from env_file.
+      - MONGO_URI=mongodb://mongodb:27017
+      - NODE_ENV=production
+      - PORT=5000
+      # CORS: allow requests from the Nginx client container
+      - ALLOWED_ORIGIN=http://localhost
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - fitmart-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── React Client (Nginx, production build) ─────────────────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        # Vite bakes these into the JS bundle at build time.
+        # Override with your own values via a .env file or --build-arg flags.
+        VITE_API_URL: http://localhost:5000
+        VITE_RAZORPAY_KEY_ID: ${VITE_RAZORPAY_KEY_ID:-}
+        VITE_ADMIN_UID: ${VITE_ADMIN_UID:-}
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY:-}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN:-}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID:-}
+        VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET:-}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID:-}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID:-}
+        VITE_FIREBASE_MEASUREMENT_ID: ${VITE_FIREBASE_MEASUREMENT_ID:-}
+    container_name: fitmart-client
+    restart: on-failure
+    ports:
+      - "80:80"
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - fitmart-network
+
+# ── Named volumes ──────────────────────────────────────────────────────────────
 volumes:
   mongodb_data:
+
+# ── Shared network ─────────────────────────────────────────────────────────────
+networks:
+  fitmart-network:
+    driver: bridge

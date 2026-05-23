@@ -383,20 +383,60 @@ Make sure you have the following installed:
 
 ---
 
-### 🐳 Local Database via Docker (Optional)
+### 🐳 Running the Full Stack with Docker
 
-If you don't have a MongoDB Atlas account or prefer to run a local database, you can use the included Docker configuration. This will spin up a local MongoDB instance.
+The included `docker-compose.yml` runs all three services — **MongoDB**, the **Node/Express API**, and the **React client** (served by Nginx) — with a single command.
 
-1.  Make sure [Docker](https://www.docker.com/products/docker-desktop/) is installed and running.
-2.  Run the following command in the project root:
+#### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+
+#### Setup
+
+1. Copy the server env file and fill in your values:
 
 ```bash
-docker-compose up -d
+cp server/.env.example server/.env
 ```
 
-3.  In your `server/.env`, set `MONGO_URI` to:
+> ⚠️ **Never commit `server/.env` or `serviceAccountKey.json` to git.** They are already in `.gitignore`.
+
+2. Export your Vite/Firebase client credentials so Docker can bake them into the React build. The easiest way is a `.env` file in the project root:
+
 ```env
-MONGO_URI=mongodb://localhost:27017
+VITE_FIREBASE_API_KEY=your_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_RAZORPAY_KEY_ID=your_razorpay_key
+VITE_ADMIN_UID=your_firebase_admin_uid
+```
+
+3. Build and start all services:
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| React client | http://localhost |
+| Node API | http://localhost:5000 |
+| MongoDB | mongodb://localhost:27017 |
+
+#### Service startup order
+
+`mongodb` → (healthcheck passes) → `server` → (healthcheck passes) → `client`
+
+This guarantees the API never starts before the database is ready.
+
+#### Stopping
+
+```bash
+docker compose down          # stop containers
+docker compose down -v       # stop + delete the MongoDB volume
 ```
 
 ---

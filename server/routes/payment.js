@@ -1,5 +1,6 @@
 // server/routes/payment.js
-
+const Rewards = require("../models/Rewards");
+const rewardsConfig = require("../config/rewardsConfig");
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
@@ -112,6 +113,49 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
     // Update local object to reflect changes
     order.paymentId = razorpay_payment_id;
     order.status = "paid";
+        // STEP 4: Award FitRewards points after successful payment
+    try {
+      let rewards = await Rewards.findOne({ userId });
+
+      if (!rewards) {
+        rewards = await Rewards.create({
+          userId,
+          pointsBalance: 0,
+          transactions: [],
+        });
+      }
+
+      const alreadyCredited = rewards.transactions.some(
+        (transaction) => transaction.orderId === String(order._id)
+      );
+
+      if (!alreadyCredited) {
+        const purchaseAmount =
+          order.totalAmount || order.total || order.amount || 0;
+
+        let points = Math.floor(
+          Number(purchaseAmount) * rewardsConfig.POINTS_PER_RUPEE
+        );
+
+        if (rewards.transactions.length === 0) {
+          points += rewardsConfig.FIRST_PURCHASE_BONUS;
+        }
+
+        rewards.transactions.push({
+          type: "earned",
+          points,
+          source: "purchase",
+          orderId: String(order._id),
+          description: "Points earned from purchase",
+          createdAt: new Date(),
+        });
+
+        rewards.pointsBalance += points;
+        await rewards.save();
+      }
+    } catch (rewardError) {
+      console.error("Reward earning failed:", rewardError.message);
+    }
 
     // STEP 4: Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow

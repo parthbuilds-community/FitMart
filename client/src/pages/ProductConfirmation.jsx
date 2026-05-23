@@ -1,5 +1,5 @@
 // src/pages/ProductConfirmation.jsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
@@ -16,16 +16,18 @@ export default function ProductConfirmation() {
     document.title = "FitMart";
   }, []);
 
-  const orderDate = useRef(
-    new Date().toLocaleDateString("en-IN", {
-      day: "numeric", month: "long", year: "numeric",
-    })
-  );
-  const orderTime = useRef(
-    new Date().toLocaleTimeString("en-IN", {
-      hour: "2-digit", minute: "2-digit",
-    })
-  );
+const now = new Date();
+
+const currentOrderDate = now.toLocaleDateString("en-IN", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+const currentOrderTime = now.toLocaleTimeString("en-IN", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
   useEffect(() => {
     if (!items.length) navigate("/");
@@ -49,7 +51,7 @@ export default function ProductConfirmation() {
 
     const addr = address;
     const addrHtml = addr ? `
-      <div class="billing-block">
+      <div class="billing-card">
         <h3>Shipping Address</h3>
         <p>${addr.label || ''}</p>
         <p>${addr.line1 || ''}${addr.line2 ? `, ${addr.line2}` : ''}</p>
@@ -59,147 +61,527 @@ export default function ProductConfirmation() {
       </div>
     ` : '';
 
-    const invoiceHTML = `
+   const invoiceHTML = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FitMart Invoice – ${paymentId || "ORDER"}</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap"
+    rel="stylesheet"
+  />
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-500: #78716c;
+      --stone-700: #44403c;
+      --stone-900: #1c1917;
+      --green-100: #dcfce7;
+      --green-700: #15803d;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: #1c1917;
-      background: #fff;
-      padding: 48px;
-      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--stone-100);
+      color: var(--stone-900);
+      padding: 40px;
       line-height: 1.6;
     }
+
+    .invoice-wrapper {
+      max-width: 960px;
+      margin: auto;
+      background: #fff;
+      border-radius: 28px;
+      padding: 42px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.06);
+      border: 1px solid var(--stone-200);
+    }
+
     .header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      gap: 24px;
       padding-bottom: 32px;
-      border-bottom: 2px solid #1c1917;
-      margin-bottom: 40px;
+      border-bottom: 1px solid var(--stone-200);
+      margin-bottom: 36px;
     }
-    .brand { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+
+    .brand-section h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 42px;
+      font-weight: 400;
+      color: var(--stone-900);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
     .invoice-label {
-      font-size: 11px; letter-spacing: 0.18em;
-      text-transform: uppercase; color: #78716c; margin-top: 6px;
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--stone-500);
+      margin-bottom: 14px;
     }
-    .meta { text-align: right; }
-    .meta p { font-size: 12px; color: #78716c; }
-    .meta .pid {
-      font-family: monospace; font-size: 11px; color: #44403c;
-      margin-top: 4px; word-break: break-all;
+
+    .tagline {
+      color: var(--stone-500);
+      font-size: 14px;
     }
-    .billing {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 32px; margin-bottom: 40px;
+
+    .meta {
+      text-align: right;
     }
-    .billing-block h3 {
-      font-size: 10px; letter-spacing: 0.18em;
-      text-transform: uppercase; color: #78716c; margin-bottom: 8px;
+
+    .meta-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--stone-500);
+      margin-bottom: 8px;
     }
-    .billing-block p { font-size: 13px; color: #1c1917; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
-    thead tr { background: #1c1917; color: #fff; }
+
+    .meta p {
+      font-size: 14px;
+      color: var(--stone-700);
+      margin-bottom: 6px;
+    }
+
+    .pid {
+      font-size: 12px;
+      color: var(--stone-700);
+      word-break: break-word;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--green-100);
+      color: var(--green-700);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 12px;
+    }
+
+    .billing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    .billing-card {
+      background: var(--stone-50);
+      border: 1px solid var(--stone-200);
+      border-radius: 20px;
+      padding: 22px;
+    }
+
+    .billing-card h3 {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--stone-500);
+      margin-bottom: 12px;
+    }
+
+    .billing-card p {
+      font-size: 14px;
+      color: var(--stone-900);
+      margin-bottom: 4px;
+    }
+
+    .products-section {
+      margin-bottom: 34px;
+    }
+
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: var(--stone-900);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
     thead th {
-      padding: 10px 14px; text-align: left; font-size: 10px;
-      letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+      background: var(--stone-900);
+      color: white;
+      padding: 14px 16px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
     }
-    thead th:last-child { text-align: right; }
-    tbody tr { border-bottom: 1px solid #e7e5e3; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody td { padding: 14px; font-size: 13px; vertical-align: middle; }
-    tbody td:last-child { text-align: right; font-weight: 500; }
+
+    thead th:first-child {
+      border-top-left-radius: 14px;
+    }
+
+    thead th:last-child {
+      border-top-right-radius: 14px;
+      text-align: right;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--stone-200);
+    }
+
+    tbody td {
+      padding: 18px 16px;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    tbody td:last-child {
+      text-align: right;
+      font-weight: 700;
+      color: var(--stone-900);
+    }
+
+    .product-cell {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .product-image {
+      width: 68px;
+      height: 68px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 1px solid var(--stone-200);
+      background: white;
+    }
+
     .product-brand {
-      font-size: 10px; letter-spacing: 0.1em;
-      text-transform: uppercase; color: #78716c; margin-bottom: 2px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--stone-500);
+      margin-bottom: 4px;
     }
-    .product-name { font-size: 14px; color: #1c1917; }
-    .unit-price { font-size: 11px; color: #a8a29e; margin-top: 2px; }
-    .totals {
-      margin-left: auto; width: 280px;
-      border-top: 2px solid #1c1917; padding-top: 20px;
+
+    .product-name {
+      font-size: 15px;
+      color: var(--stone-900);
+      font-weight: 600;
+      margin-bottom: 4px;
     }
+
+    .unit-price {
+      font-size: 12px;
+      color: var(--stone-500);
+    }
+
+    .qty {
+      text-align: center;
+      font-weight: 600;
+      color: var(--stone-700);
+    }
+
+    .summary-section {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .totals-card {
+      width: 340px;
+      background: var(--stone-50);
+      border: 1px solid var(--stone-200);
+      border-radius: 22px;
+      padding: 26px;
+    }
+
     .total-row {
-      display: flex; justify-content: space-between;
-      padding: 5px 0; font-size: 13px; color: #44403c;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-size: 14px;
+      color: var(--stone-700);
     }
+
     .total-row.grand {
-      font-size: 16px; font-weight: 700; color: #1c1917;
-      padding-top: 12px; margin-top: 8px; border-top: 1px solid #e7e5e3;
+      margin-top: 12px;
+      padding-top: 18px;
+      border-top: 1px solid var(--stone-300);
+      font-size: 22px;
+      font-family: 'DM Serif Display', serif;
+      color: var(--stone-900);
     }
+
     .footer {
-      margin-top: 60px; padding-top: 24px; border-top: 1px solid #e7e5e3;
-      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 42px;
+      padding-top: 24px;
+      border-top: 1px solid var(--stone-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
     }
-    .footer p { font-size: 11px; color: #a8a29e; }
-    .thank-you { font-size: 13px; color: #1c1917; font-weight: 500; }
-    @media print { body { padding: 24px; } }
+
+    .footer-left p {
+      font-size: 12px;
+      color: var(--stone-500);
+      margin-bottom: 4px;
+    }
+
+    .thank-you {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--stone-900);
+      margin-bottom: 8px;
+    }
+
+    .qr-code {
+      width: 78px;
+      height: 78px;
+      border-radius: 12px;
+      border: 1px solid var(--stone-200);
+      padding: 4px;
+      background: white;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 20px;
+      }
+
+      .invoice-wrapper {
+        padding: 24px;
+      }
+
+      .header {
+        flex-direction: column;
+      }
+
+      .meta {
+        text-align: left;
+      }
+
+      .summary-section {
+        justify-content: stretch;
+      }
+
+      .totals-card {
+        width: 100%;
+      }
+
+      .footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .invoice-wrapper {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+
+      .billing-card,
+      .totals-card {
+        break-inside: avoid;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="header">
-    <div>
-      <div class="brand">FitMart</div>
-      <div class="invoice-label">Tax Invoice</div>
+  <div class="invoice-wrapper">
+
+    <div class="header">
+      <div class="brand-section">
+        <div class="invoice-label">FitMart Official Invoice</div>
+        <h1>FitMart</h1>
+        <p class="tagline">
+          Premium fitness marketplace for modern athletes.
+        </p>
+      </div>
+
+      <div class="meta">
+        <div class="meta-title">Invoice Details</div>
+        <p>${currentOrderDate} · ${currentOrderTime}</p>
+
+        ${
+          paymentId
+            ? `<div class="pid">Payment ID: ${paymentId}</div>`
+            : ""
+        }
+
+        <div class="status-badge">Paid Successfully</div>
+      </div>
     </div>
-    <div class="meta">
-      <p>${orderDate.current} · ${orderTime.current}</p>
-      ${paymentId ? `<div class="pid">Payment ID: ${paymentId}</div>` : ""}
+
+    <div class="billing-grid">
+
+      <div class="billing-card">
+        <h3>Billed To</h3>
+        <p>${userName}</p>
+        ${userEmail ? `<p>${userEmail}</p>` : ""}
+      </div>
+
+      ${addrHtml}
+
+      <div class="billing-card">
+        <h3>Sold By</h3>
+        <p>FitMart India Pvt. Ltd.</p>
+        <p>Mumbai, Maharashtra</p>
+        <p>support@fitmart.in</p>
+      </div>
+
     </div>
-  </div>
-  <div class="billing">
-    <div class="billing-block">
-      <h3>Billed To</h3>
-      <p>${userName}</p>
-      ${userEmail ? `<p>${userEmail}</p>` : ""}
+
+    <div class="products-section">
+      <h2 class="section-title">Order Summary</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th style="text-align:center">Qty</th>
+            <th style="text-align:right">Amount</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${items.map(({ product, quantity }) => `
+            <tr>
+              <td>
+                <div class="product-cell">
+
+                  <img
+                    src="${product.image}"
+                    alt="${product.name}"
+                    class="product-image"
+                  />
+
+                  <div>
+                    <div class="product-brand">
+                      ${product.brand || "FitMart"}
+                    </div>
+
+                    <div class="product-name">
+                      ${product.name}
+                    </div>
+
+                    <div class="unit-price">
+                      ${fmt(product.price)} / unit
+                    </div>
+                  </div>
+
+                </div>
+              </td>
+
+              <td class="qty">
+                ${quantity}
+              </td>
+
+              <td>
+                ${fmt(product.price * quantity)}
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
     </div>
-    ${addrHtml}
-    <div class="billing-block">
-      <h3>Sold By</h3>
-      <p>FitMart India Pvt. Ltd.</p>
-      <p>Mumbai, Maharashtra</p>
-      <p>fitmart.in</p>
+
+    <div class="summary-section">
+      <div class="totals-card">
+
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span>${fmt(total)}</span>
+        </div>
+
+        <div class="total-row">
+          <span>Shipping</span>
+          <span>Free</span>
+        </div>
+
+        <div class="total-row">
+          <span>Tax (GST)</span>
+          <span>Included</span>
+        </div>
+
+        <div class="total-row grand">
+          <span>Total Paid</span>
+          <span>${fmt(total)}</span>
+        </div>
+
+      </div>
     </div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th style="text-align:center">Qty</th>
-        <th style="text-align:right">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${items.map(({ product, quantity }) => `
-        <tr>
-          <td>
-            <div class="product-brand">${product.brand || ""}</div>
-            <div class="product-name">${product.name}</div>
-            <div class="unit-price">${fmt(product.price)} / unit</div>
-          </td>
-          <td style="text-align:center">${quantity}</td>
-          <td>${fmt(product.price * quantity)}</td>
-        </tr>
-      `).join("")}
-    </tbody>
-  </table>
-  <div class="totals">
-    <div class="total-row"><span>Subtotal</span><span>${fmt(total)}</span></div>
-    <div class="total-row"><span>Shipping</span><span>Free</span></div>
-    <div class="total-row"><span>Tax (GST)</span><span>Included</span></div>
-    <div class="total-row grand"><span>Total Paid</span><span>${fmt(total)}</span></div>
-  </div>
-  <div class="footer">
-    <p>© 2026 FitMart · Mumbai · All rights reserved</p>
-    <span class="thank-you">Thank you for your purchase ✓</span>
+
+    <div class="footer">
+
+      <div class="footer-left">
+        <div class="thank-you">
+          Thank you for shopping with FitMart ✓
+        </div>
+
+        <p>
+          © 2026 FitMart India Pvt. Ltd. All rights reserved.
+        </p>
+
+        <p>
+          Designed for seamless digital invoicing and print-ready export.
+        </p>
+      </div>
+
+      ${
+        paymentId
+          ? `
+            <img
+              class="qr-code"
+              src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${paymentId}"
+              alt="Payment QR"
+            />
+          `
+          : ""
+      }
+
+    </div>
+
   </div>
 </body>
-</html>`;
+</html>
+`;
 
     const win = window.open("", "_blank");
     win.document.write(invoiceHTML);
@@ -250,7 +632,7 @@ export default function ProductConfirmation() {
             Thank you for shopping with FitMart.
           </p>
           <p className="text-xs text-stone-400">
-            {orderDate.current} · {orderTime.current}
+            {currentOrderDate} · {currentOrderTime}
           </p>
           {paymentId && (
             <p className="text-[11px] text-stone-400 mt-2 font-mono bg-stone-100

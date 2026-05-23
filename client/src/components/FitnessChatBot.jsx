@@ -8,6 +8,27 @@ const WELCOME = {
   text: "Hello! I'm your FitMart fitness assistant. Ask me anything about workouts, diet, protein, weight loss, or muscle gain.",
 };
 
+
+
+const QUICK_REPLIES = [
+  {
+    label: "💪 Build muscle",
+    prompt: "How can I build muscle effectively?",
+  },
+  {
+    label: "🥗 Diet plan",
+    prompt: "What's a good daily diet plan?",
+  },
+  {
+    label: "🏃 Cardio tips",
+    prompt: "Give me tips for cardio workouts",
+  },
+  {
+    label: "⚖️ Lose weight",
+    prompt: "How do I lose weight sustainably?",
+  },
+]
+
 export default function FitnessChatBot() {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState([WELCOME]);
@@ -40,8 +61,15 @@ export default function FitnessChatBot() {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const send = async () => {
-    const text = input.trim();
+  const send = async (customText = input) => {
+    // customText is passed from quick replies,
+    // otherwise fallback to manual textarea input
+    // Prevent crashes if non-string values are passed into send()
+    const text =
+      typeof customText === "string"
+        ? customText.trim()
+        : "";
+
     if (!text || typing) return;
     setMsgs((prev) => [...prev, { role: "user", text }]);
     setInput("");
@@ -246,6 +274,8 @@ export default function FitnessChatBot() {
             </div>
           ))}
 
+
+
           {/* Typing Indicator */}
           {typing && (
             <div className="fm-msg flex justify-start">
@@ -267,8 +297,24 @@ export default function FitnessChatBot() {
 
         <div className="h-px bg-stone-100 shrink-0" />
 
+        {/*  Show quick replies only before the conversation starts
+         to keep the chat area clean after interaction begins */}
+        {msgs.length === 1 && (
+          <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-hide">
+            {QUICK_REPLIES.map((reply) => (
+              <button
+                key={reply.label}
+                onClick={() => send(reply.prompt)}
+                className="px-3 py-1.5 text-sm bg-white border border-stone-200 rounded-full shadow-sm hover:bg-stone-100 transition-colors shrink-0"
+              >
+                {reply.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* ── Input Area ── */}
-        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white flex items-end gap-2 shrink-0">
+        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white flex items-end gap-2 shrink-0 overflow-hidden">
           <textarea
             ref={inputRef}
             rows={1}
@@ -277,18 +323,22 @@ export default function FitnessChatBot() {
             onKeyDown={onKeyDown}
             placeholder="Ask about workouts, diet, protein…"
             disabled={typing}
-            className="flex-1 resize-none border border-stone-200 bg-stone-50 rounded-xl
+            className="flex-1 min-w-0  resize-none border border-stone-200 bg-stone-50 rounded-xl
                        px-3.5 sm:px-4 py-2.5 text-sm text-stone-900 placeholder-stone-300
                        focus:outline-none focus:border-stone-900 transition-colors
                        disabled:opacity-50 leading-relaxed"
-            style={{ maxHeight: "96px", overflowY: "auto" }}
+            // min-w-0 allows the textarea to shrink correctly
+            // inside flex layouts and prevents layout overflow
+            style={{ maxHeight: "96px", overflowY: "hidden" }}
             onInput={(e) => {
               e.target.style.height = "auto";
               e.target.style.height = Math.min(e.target.scrollHeight, 96) + "px";
             }}
           />
           <button
-            onClick={send}
+            // Wrap send() in an arrow function to avoid
+            // React automatically passing the click event object
+            onClick={() => send()}
             disabled={!input.trim() || typing}
             className="w-10 h-10 sm:w-9 sm:h-9 bg-stone-900 text-white rounded-full
                        flex items-center justify-center hover:bg-stone-700 transition-colors

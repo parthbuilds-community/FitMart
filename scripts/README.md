@@ -106,7 +106,9 @@ FitMart/
 ├── scripts/
 │   ├── README.md
 │   ├── merge-pr.ps1
-│   └── review-pr.ps1
+│   ├── merge-pr.sh
+│   ├── review-pr.ps1
+│   └── review-pr.sh
 ```
 
 These scripts are already included in the repository structure.
@@ -166,8 +168,8 @@ git mergepr 273
 ### Step 1 — Make Scripts Executable
 
 ```bash
-chmod +x scripts/review-pr.ps1
-chmod +x scripts/merge-pr.ps1
+chmod +x scripts/review-pr.sh
+chmod +x scripts/merge-pr.sh
 ```
 
 ---
@@ -175,14 +177,14 @@ chmod +x scripts/merge-pr.ps1
 ### Step 2 — Configure Git Aliases
 
 ```bash
-git config --global alias.reviewpr '!pwsh ./scripts/review-pr.ps1'
+git config --global alias.reviewpr '!./scripts/review-pr.sh'
 ```
 
 ```bash
-git config --global alias.mergepr '!pwsh ./scripts/merge-pr.ps1'
+git config --global alias.mergepr '!./scripts/merge-pr.sh'
 ```
 
-> Note: PowerShell Core (`pwsh`) must be installed on Linux/macOS.
+> Note: The merge script requires the GitHub CLI (`gh`) to be installed.
 
 ---
 
@@ -232,6 +234,8 @@ Copy the following files into that folder:
 
 * `review-pr.ps1`
 * `merge-pr.ps1`
+* `review-pr.sh`
+* `merge-pr.sh`
 
 ---
 
@@ -268,11 +272,11 @@ git config --global alias.mergepr "!powershell -ExecutionPolicy Bypass -File \"D
 ### Configure Git Aliases
 
 ```bash
-git config --global alias.reviewpr '!pwsh ~/git-tools/review-pr.ps1'
+git config --global alias.reviewpr '!~/git-tools/review-pr.sh'
 ```
 
 ```bash
-git config --global alias.mergepr '!pwsh ~/git-tools/merge-pr.ps1'
+git config --global alias.mergepr '!~/git-tools/merge-pr.sh'
 ```
 
 ---
