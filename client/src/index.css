@@ -1,2 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
 @import "tailwindcss";
+
+
+:focus-visible {
+  outline: 2px solid #3b82f6;  
+  outline-offset: 2px;
+}
+
+/* Remove the default browser outline only when using mouse */
+:focus:not(:focus-visible) {
+  outline: none;
+}
