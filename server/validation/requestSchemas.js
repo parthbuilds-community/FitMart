@@ -51,6 +51,22 @@ const productUpdateBodySchema = productFieldsSchema
     message: 'At least one product field is required',
   });
 
+const workoutExerciseSchema = z.object({
+  id: z.string().min(1, 'id is required'),
+  name: z.string().min(1, 'name is required'),
+  bodyPart: z.string().optional(),
+  target: z.string().optional(),
+  equipment: z.string().optional(),
+  gifUrl: z.string().optional()
+}).strict();
+
+const workoutLogBodySchema = z.object({
+  date: z.string().min(1, 'date is required'),
+  title: z.string().optional(),
+  notes: z.string().optional(),
+  exercises: z.array(workoutExerciseSchema).optional()
+}).strict();
+
 module.exports = {
   cartAddSchema: {
     params: userIdParamsSchema,
@@ -72,5 +88,8 @@ module.exports = {
   updateProductSchema: {
     params: productIdParamSchema,
     body: productUpdateBodySchema,
+  },
+  updateWorkoutLogSchema: {
+    body: workoutLogBodySchema,
   },
 };

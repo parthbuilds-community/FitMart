@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const WorkoutLog = require('../models/WorkoutLog');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const validateRequest = require('../middleware/validateRequest');
+const { updateWorkoutLogSchema } = require('../validation/requestSchemas');
 
 /**
  * @route   GET /api/workouts
@@ -34,13 +36,9 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
  * @desc    Create or update a workout log for a specific date
  * @access  Private
  */
-router.post('/', verifyFirebaseToken, async (req, res) => {
+router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), async (req, res) => {
   try {
     const { date, title, notes, exercises } = req.body;
-    
-    if (!date) {
-      return res.status(400).json({ error: 'Date is required' });
-    }
 
     const logData = {
       title: title || '',
