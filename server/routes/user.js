@@ -19,6 +19,14 @@ const upload = multer({
   },
 });
 
+function checkOwnership(req, res) {
+  if (req.user.uid !== req.params.userId) {
+    res.status(403).json({ error: "Forbidden" });
+    return false;
+  }
+  return true;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/user/login
 // Body: { userId }
@@ -150,7 +158,9 @@ router.post("/use-discount", async (req, res) => {
 // Returns current discount eligibility for a user.
 // Used by Checkout to decide whether to apply the 10% discount.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/discount-status/:userId", async (req, res) => {
+router.get("/discount-status/:userId", verifyFirebaseToken, async (req, res) => {
+  if (!checkOwnership(req, res)) return;
+
   try {
     const { userId } = req.params;
     const profile = await UserProfile.findOne({ userId });
@@ -175,7 +185,9 @@ router.get("/discount-status/:userId", async (req, res) => {
 // GET /api/user/profile/:userId
 // Returns stored profile (including addresses) for a user
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/profile/:userId", async (req, res) => {
+router.get("/profile/:userId", verifyFirebaseToken, async (req, res) => {
+  if (!checkOwnership(req, res)) return;
+
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -195,7 +207,9 @@ router.get("/profile/:userId", async (req, res) => {
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", async (req, res) => {
+router.put("/profile/:userId", verifyFirebaseToken, async (req, res) => {
+  if (!checkOwnership(req, res)) return;
+
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
