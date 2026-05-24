@@ -50,10 +50,12 @@ export default function Navbar({
   const bgClass = isLanding
     ? navOpaque
       ? "bg-white/95 backdrop-blur-sm border-b border-stone-200 shadow-sm"
-      : "bg-transparent"
+      : "bg-white/30 backdrop-blur-md"
     : "bg-white border-b border-stone-200";
 
-  const logoColor = isLanding && !navOpaque ? "text-white" : "text-stone-900";
+  const logoColor = isLanding && !navOpaque
+  ? "text-stone-900 drop-shadow-sm"
+  : "text-stone-900";
   const iconColor =
     isLanding && !navOpaque ? "text-white/80 hover:text-white" : "text-stone-500 hover:text-stone-900";
 
