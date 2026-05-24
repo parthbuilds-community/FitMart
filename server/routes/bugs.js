@@ -98,7 +98,12 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 // ── GET /api/bugs — admin only ────────────────────────────────────────────
 router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
   try {
-    const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
+    status;
+    search;
+    page;
+    limit;
+    skip();
+    countDocuments();
     res.json({ ok: true, bugs });
   } catch (err) {
     console.error('Error fetching bugs:', err);
