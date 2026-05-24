@@ -2,12 +2,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiRequest } from "../lib/apiClient";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const FEATURE_MAP = {
   Equipment: ["Free shipping", "Assembly guide included", "2-year warranty", "Returns within 30 days"],
@@ -16,20 +15,19 @@ const FEATURE_MAP = {
 };
 
 async function apiAddToCart(userId, productId, quantity) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}/add`, {
-    method: "POST", headers, credentials: "include",
-    body: JSON.stringify({ productId, quantity }),
+  return apiRequest(`/api/cart/${userId}/add`, {
+    method: "POST",
+    auth: true,
+    credentials: "include",
+    body: { productId, quantity },
   });
-  if (!res.ok) throw new Error("Failed to add to cart");
-  return res.json();
 }
 
 async function apiGetCart(userId) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch cart");
-  return res.json();
+  return apiRequest(`/api/cart/${userId}`, {
+    auth: true,
+    credentials: "include",
+  });
 }
 
 function enrichCart(cartDoc, products) {
@@ -97,9 +95,7 @@ export default function ProductPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API}/api/products`);
-        if (!res.ok) throw new Error("Failed to load products");
-        const all = res.ok ? await res.json() : [];
+        const all = await apiRequest("/api/products");
         const normalised = all.map(p => ({ ...p, id: p.productId }));
         setProducts(normalised);
         const found = normalised.find(p => String(p.productId) === String(productId));
@@ -180,14 +176,13 @@ export default function ProductPage() {
     if (!user) return;
     try {
       const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
-      });
-      if (!res.ok) throw new Error("Failed to update qty");
-      const cartDoc = await res.json();
-      setCart(enrichCart(cartDoc, products));
+const cartDoc = await apiRequest(`/api/cart/${user.uid}/remove`, {
+  method: "POST",
+  auth: true,
+  credentials: "include",
+  body: { productId: id, quantity: existing?.qty || 1 },
+});
+setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("updateQty error:", err);
     }
