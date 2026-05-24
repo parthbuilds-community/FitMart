@@ -29,11 +29,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 
     if (!title || !description)
       return res.status(400).json({ error: 'Title and description are required' });
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (req.body.reporterEmail && !emailRegex.test(req.body.reporterEmail)) {
-      return res.status(400).json({ error: 'Invalid email format' });
-    }
+
     // Prefer authenticated name/email from token if present
     try {
       const authHeader = req.headers.authorization;
