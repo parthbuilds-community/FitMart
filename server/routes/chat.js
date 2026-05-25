@@ -29,16 +29,73 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const modelName = process.env.GEMINI_MODEL_NAME || "gemini-2.5-flash";
 const model = genAI.getGenerativeModel({ model: modelName });
 
+const MAX_HISTORY_TURNS = 6;
+
+/**
+ * Validates that the history value from the request body is a usable array.
+ * Returns an empty array for any invalid / missing input (backward compatible).
+ *
+ * @param {*} raw - raw value from req.body.history
+ * @returns {Array<{role: string, parts: [{text: string}]}>}
+ */
+
+function sanitiseHistory(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (entry) =>
+      entry &&
+      typeof entry.role === "string" &&
+      Array.isArray(entry.parts) &&
+      entry.parts.length > 0 &&
+      typeof entry.parts[0]?.text === "string"
+  );
+}
+
+/**
+ * Converts a validated history array into a plain-text conversation block
+ * prepended to the system prompt so Gemini has prior turn context.
+ *
+ * @param {Array<{role: string, parts: [{text: string}]}>} history
+ * @returns {string}
+ */
+
+function buildHistoryBlock(history) {
+  if (!history || history.length === 0) return "";
+
+  const capped = history.slice(-MAX_HISTORY_TURNS);
+  if (capped.length < history.length) {
+    console.warn(`⚠️ Chat history truncated from ${history.length} to ${MAX_HISTORY_TURNS} turns`);
+  }
+
+  const lines = capped.map((entry) => {
+    const role = entry.role === "assistant" ? "Assistant" : "User";
+    const text = entry?.parts?.[0]?.text ?? "";
+    return `${role}: ${text}`;
+  });
+
+  return lines.join("\n");
+}
+
 router.post("/", chatLimiter, async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, history: rawHistory } = req.body;
     if (!message?.trim()) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    console.log("Processing chat message:", { length: message.length, timestamp: Date.now() });
+    const history = sanitiseHistory(rawHistory);
 
-    const prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}`;
+    console.log("Processing chat message:", {
+      length: message.length,
+      historyTurns: history.length,
+      timestamp: Date.now(),
+    });
+
+    // Build the full prompt: system instructions + prior conversation turns + current message.
+    const historyBlock = buildHistoryBlock(history);
+    const prompt = historyBlock
+      ? `${SYSTEM_PROMPT}\n\nConversation so far:\n${historyBlock}\n\nUser: ${message}`
+      : `${SYSTEM_PROMPT}\n\nUser: ${message}`;
 
     let reply;
     let usedFallback = false;

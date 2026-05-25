@@ -8,7 +8,9 @@ const WELCOME = {
   text: "Hello! I'm your FitMart fitness assistant. Ask me anything about workouts, diet, protein, weight loss, or muscle gain.",
 };
 
-
+// Maximum number of history entries (messages) to send to the server.
+// Matches the server-side MAX_HISTORY_TURNS cap.
+const MAX_HISTORY = 6;
 
 const QUICK_REPLIES = [
   {
@@ -27,7 +29,7 @@ const QUICK_REPLIES = [
     label: "⚖️ Lose weight",
     prompt: "How do I lose weight sustainably?",
   },
-]
+];
 
 export default function FitnessChatBot() {
   const [open, setOpen] = useState(false);
@@ -37,6 +39,7 @@ export default function FitnessChatBot() {
   const [visible, setVisible] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const historyRef = useRef([]);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 120);
@@ -61,10 +64,17 @@ export default function FitnessChatBot() {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  /** Resets the chat to its initial state and wipes conversation history. */
+  const clearChat = () => {
+    setMsgs([WELCOME]);
+    setInput("");
+    historyRef.current = [];
+  };
+
   const send = async (customText = input) => {
     // customText is passed from quick replies,
-    // otherwise fallback to manual textarea input
-    // Prevent crashes if non-string values are passed into send()
+    // otherwise fallback to manual textarea input.
+    // Prevent crashes if non-string values are passed into send
     const text =
       typeof customText === "string"
         ? customText.trim()
@@ -74,15 +84,28 @@ export default function FitnessChatBot() {
     setMsgs((prev) => [...prev, { role: "user", text }]);
     setInput("");
     setTyping(true);
+
+    // Snapshot and cap history before the fetch so the ref can't mutate mid-flight.
+    const historySnapshot = historyRef.current.slice(-MAX_HISTORY);
+
     try {
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, history: historySnapshot }),
       });
       if (!res.ok) throw new Error("Request failed");
       const data = await res.json();
-      setMsgs((prev) => [...prev, { role: "bot", text: data.reply }]);
+      const botText = data.reply;
+
+      setMsgs((prev) => [...prev, { role: "bot", text: botText }]);
+
+      // Append both turns to history after a successful round-trip.
+      historyRef.current = [
+        ...historyRef.current,
+        { role: "user", parts: [{ text }] },
+        { role: "assistant", parts: [{ text: botText }] },
+      ];
     } catch {
       setMsgs((prev) => [
         ...prev,
@@ -195,6 +218,10 @@ export default function FitnessChatBot() {
         .fm-scrollbar::-webkit-scrollbar { width: 4px; }
         .fm-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .fm-scrollbar::-webkit-scrollbar-thumb { background: #e7e5e3; border-radius: 99px; }
+        .fm-clear-btn {
+          transition: color 0.15s ease, background 0.15s ease;
+        }
+        .fm-clear-btn:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
       `}</style>
 
       {/* ── Chat Window ── */}
@@ -228,11 +255,30 @@ export default function FitnessChatBot() {
               Fitness Assistant
             </h3>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="flex items-center gap-1.5 text-[10px] text-stone-400">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="flex items-center gap-1.5 text-[10px] text-stone-400 mr-1">
               <span className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-pulse" />
               Online
             </span>
+            {msgs.length > 1 && (
+              <button
+                onClick={clearChat}
+                className="fm-clear-btn text-stone-400 text-[10px] tracking-wide uppercase
+                           min-w-8 min-h-8 flex items-center justify-center
+                           rounded-full px-2 gap-1"
+                aria-label="Clear chat history"
+                title="Clear conversation"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+                <span className="hidden sm:inline">Clear</span>
+              </button>
+            )}
+
             <button
               onClick={() => setOpen(false)}
               className="text-stone-400 hover:text-white transition-colors text-2xl
@@ -274,8 +320,6 @@ export default function FitnessChatBot() {
             </div>
           ))}
 
-
-
           {/* Typing Indicator */}
           {typing && (
             <div className="fm-msg flex justify-start">
@@ -297,8 +341,8 @@ export default function FitnessChatBot() {
 
         <div className="h-px bg-stone-100 shrink-0" />
 
-        {/*  Show quick replies only before the conversation starts
-         to keep the chat area clean after interaction begins */}
+        {/* Show quick replies only before the conversation starts
+            to keep the chat area clean after interaction begins */}
         {msgs.length === 1 && (
           <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-hide">
             {QUICK_REPLIES.map((reply) => (
