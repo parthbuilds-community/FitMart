@@ -141,6 +141,7 @@ app.use("/api/chat", require("./routes/chat"));
 app.use("/api/user", require("./routes/user"));
 app.use("/api/customers", require("./routes/customers"));
 app.use("/api/exercises", require("./routes/exercises"));
+app.use("/api/workouts", require("./routes/workouts"));
 app.use("/api/bugs", require("./routes/bugs"));
 
 // ── // Razorpay / payment routes (prefixed with /api/payment) ─────────────────

@@ -1,335 +1,233 @@
-// src/components/Navbar.jsx
-import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
-import { signOut } from "firebase/auth";
-import { auth } from "../auth/firebase";
-import { useAuth } from "../auth/useAuth";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import WorkoutLogSkeleton from "../components/WorkoutLogSkeleton";
+import {
+  getWorkoutByDate,
+  removeExerciseFromWorkout,
+  saveWorkout,
+} from "../utils/workoutStorage";
 
-export default function Navbar({
-  variant = "landing",
-  navOpaque = true,
-  onSearchToggle,
-  cartCount = 0,
-  onCartOpen,
-  menuOpen,
-  setMenuOpen,
-  onSignOut,
-}) {
+export default function NotesPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const [localMenuOpen, setLocalMenuOpen] = useState(false);
+  const [date, setDate] = useState("");
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [exercises, setExercises] = useState([]);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState(new Set());
 
-  // Treat tracker and notes as limited nav routes (no "Track Fitness" option)
-  const isLimitedNavRoute =
-    location?.pathname === "/profile" ||
-    location?.pathname === "/tracker" ||
-    location?.pathname === "/notes";
+  useEffect(() => {
+    let active = true;
 
-  const handleSignOut = async () => {
-    if (onSignOut) {
-      onSignOut();
-    } else {
-      await signOut(auth);
-      navigate("/");
+    const loadWorkout = async () => {
+      const storedDate = localStorage.getItem("selectedDate");
+
+      if (!storedDate) {
+        if (active) {
+          setError("No date selected. Please go back to the calendar and select a date.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (active) setDate(storedDate);
+
+      try {
+        // Promise.resolve preserves compatibility with the local-storage implementation.
+        const workout = await Promise.resolve(getWorkoutByDate(storedDate));
+        if (active && workout) {
+          setTitle(workout.title || "");
+          setNotes(workout.notes || "");
+          setExercises(workout.exercises || []);
+        }
+      } catch {
+        if (active) {
+          setError("Unable to load this workout. Please try again.");
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadWorkout();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      alert("Please enter a workout title.");
+      return;
     }
-    // Close whichever menu state is in use
-    if (typeof setMenuOpen === "function") setMenuOpen(false);
-    else setLocalMenuOpen(false);
+
+    await Promise.resolve(saveWorkout({ date, title, notes, exercises }));
+    setSaved(true);
+    setTimeout(() => navigate("/tracker"), 1000);
   };
 
-  const isLanding = variant === "landing";
-
-  const handleNav = () => {
-    if (isLanding) window.scrollTo({ top: 0, behavior: "smooth" });
-    else navigate("/home");
+  const handleAddExercise = async () => {
+    await Promise.resolve(saveWorkout({ date, title, notes, exercises }));
+    localStorage.setItem("selectedDate", date);
+    navigate("/exercises");
   };
 
-  const positionClass = isLanding
-    ? "fixed top-0 left-0 right-0 z-50"
-    : "sticky top-0 z-40";
+  const handleRemoveExercise = async (exerciseId) => {
+    await Promise.resolve(removeExerciseFromWorkout(date, exerciseId));
+    setExercises((current) => current.filter((exercise) => exercise.id !== exerciseId));
+  };
 
-  const bgClass = isLanding
-    ? navOpaque
-      ? "bg-white/95 backdrop-blur-sm border-b border-stone-200 shadow-sm"
-      : "bg-transparent"
-    : "bg-white border-b border-stone-200";
-
-  const logoColor = isLanding && !navOpaque ? "text-white" : "text-stone-900";
-  const iconColor =
-    isLanding && !navOpaque
-      ? "text-white/80 hover:text-white"
-      : "text-stone-500 hover:text-stone-900";
+  const formattedDate = date
+    ? new Date(date).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "";
 
   return (
-    <nav className={`w-full ${positionClass} transition-all duration-300 ${bgClass}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 h-14 sm:h-16
-                      flex items-center justify-between">
+    <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif]">
+      <Navbar variant="product" />
 
-        {/* ── Brand ── */}
-        {/* FIX: Added role, tabIndex, aria-label, onKeyDown for keyboard accessibility */}
-        <span
-          className={`font-['DM_Serif_Display'] text-lg sm:text-xl tracking-tight
-                       cursor-pointer transition-colors ${logoColor}`}
-          onClick={handleNav}
-          role="button"
-          tabIndex="0"
-          aria-label="FitMart – go to home"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleNav();
-          }}
-        >
-          FitMart
-        </span>
-
-        {/* ── Right side ── */}
-        <div className="flex items-center gap-0.5 sm:gap-1.5">
-
-          {/* Search icon — home only */}
-          {onSearchToggle && (
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-16">
+        {loading ? (
+          <WorkoutLogSkeleton />
+        ) : error ? (
+          <div className="max-w-md mx-auto bg-white border border-stone-200 rounded-2xl p-10 text-center">
+            <p className="text-stone-700 font-medium mb-6">{error}</p>
             <button
-              onClick={onSearchToggle}
-              className={`p-2 transition-colors min-w-10 min-h-10 flex items-center
-                          justify-center rounded-full ${iconColor}`}
-              aria-label="Toggle search"
+              onClick={() => navigate("/tracker")}
+              className="w-full bg-stone-900 text-white py-3 rounded-full hover:bg-stone-700 transition-all font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor"
-                strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m16.5 16.5 4 4" />
-              </svg>
+              Back to Tracker
             </button>
-          )}
-
-          {/* Cart icon — home only */}
-          {onCartOpen && (
+          </div>
+        ) : (
+          <>
             <button
-              onClick={onCartOpen}
-              className={`relative p-2 transition-colors min-w-10 min-h-10
-                          flex items-center justify-center rounded-full ${iconColor}`}
-              aria-label={`Cart, ${cartCount} item${cartCount !== 1 ? "s" : ""}`}
+              onClick={() => navigate("/tracker")}
+              className="text-xs tracking-[0.2em] uppercase text-stone-400 hover:text-stone-900 transition-colors mb-12 flex items-center gap-2 group"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor"
-                strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
-              {cartCount > 0 && (
-                <span
-                  className="absolute top-0.5 right-0.5 bg-stone-900 text-white
-                               text-[9px] w-4 h-4 rounded-full flex items-center
-                               justify-center font-semibold"
-                  aria-hidden="true"
-                >
-                  {cartCount}
-                </span>
-              )}
+              <span className="group-hover:-translate-x-1 transition-transform">{"<-"}</span>
+              Back to Calendar
             </button>
-          )}
 
-          {/* ── Auth area ── */}
-          {!authLoading && (
-            <>
-              {user ? (
-                /* ── Logged IN: avatar + dropdown ── */
-                <div className="relative">
-                  {/* FIX: Added aria-expanded, aria-controls, aria-label for screen readers */}
-                  <button
-                    onClick={() => {
-                      if (typeof setMenuOpen === "function") setMenuOpen(!menuOpen);
-                      else setLocalMenuOpen((p) => !p);
+            <div className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 md:p-10 shadow-sm">
+              <header className="mb-8 sm:mb-10 text-center md:text-left">
+                <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-stone-400 mb-2 font-medium">
+                  Training Session For
+                </p>
+                <h1 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl text-stone-900">
+                  {formattedDate}
+                </h1>
+              </header>
+
+              <div className="space-y-8">
+                <div>
+                  <label className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
+                    Workout Title
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(event) => {
+                      setTitle(event.target.value);
+                      setSaved(false);
                     }}
-                    aria-expanded={typeof setMenuOpen === "function" ? !!menuOpen : localMenuOpen}
-                    aria-controls="user-dropdown-menu"
-                    aria-label="User menu"
-                    className={`flex items-center gap-1.5 sm:gap-2 border rounded-full
-                                px-2 sm:px-2.5 py-1.5 hover:bg-stone-50 transition-colors ml-0.5
-                                min-h-9
-                                ${isLanding && !navOpaque
-                        ? "border-white/30 hover:bg-white/10"
-                        : "border-stone-200"
-                      }`}
-                  >
-                    {/* Avatar */}
-                    <div className="w-6 h-6 rounded-full overflow-hidden shrink-0
-                                    bg-stone-200 flex items-center justify-center">
-                      {user.photoURL ? (
-                        <img
-                          src={user.photoURL}
-                          alt={user.displayName ? `${user.displayName}'s avatar` : "User avatar"}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <span
-                          className={`text-[11px] font-medium
-                                      ${isLanding && !navOpaque
-                              ? "text-stone-700"
-                              : "text-stone-600"
-                            }`}
-                          aria-hidden="true"
+                    placeholder="e.g. Chest Day"
+                    className="w-full border-b border-stone-200 bg-transparent py-3 text-2xl sm:text-3xl md:text-4xl text-stone-900 font-['DM_Serif_Display'] placeholder-stone-200 focus:outline-none focus:border-stone-900 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
+                    Workout Notes
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(event) => {
+                      setNotes(event.target.value);
+                      setSaved(false);
+                    }}
+                    placeholder="List exercises, weight, reps..."
+                    rows={12}
+                    className="w-full border border-stone-200 bg-white rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-6 text-sm sm:text-base text-stone-700 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors resize-none min-h-75 sm:min-h-112.5 leading-relaxed"
+                  />
+                </div>
+
+                {exercises.length > 0 && (
+                  <div>
+                    <p className="block text-xs text-stone-500 mb-4 tracking-wide uppercase">
+                      Selected Exercises ({exercises.length})
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {exercises.map((exercise) => (
+                        <div
+                          key={exercise.id}
+                          className="bg-stone-50 border border-stone-200 rounded-xl overflow-hidden flex flex-col"
                         >
-                          {(user.displayName?.[0] || user.email?.[0] || "U").toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    {/* Name — hidden on mobile */}
-                    {!isLanding && (
-                      <span className="hidden sm:block text-xs text-stone-700
-                                       max-w-20 sm:max-w-24 truncate">
-                        {user.displayName || user.email?.split("@")[0]}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Dropdown */}
-                  {(typeof setMenuOpen === "function" ? menuOpen : localMenuOpen) && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => {
-                          if (typeof setMenuOpen === "function") setMenuOpen(false);
-                          else setLocalMenuOpen(false);
-                        }}
-                        aria-hidden="true"
-                      />
-                      {/* FIX: Added id matching aria-controls on the toggle button */}
-                      <div
-                        id="user-dropdown-menu"
-                        role="menu"
-                        className="absolute right-0 top-full mt-2 w-44 sm:w-48 bg-white
-                                    border border-stone-200 rounded-xl shadow-lg py-1 z-50"
-                      >
-                        <div className="px-4 py-2.5 border-b border-stone-100">
-                          <p className="text-xs font-medium text-stone-900 truncate">
-                            {user.displayName || "Account"}
-                          </p>
-                          <p className="text-[10px] text-stone-400 truncate mt-0.5">
-                            {user.email}
-                          </p>
-                        </div>
-
-                        {/* Limited routes (tracker, notes, profile) show only View Profile + Sign Out */}
-                        {isLimitedNavRoute ? (
-                          <div className="border-t border-stone-100 mt-1">
+                          <div className="w-full bg-stone-100 overflow-hidden aspect-video flex items-center justify-center">
+                            {exercise.gifUrl && !imageErrors.has(exercise.id) ? (
+                              <img
+                                src={exercise.gifUrl}
+                                alt={exercise.name}
+                                className="w-full h-full object-cover"
+                                onError={() =>
+                                  setImageErrors((current) => new Set([...current, exercise.id]))
+                                }
+                              />
+                            ) : (
+                              <p className="text-stone-400 text-xs uppercase tracking-wide font-medium">
+                                Exercise
+                              </p>
+                            )}
+                          </div>
+                          <div className="p-4 flex flex-col grow">
+                            <h2 className="font-['DM_Serif_Display'] text-lg text-stone-900 mb-2 capitalize">
+                              {exercise.name}
+                            </h2>
+                            <p className="text-xs text-stone-500 mb-4 grow capitalize">
+                              {[exercise.target, exercise.equipment].filter(Boolean).join(" / ")}
+                            </p>
                             <button
-                              role="menuitem"
-                              onClick={() => {
-                                navigate('/profile');
-                                if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                else setLocalMenuOpen(false);
-                              }}
-                              className="w-full text-left text-xs text-stone-700 hover:bg-stone-50
-                                         px-4 py-2.5 transition-colors min-h-9"
+                              onClick={() => handleRemoveExercise(exercise.id)}
+                              className="text-xs text-stone-500 hover:text-stone-900 uppercase tracking-wide transition-colors"
                             >
-                              View Profile
-                            </button>
-
-                            <button
-                              role="menuitem"
-                              onClick={handleSignOut}
-                              className="w-full text-left text-xs text-stone-500 hover:bg-stone-50
-                                         px-4 py-2.5 transition-colors min-h-9"
-                            >
-                              Sign Out
+                              Remove
                             </button>
                           </div>
-                        ) : (
-                          <>
-                            {isLanding && (
-                              <button
-                                role="menuitem"
-                                onClick={() => {
-                                  navigate("/home");
-                                  if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                  else setLocalMenuOpen(false);
-                                }}
-                                className="w-full text-left text-xs text-stone-700 font-medium
-                                           hover:bg-stone-50 px-4 py-2.5 transition-colors
-                                           min-h-9"
-                              >
-                                Go to Shop →
-                              </button>
-                            )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                            {/* Fitness tracker link - shown on non-limited routes */}
-                            <button
-                              role="menuitem"
-                              onClick={() => {
-                                navigate("/tracker");
-                                if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                else setLocalMenuOpen(false);
-                              }}
-                              className="w-full text-left text-xs text-stone-700 font-medium
-                                         hover:bg-stone-50 px-4 py-2.5 transition-colors
-                                         min-h-9"
-                            >
-                              Track Fitness →
-                            </button>
-
-                            <div className="border-t border-stone-100 mt-1">
-                              <button
-                                role="menuitem"
-                                onClick={() => {
-                                  navigate('/profile');
-                                  if (typeof setMenuOpen === "function") setMenuOpen(false);
-                                  else setLocalMenuOpen(false);
-                                }}
-                                className="w-full text-left text-xs text-stone-700 hover:bg-stone-50
-                                           px-4 py-2.5 transition-colors min-h-9"
-                              >
-                                View Profile
-                              </button>
-
-                              <button
-                                role="menuitem"
-                                onClick={handleSignOut}
-                                className="w-full text-left text-xs text-stone-500 hover:bg-stone-50
-                                           px-4 py-2.5 transition-colors min-h-9"
-                              >
-                                Sign Out
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-              ) : (
-                /* ── Logged OUT ── */
-                <div className="flex items-center gap-1.5 sm:gap-2 ml-0.5 sm:ml-1">
-                  {/* "Sign In" text link — hidden on mobile */}
-                  <button
-                    onClick={() => navigate(user ? "/home" : "/auth")}
-                    className={`hidden sm:block text-sm px-3 sm:px-4 py-2 transition-colors
-                                 ${isLanding && !navOpaque
-                        ? "text-white/80 hover:text-white"
-                        : "text-stone-600 hover:text-stone-900"
-                      }`}
-                  >
-                    Sign In
-                  </button>
-                  {/* Primary CTA */}
-                  <button
-                    onClick={() => navigate(user ? "/home" : "/auth")}
-                    className={`text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full
-                                 transition-colors min-h-9
-                                 ${isLanding && !navOpaque
-                        ? "bg-white text-stone-900 hover:bg-stone-100"
-                        : "bg-stone-900 text-white hover:bg-stone-700"
-                      }`}
-                  >
-                    {isLanding ? "Get Started" : "Sign In"}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </nav>
+                <button
+                  onClick={handleAddExercise}
+                  className="w-full bg-stone-100 text-stone-900 text-sm py-4 rounded-full hover:bg-stone-900 hover:text-white transition-all font-medium border border-stone-200 hover:border-stone-900"
+                >
+                  + Add Your Exercise
+                </button>
+                <button
+                  onClick={handleSave}
+                  className={`w-full text-sm py-4 rounded-full transition-all font-medium ${
+                    saved
+                      ? "bg-stone-700 text-stone-300"
+                      : "bg-stone-900 text-white hover:bg-stone-700 shadow-lg shadow-stone-200/50"
+                  }`}
+                >
+                  {saved ? "Saved" : "Save Workout"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </main>
+    </div>
   );
 }

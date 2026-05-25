@@ -15,7 +15,7 @@ export default function WorkoutCalendar() {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    setEvents(getAllWorkoutEvents());
+    getAllWorkoutEvents().then(setEvents);
   }, []);
 
   useEffect(() => {
