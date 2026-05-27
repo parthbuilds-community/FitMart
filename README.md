@@ -974,6 +974,7 @@ The admin panel is accessible only to the account whose Firebase UID matches `VI
 
 - **API URL consistency** — Use `VITE_API_URL` consistently across all client files. Replacing any remaining hardcoded `http://localhost:5000` references is a great first contribution!
 - **Cart reservation** — `Product.reserved` increments on cart add and decrements on cart remove/clear. Orders finalize the reservation but don't re-release it — this is intentional.
+  > Reservation updates use atomic `findOneAndUpdate` operations to prevent race conditions under concurrent cart activity.
 - **Razorpay** — Always verify payments server-side with HMAC. Never expose `RAZORPAY_KEY_SECRET` to the client.
 - **Firebase** — Only client-facing Firebase config keys go in the Vite `.env`. Never put service account credentials in the client `.env`.
 - **Demo payment** — A "Simulate Success" bypass button is available on the payment page for testing without a real Razorpay transaction. Remove or guard this in production.

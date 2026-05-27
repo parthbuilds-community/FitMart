@@ -15,7 +15,11 @@ const ProductSchema = new mongoose.Schema(
     // total stock available (optional). If null, stock is not enforced.
     stock: { type: Number, default: null },
     // quantity reserved by carts (sum of quantities currently in carts)
-    reserved: { type: Number, default: 0 },
+    reserved: {
+      type: Number,
+      default: 0,
+      min: [0, 'reserved cannot be negative'],
+    },
   },
   { timestamps: true }
 );
