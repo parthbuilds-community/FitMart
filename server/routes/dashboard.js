@@ -7,6 +7,8 @@ const admin = require('../firebaseAdmin');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
+const { LOW_STOCK_THRESHOLD } = require('../config/constants');
+
 
 // ── Helper: get the start date based on the time range filter
 // 'today'  -> start of today
@@ -50,7 +52,6 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     const totalCustomers = uniqueCustomers.length;
 
     // ── 3. KPI: Products Low on Stock ─────────────────────────────────────
-    const LOW_STOCK_THRESHOLD = 10;
     const lowStockCount = await Product.countDocuments({
       stock: { $ne: null, $lt: LOW_STOCK_THRESHOLD },
     });
