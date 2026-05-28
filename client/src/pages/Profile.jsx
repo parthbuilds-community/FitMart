@@ -285,10 +285,11 @@ export default function Profile() {
   };
 
   const tabs = [
-    { id: "profile", label: "Personal Info" },
-    { id: "addresses", label: "Addresses" },
-    { id: "orders", label: "Orders" },
-  ];
+  { id: "profile", label: "Personal Info" },
+  { id: "addresses", label: "Addresses" },
+  { id: "orders", label: "Orders" },
+  { id: "rewards", label: "FitRewards" },
+];
 
   if (loading) return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -545,7 +546,187 @@ export default function Profile() {
           </div>
         )}
       </div>
+   {/* ── REWARDS TAB ── */}
+{activeTab === "rewards" && (
+  <div className="space-y-6">
 
+    {/* Rewards Balance Card */}
+    <div className="bg-white border border-stone-200 rounded-2xl p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        
+        <div>
+          <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+            FitRewards Balance
+          </p>
+
+          <h2
+            style={{ fontFamily: "'DM Serif Display', serif" }}
+            className="text-5xl text-stone-900 leading-none"
+          >
+            240
+          </h2>
+
+          <p className="text-sm text-stone-400 mt-2">
+            Available reward points
+          </p>
+        </div>
+
+        <div className="self-start sm:self-auto">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-stone-900 text-white text-xs tracking-widest uppercase">
+            Silver Tier
+          </div>
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs uppercase tracking-wide text-stone-400">
+            Progress to Gold
+          </p>
+
+          <p className="text-xs text-stone-500">
+            240 / 500 pts
+          </p>
+        </div>
+
+        <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
+          <div className="h-full w-[48%] bg-stone-900 rounded-full"></div>
+        </div>
+
+        <p className="text-xs text-stone-400 mt-2">
+          260 more points needed to unlock Gold tier
+        </p>
+      </div>
+    </div>
+
+    {/* Activity Card */}
+    <div className="bg-white border border-stone-200 rounded-2xl p-6">
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-xs tracking-[0.2em] uppercase text-stone-400">
+          Rewards Activity
+        </p>
+
+        <span className="text-xs text-stone-400">
+          Recent transactions
+        </span>
+      </div>
+
+      <div className="space-y-4">
+
+        {/* Transaction */}
+        <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-sm">
+              🛍️
+            </div>
+
+            <div>
+              <p className="text-sm text-stone-900">
+                Purchase Reward
+              </p>
+
+              <p className="text-xs text-stone-400">
+                Earned from your recent order
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm font-medium text-stone-900">
+              +40 pts
+            </p>
+
+            <p className="text-xs text-stone-400">
+              Today
+            </p>
+          </div>
+        </div>
+
+        {/* Transaction */}
+        <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-sm">
+              🏋️
+            </div>
+
+            <div>
+              <p className="text-sm text-stone-900">
+                Workout Milestone
+              </p>
+
+              <p className="text-xs text-stone-400">
+                Completed weekly challenge
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm font-medium text-stone-900">
+              +100 pts
+            </p>
+
+            <p className="text-xs text-stone-400">
+              3 days ago
+            </p>
+          </div>
+        </div>
+
+        {/* Transaction */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-sm">
+              🎯
+            </div>
+
+            <div>
+              <p className="text-sm text-stone-900">
+                Fitness Milestone
+              </p>
+
+              <p className="text-xs text-stone-400">
+                First activity streak completed
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm font-medium text-stone-900">
+              +60 pts
+            </p>
+
+            <p className="text-xs text-stone-400">
+              1 week ago
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Empty State Example */}
+    <div className="bg-white border border-dashed border-stone-200 rounded-2xl p-10 text-center">
+      <p className="text-4xl mb-4">
+        ✨
+      </p>
+
+      <p className="text-sm text-stone-600 mb-1">
+        More rewards are waiting for you.
+      </p>
+
+      <p className="text-xs text-stone-400 mb-5">
+        Shop products and complete workouts to earn additional FitRewards points.
+      </p>
+
+      <button
+        onClick={() => navigate("/home")}
+        className="bg-stone-900 text-white text-sm px-6 py-2.5 rounded-full hover:bg-stone-700 transition-colors"
+      >
+        Start earning
+      </button>
+    </div>
+  </div>
+)}
       {/* ── ADDRESS MODAL ── */}
       {editingAddress && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
