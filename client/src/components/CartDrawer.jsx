@@ -1,5 +1,5 @@
 // src/components/CartDrawer.jsx
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
 
@@ -12,7 +12,10 @@ function CartDrawer({
   updateQty,
   removeFromCart,
 }) {
+  const closeButtonRef = useRef(null);
+  const previousFocusRef = useRef(null);
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && isOpen) onClose();
     };
@@ -30,6 +33,19 @@ function CartDrawer({
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement;
+      closeButtonRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen && previousFocusRef.current) {
+      previousFocusRef.current.focus();
+    }
+  }, [isOpen]);
+
   return (
     <>
       {/* Overlay */}
@@ -40,6 +56,9 @@ function CartDrawer({
 
       {/* Drawer — full-width on mobile, max-sm on larger screens */}
       <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-title"
         className={`cart-slide fixed right-0 top-0 h-full z-50 shadow-2xl flex flex-col
                     bg-white w-full sm:max-w-sm ${isOpen ? "open" : ""}`}
       >
@@ -50,7 +69,9 @@ function CartDrawer({
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">
               Your
             </p>
-            <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
+            <h2
+             id="cart-title"
+             className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
                            leading-tight">
               Cart
               {cartCount > 0 && (
@@ -59,6 +80,7 @@ function CartDrawer({
             </h2>
           </div>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             aria-label="Close cart"
             className="text-stone-400 hover:text-stone-900 transition-colors
