@@ -97,7 +97,7 @@ app.use(
 );
 
 app.use(helmet());
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
@@ -188,4 +188,13 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(", ")}`);
+});
+app.use((err, req, res, next) => {
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({
+      success: false,
+      message: "Payload too large. Maximum size is 1MB."
+    });
+  }
+  next(err);
 });
