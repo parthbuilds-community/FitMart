@@ -1,3 +1,4 @@
+
 // src/pages/HomePage.jsx
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
