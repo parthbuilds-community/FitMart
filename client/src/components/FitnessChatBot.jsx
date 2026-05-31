@@ -1,4 +1,6 @@
 // src/components/FitnessChatBot.jsx
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 import { useState, useEffect, useRef } from "react";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -104,55 +106,27 @@ export default function FitnessChatBot() {
     }
   };
 
-  const formatMessageText = (text) => {
-    const lines = text.split("\n");
-    return lines.map((line, lineIndex) => {
-      const parts = [];
-      const boldRegex = /\*\*(.*?)\*\*|__(.*?)__/g;
-      const matches = [];
-      let matchFound;
-      while ((matchFound = boldRegex.exec(line)) !== null) {
-        matches.push({
-          start: matchFound.index,
-          end: matchFound.index + matchFound[0].length,
-          text: matchFound[1] || matchFound[2],
-        });
-      }
-      if (matches.length === 0) {
-        parts.push(<span key={`line-${lineIndex}`}>{line}</span>);
-      } else {
-        let currentPos = 0;
-        matches.forEach((match, idx) => {
-          if (match.start > currentPos) {
-            parts.push(
-              <span key={`text-${lineIndex}-${idx}`}>
-                {line.substring(currentPos, match.start)}
-              </span>
-            );
-          }
-          parts.push(
-            <strong key={`bold-${lineIndex}-${idx}`}
-              className="font-semibold text-stone-900">
-              {match.text}
-            </strong>
-          );
-          currentPos = match.end;
-        });
-        if (currentPos < line.length) {
-          parts.push(
-            <span key={`text-${lineIndex}-end`}>
-              {line.substring(currentPos)}
-            </span>
-          );
-        }
-      }
-      return (
-        <span key={lineIndex}>
-          {parts}
-          {lineIndex < lines.length - 1 && <br />}
-        </span>
-      );
-    });
+  const renderMarkdown = (text) => {
+    try {
+      const html = marked.parse(text);
+
+      return DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: [
+          "p",
+          "strong",
+          "em",
+          "ul",
+          "ol",
+          "li",
+          "code",
+          "pre",
+          "blockquote",
+          "br"
+        ]
+      });
+    } catch {
+      return text;
+    }
   };
 
   return (
@@ -195,11 +169,39 @@ export default function FitnessChatBot() {
         .fm-scrollbar::-webkit-scrollbar { width: 4px; }
         .fm-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .fm-scrollbar::-webkit-scrollbar-thumb { background: #e7e5e3; border-radius: 99px; }
+
+        .fm-bot-content ul {
+          list-style: disc;
+          margin-left: 1.25rem;
+        }
+
+        .fm-bot-content ol {
+          list-style: decimal;
+          margin-left: 1.25rem;
+        }
+
+        .fm-bot-content li {
+          margin-bottom: 0.25rem;
+        }
+
+        .fm-bot-content code {
+          background: #f5f5f4;
+          padding: 2px 4px;
+          border-radius: 4px;
+        }
+
+        .fm-bot-content pre {
+          background: #f5f5f4;
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+        }
       `}</style>
 
       {/* ── Chat Window ── */}
       {/* Full-screen on mobile, fixed-size floating window on sm+ */}
       <div
+        id="fitness-chatbot"
         className={`fm-chat-window fixed z-50 bg-white border border-stone-200
                     shadow-2xl flex flex-col overflow-hidden
                     /* Mobile: full screen minus FAB area */
@@ -246,12 +248,19 @@ export default function FitnessChatBot() {
         </div>
 
         {/* ── Messages Area ── */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 space-y-3
-                        fm-scrollbar bg-stone-50">
+        <div
+          className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 space-y-3 fm-scrollbar bg-stone-50"
+          aria-live="polite"
+          aria-relevant="additions text"
+          role="log"
+        >
           {msgs.map((msg, idx) => (
             <div
               key={idx}
               className={`fm-msg flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              role="article"
+              aria-label={`${msg.role === "user" ? "User message" : "Assistant message"}`}
+              tabIndex={0}
             >
               {msg.role === "bot" && (
                 <div className="w-7 h-7 rounded-full bg-stone-900 flex items-center
@@ -269,7 +278,18 @@ export default function FitnessChatBot() {
                       : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
                   }`}
               >
-                {formatMessageText(msg.text)}
+                {msg.role === "bot" ? (
+                  <div
+                    className="fm-bot-content"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(msg.text),
+                    }}
+                    aria-label="Assistant response"
+                    role="region"
+                  />
+                ) : (
+                  <span>{msg.text}</span>
+                )}
               </div>
             </div>
           ))}
@@ -291,7 +311,9 @@ export default function FitnessChatBot() {
               </div>
             </div>
           )}
-
+          <div className="sr-only" aria-live="polite">
+            {msgs.length > 0 ? msgs[msgs.length - 1].text : ""}
+          </div>
           <div ref={bottomRef} />
         </div>
 
@@ -318,6 +340,7 @@ export default function FitnessChatBot() {
           <textarea
             ref={inputRef}
             rows={1}
+            aria-label="Type your fitness question"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
@@ -359,6 +382,8 @@ export default function FitnessChatBot() {
       {/* ── FAB ── */}
       <button
         onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+        aria-controls="fitness-chatbot"
         className={`fm-fab fixed bottom-5 right-5 z-50 w-14 h-14 bg-stone-900 text-white
                     rounded-full shadow-lg flex items-center justify-center
                     transition-opacity duration-500 ${visible ? "opacity-100" : "opacity-0"}`}
