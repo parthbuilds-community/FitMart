@@ -3,6 +3,7 @@
  * Based on the Mifflin-St Jeor Equation and WHO BMI Categories
  */
 
+
 export const calculateBMI = (weight, heightCm) => {
   if (!weight || !heightCm || heightCm <= 0) return 0;
 
