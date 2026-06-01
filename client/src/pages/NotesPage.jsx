@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../utils/workoutStorage";
-
+import WorkoutLogSkeleton from "../components/WorkoutLogSkeleton";
 /**
  * NotesPage
  * Allows users to write workout details for a selected date.
