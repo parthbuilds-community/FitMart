@@ -373,13 +373,7 @@ React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin 
 Make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) v16+
-
-# Optional: Redis caching for products API
-# When set, the server will use Redis to cache product-list responses.
-# Use `REDIS_URL` for a full Redis connection string (e.g. redis://localhost:6379)
-# or `REDIS_HOST` for a host-only configuration. TTL (seconds) is configurable:
-# PRODUCTS_CACHE_TTL=60
-
+- Redis *(optional — for product API caching)*
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - A [MongoDB](https://www.mongodb.com/atlas) connection (Atlas or local)
 - A [Firebase](https://firebase.google.com/) project (for auth)
@@ -522,6 +516,11 @@ RAZORPAY_KEY_SECRET=<your_razorpay_key_secret>
 # Optional — database name override
 MONGO_DB=<your_database_name>
 
+# Optional — Redis caching
+REDIS_URL=redis://localhost:6379
+REDIS_HOST=localhost
+PRODUCTS_CACHE_TTL=60
+
 # CORS
 ALLOWED_ORIGIN=http://localhost:5173    # comma-separate multiple origins
 
@@ -549,6 +548,22 @@ SMTP_PASS=your-app-password
 SMTP_FROM=noreply@fitmart.com
 APP_BASE_URL=http://localhost:5173
 ```
+
+#### Redis Caching (Optional)
+
+The server supports Redis-based caching for product-list responses.
+
+- `REDIS_URL` — Full Redis connection string.
+- `REDIS_HOST` — Host-only Redis configuration.
+- `PRODUCTS_CACHE_TTL` — Cache duration in seconds.
+
+Example:
+
+```text
+redis://localhost:6379
+```
+
+If Redis is not configured, the application will continue to operate normally without caching.
 
 > **Startup behaviour:** The server validates environment variables on startup. `MONGO_URI` is the only truly critical variable — the server will exit if it's missing. All other variables are optional; missing ones produce a warning and disable the corresponding feature gracefully.
 
