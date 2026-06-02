@@ -85,6 +85,8 @@ export default function AdminBugs() {
   const [loadingBugs, setLoadingBugs] = useState(true);
   // Mobile status picker state: { id, status }
   const [mobilePicker, setMobilePicker] = useState(null);
+  const [updatingIds, setUpdatingIds] = useState(new Set());
+  const [toast, setToast] = useState(null);
 
   const openMobilePicker = (bug) => {
     setMobilePicker({ id: bug._id, status: bug.status });
@@ -93,33 +95,74 @@ export default function AdminBugs() {
   const closeMobilePicker = () => setMobilePicker(null);
 
   const handleMobileStatusChange = async (newStatus) => {
-    if (!mobilePicker) return;
-    const id = mobilePicker.id;
-    const prev = bugs.find(b => b._id === id)?.status;
-    // optimistic update
-    setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: newStatus } : b)));
-    try {
-      const token = await user.getIdToken();
-      const url = `${API}/api/bugs/${id}`;
-      const res = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) {
-        let body = null;
-        try { body = await res.json(); } catch (e) { body = await res.text(); }
-        console.error('PATCH failed', { url, status: res.status, body });
-        throw new Error(`update failed (${res.status})`);
-      }
-      setMobilePicker(null);
-    } catch (err) {
-      console.error(err);
-      // rollback
-      setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: prev } : b)));
-      alert('Failed to update status');
+  if (!mobilePicker) return;
+
+  const id = mobilePicker.id;
+  const prev = bugs.find(b => b._id === id)?.status;
+
+  setBugs((cur) =>
+    cur.map(b =>
+      b._id === id
+        ? { ...b, status: newStatus }
+        : b
+    )
+  );
+
+  setUpdatingIds(prevIds => new Set(prevIds).add(id));
+
+  try {
+    const token = await user.getIdToken();
+
+    const url = `${API}/api/bugs/${id}`;
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`update failed (${res.status})`);
     }
-  };
+
+    setToast({
+      type: 'success',
+      message: 'Bug status updated',
+    });
+
+    setTimeout(() => setToast(null), 2500);
+
+    setMobilePicker(null);
+
+  } catch (err) {
+    console.error(err);
+
+    setBugs((cur) =>
+      cur.map(b =>
+        b._id === id
+          ? { ...b, status: prev }
+          : b
+      )
+    );
+
+    setToast({
+      type: 'error',
+      message: 'Failed to update status',
+    });
+
+    setTimeout(() => setToast(null), 2500);
+
+  } finally {
+    setUpdatingIds(prevIds => {
+      const updated = new Set(prevIds);
+      updated.delete(id);
+      return updated;
+    });
+  }
+};
 
   useEffect(() => {
     if (loading || !user) return;
@@ -137,7 +180,7 @@ export default function AdminBugs() {
         setError('Unable to load bug reports');
       } finally {
         if (mounted) setLoadingBugs(false);
-      }
+      } 
     })();
     return () => { mounted = false; };
   }, [loading, user]);
@@ -164,6 +207,18 @@ export default function AdminBugs() {
       `}</style>
 
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+      {toast && (
+        <div
+          aria-live="polite"
+          className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg text-sm
+            ${toast.type === 'error'
+              ? 'bg-red-50 border border-red-200 text-red-600'
+              : 'bg-green-50 border border-green-200 text-green-700'
+            }`}
+        >
+          {toast.message}
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">
 
@@ -301,15 +356,21 @@ export default function AdminBugs() {
                 <div className="max-w-2xl mx-auto">
                   <p className="text-xs text-stone-400 mb-2">Change status</p>
                   <div className="flex gap-2">
-                    <button onClick={() => handleMobileStatusChange('open')}
+                    <button
+                      disabled={updatingIds.has(mobilePicker.id)}
+                      onClick={() => handleMobileStatusChange('open')}
                       className={`flex-1 py-2 rounded-full text-sm ${mobilePicker.status === 'open' ? 'bg-stone-900 text-white' : 'border border-stone-200 text-stone-700'}`}>
                       Open
                     </button>
-                    <button onClick={() => handleMobileStatusChange('in-progress')}
+                    <button
+                      disabled={updatingIds.has(mobilePicker.id)}
+                      onClick={() => handleMobileStatusChange('in-progress')}
                       className={`flex-1 py-2 rounded-full text-sm ${mobilePicker.status === 'in-progress' ? 'bg-stone-900 text-white' : 'border border-stone-200 text-stone-700'}`}>
                       In Progress
                     </button>
-                    <button onClick={() => handleMobileStatusChange('resolved')}
+                    <button
+                      disabled={updatingIds.has(mobilePicker.id)}
+                      onClick={() => handleMobileStatusChange('resolved')}
                       className={`flex-1 py-2 rounded-full text-sm ${mobilePicker.status === 'resolved' ? 'bg-stone-900 text-white' : 'border border-stone-200 text-stone-700'}`}>
                       Resolved
                     </button>
@@ -375,39 +436,83 @@ export default function AdminBugs() {
                     <td className="px-6 py-5">
                       <div className="flex items-center justify-center">
                         <select
-                          value={bug.status}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value;
-                            // optimistic update
-                            const prev = bug.status;
-                            bug.status = newStatus;
-                            setBugs((cur) => cur.map(b => (b._id === bug._id ? { ...b, status: newStatus } : b)));
-                            try {
-                              const token = await user.getIdToken();
-                              const res = await fetch(`${API}/api/bugs/${bug._id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ status: newStatus }),
-                              });
-                              if (!res.ok) {
-                                let body = null;
-                                try { body = await res.json(); } catch (e) { body = await res.text(); }
-                                console.error('PATCH failed', { url: `${API}/api/bugs/${bug._id}`, status: res.status, body });
-                                throw new Error(`update failed (${res.status})`);
-                              }
-                            } catch (err) {
-                              console.error(err);
-                              // rollback
-                              setBugs((cur) => cur.map(b => (b._id === bug._id ? { ...b, status: prev } : b)));
-                              alert('Failed to update status');
-                            }
-                          }}
-                          className="text-xs border border-stone-200 rounded-full px-3 py-1 bg-white"
-                        >
-                          <option value="open">Open</option>
-                          <option value="in-progress">In Progress</option>
-                          <option value="resolved">Resolved</option>
-                        </select>
+  value={bug.status}
+  disabled={updatingIds.has(bug._id)}
+  aria-label="Update bug status"
+  onChange={async (e) => {
+    const newStatus = e.target.value;
+    const prev = bug.status;
+
+    setUpdatingIds(prevIds => new Set(prevIds).add(bug._id));
+
+    setBugs((cur) =>
+      cur.map(b =>
+        b._id === bug._id
+          ? { ...b, status: newStatus }
+          : b
+      )
+    );
+
+    try {
+      const token = await user.getIdToken();
+
+      const res = await fetch(`${API}/api/bugs/${bug._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`update failed (${res.status})`);
+      }
+
+      setToast({
+        type: 'success',
+        message: 'Bug status updated',
+      });
+
+      setTimeout(() => setToast(null), 2500);
+
+    } catch (err) {
+      console.error(err);
+
+      setBugs((cur) =>
+        cur.map(b =>
+          b._id === bug._id
+            ? { ...b, status: prev }
+            : b
+        )
+      );
+
+      setToast({
+        type: 'error',
+        message: 'Failed to update status',
+      });
+
+      setTimeout(() => setToast(null), 2500);
+
+    } finally {
+      setUpdatingIds(prevIds => {
+        const updated = new Set(prevIds);
+        updated.delete(bug._id);
+        return updated;
+      });
+    }
+  }}
+  className="text-xs border border-stone-200 rounded-full px-3 py-1 bg-white"
+>
+  <option value="open">Open</option>
+  <option value="in-progress">In Progress</option>
+  <option value="resolved">Resolved</option>
+</select>
+{updatingIds.has(bug._id) && (
+  <p className="text-[10px] text-stone-400 mt-1">
+    Saving...
+  </p>
+)}
                       </div>
                     </td>
                     <td className="px-6 py-5 text-right text-stone-400 text-xs whitespace-nowrap">
@@ -443,9 +548,15 @@ export default function AdminBugs() {
                             >
                               <img
                                 src={url}
-                                alt="Screenshot"
+                                alt={`Screenshot for bug: ${bug.title}`}
+                                loading="lazy"
+                                onError={(e) => {
+                                  e.target.src =
+                                    "https://placehold.co/100x60?text=No+Image";
+                                }}
                                 className="w-12 h-8 object-cover rounded border border-stone-200 hover:opacity-80 transition-opacity"
                               />
+                              
                             </a>
                           );
                         })()
