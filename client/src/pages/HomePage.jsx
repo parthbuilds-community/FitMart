@@ -196,19 +196,39 @@ export default function HomePage() {
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
 
   useEffect(() => {
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedQuery(searchQuery), 300);
-    return () => clearTimeout(debounceRef.current);
-  }, [searchQuery]);
+    setTimeout(() => setVisible(true), 80);
+
+    if (!auth) {
+      setUser(null);
+      return;
+    }
+
+    const unsub = auth.onAuthStateChanged((u) => {
+      setUser(u);
+      if (!u) navigate("/auth");
+    });
+
+    return () => unsub();
+  }, [navigate]);
 
   useEffect(() => { document.title = "FitMart - Fitness & Nutrition Store"; }, []);
 
   useEffect(() => {
-    setTimeout(() => setVisible(true), 80);
-    const unsub = auth.onAuthStateChanged(u => {
+  setTimeout(() => setVisible(true), 80);
+
+  if (!auth) {
+    setUser(null);
+    return;
+  }
+
+    const unsub = auth.onAuthStateChanged((u) => {
       setUser(u);
-      if (!u) navigate("/auth");
+
+      if (!u) {
+        navigate("/auth");
+      }
     });
+
     return () => unsub();
   }, [navigate]);
 
