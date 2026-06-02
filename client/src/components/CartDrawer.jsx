@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
 
 function CartDrawer({
   isOpen,
@@ -228,3 +229,22 @@ function CartDrawer({
 }
 
 export default CartDrawer;
+
+CartDrawer.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  cart: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      name: PropTypes.string,
+      brand: PropTypes.string,
+      price: PropTypes.number,
+      image: PropTypes.string,
+      qty: PropTypes.number,
+    })
+  ).isRequired,
+  cartCount: PropTypes.number.isRequired,
+  cartTotal: PropTypes.number.isRequired,
+  updateQty: PropTypes.func.isRequired,
+  removeFromCart: PropTypes.func.isRequired,
+};
