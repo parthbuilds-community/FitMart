@@ -80,8 +80,13 @@ const paymentLimiter = rateLimit({
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (allowedOrigins.includes(origin)) {
-        console.log(`[CORS] Allowing whitelisted origin: ${origin}`);
+      // Allow requests with no origin (like direct navigation, curl, or server-to-server requests)
+      if (!origin || allowedOrigins.includes(origin)) {
+        if (origin) {
+          console.log(`[CORS] Allowing whitelisted origin: ${origin}`);
+        } else {
+          console.log(`[CORS] Allowing request with no origin`);
+        }
         return callback(null, true);
       }
 
