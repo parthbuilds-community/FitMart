@@ -1,5 +1,7 @@
 // src/components/FitnessChatBot.jsx
 import { useState, useEffect, useRef } from "react";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -8,7 +10,16 @@ const WELCOME = {
   text: "Hello! I'm your FitMart fitness assistant. Ask me anything about workouts, diet, protein, weight loss, or muscle gain.",
 };
 
+const renderMarkdown = (text) => {
+  try {
+    const rawHtml = marked.parse(text);
 
+    return DOMPurify.sanitize(rawHtml);
+  } catch (err) {
+    console.error(err);
+    return text;
+  }
+};
 
 const QUICK_REPLIES = [
   {
@@ -104,55 +115,14 @@ export default function FitnessChatBot() {
     }
   };
 
-  const formatMessageText = (text) => {
-    const lines = text.split("\n");
-    return lines.map((line, lineIndex) => {
-      const parts = [];
-      const boldRegex = /\*\*(.*?)\*\*|__(.*?)__/g;
-      const matches = [];
-      let matchFound;
-      while ((matchFound = boldRegex.exec(line)) !== null) {
-        matches.push({
-          start: matchFound.index,
-          end: matchFound.index + matchFound[0].length,
-          text: matchFound[1] || matchFound[2],
-        });
-      }
-      if (matches.length === 0) {
-        parts.push(<span key={`line-${lineIndex}`}>{line}</span>);
-      } else {
-        let currentPos = 0;
-        matches.forEach((match, idx) => {
-          if (match.start > currentPos) {
-            parts.push(
-              <span key={`text-${lineIndex}-${idx}`}>
-                {line.substring(currentPos, match.start)}
-              </span>
-            );
-          }
-          parts.push(
-            <strong key={`bold-${lineIndex}-${idx}`}
-              className="font-semibold text-stone-900">
-              {match.text}
-            </strong>
-          );
-          currentPos = match.end;
-        });
-        if (currentPos < line.length) {
-          parts.push(
-            <span key={`text-${lineIndex}-end`}>
-              {line.substring(currentPos)}
-            </span>
-          );
-        }
-      }
-      return (
-        <span key={lineIndex}>
-          {parts}
-          {lineIndex < lines.length - 1 && <br />}
-        </span>
-      );
-    });
+  const renderMarkdown = (text) => {
+    try {
+      const rawHtml = marked.parse(text);
+      return DOMPurify.sanitize(rawHtml);
+    } catch (err) {
+      console.error(err);
+      return text;
+    }
   };
 
   return (
@@ -269,7 +239,16 @@ export default function FitnessChatBot() {
                       : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
                   }`}
               >
-                {formatMessageText(msg.text)}
+                {msg.role === "bot" ? (
+                  <div
+                    className="fm-bot-content"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(msg.text),
+                    }}
+                  />
+                ) : (
+                  <span>{msg.text}</span>
+                )}
               </div>
             </div>
           ))}
