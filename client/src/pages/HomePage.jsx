@@ -632,7 +632,8 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <button   onClick={() => alert(`${cta} feature coming soon!`)}
+                className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
                                    transition-all self-start min-h-10">
                   {p.cta}
