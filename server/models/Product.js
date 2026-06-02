@@ -13,7 +13,7 @@ const ProductSchema = new mongoose.Schema(
     badge: { type: String, default: null },
     image: { type: String, default: '' },
     // total stock available (optional). If null, stock is not enforced.
-    stock: { type: Number, default: 0, min: [0, 'Stock cannot be negative'] },
+    stock: { type: Number, default: null, min: [0, 'Stock cannot be negative'] },
     reserved: { type: Number, default: 0, min: [0, 'Reserved count cannot be negative'] }
   },
   { timestamps: true }
