@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { patchBugStatus } from '../utils/api/bugs';
+import Toast from '../components/Toast';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
 
@@ -18,6 +20,25 @@ const BugAvatar = ({ title }) => (
     </span>
   </div>
 );
+const SCREENSHOT_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='32' viewBox='0 0 48 32'%3E%3Crect width='48' height='32' fill='%23f5f5f4'/%3E%3Cpath d='M14 10 Q24 4 34 10 L38 22 H10Z' fill='%23e7e5e4'/%3E%3Ccircle cx='34' cy='9' r='5' fill='%23e7e5e4'/%3E%3C/svg%3E";
+
+const BugScreenshot = ({ url, title }) => {
+  const [failed, setFailed] = React.useState(false);
+  return (
+    <img
+      src={failed ? SCREENSHOT_PLACEHOLDER : url}
+      alt={`Screenshot for bug: ${title}`}
+      loading="lazy"
+      width={48}
+      height={32}
+      onError={() => setFailed(true)}
+      className={`w-12 h-8 object-cover rounded border border-stone-200
+                  hover:opacity-80 transition-opacity
+                  ${failed ? 'opacity-50' : ''}`}
+    />
+  );
+};
 
 const SkeletonRow = () => (
   <tr className="border-b border-stone-100">
@@ -85,6 +106,8 @@ export default function AdminBugs() {
   const [loadingBugs, setLoadingBugs] = useState(true);
   // Mobile status picker state: { id, status }
   const [mobilePicker, setMobilePicker] = useState(null);
+  const [updatingIds, setUpdatingIds] = useState(new Set());
+const [toast, setToast] = useState(null); // { message, type }
 
   const openMobilePicker = (bug) => {
     setMobilePicker({ id: bug._id, status: bug.status });
@@ -93,33 +116,31 @@ export default function AdminBugs() {
   const closeMobilePicker = () => setMobilePicker(null);
 
   const handleMobileStatusChange = async (newStatus) => {
-    if (!mobilePicker) return;
-    const id = mobilePicker.id;
-    const prev = bugs.find(b => b._id === id)?.status;
-    // optimistic update
-    setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: newStatus } : b)));
-    try {
-      const token = await user.getIdToken();
-      const url = `${API}/api/bugs/${id}`;
-      const res = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) {
-        let body = null;
-        try { body = await res.json(); } catch (e) { body = await res.text(); }
-        console.error('PATCH failed', { url, status: res.status, body });
-        throw new Error(`update failed (${res.status})`);
-      }
-      setMobilePicker(null);
-    } catch (err) {
-      console.error(err);
-      // rollback
-      setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: prev } : b)));
-      alert('Failed to update status');
-    }
-  };
+  if (!mobilePicker) return;
+  const id = mobilePicker.id;
+  const prev = bugs.find(b => b._id === id)?.status;
+
+  // Mark as updating — disables buttons immediately
+  setUpdatingIds((s) => new Set([...s, id]));
+
+  // Optimistic update
+  setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: newStatus } : b)));
+
+  try {
+    const token = await user.getIdToken();
+    await patchBugStatus(id, newStatus, token);
+    setMobilePicker(null);
+    setToast({ message: 'Status updated.', type: 'success' });
+  } catch (err) {
+    console.error(err);
+    // Rollback to previous status
+    setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: prev } : b)));
+    setToast({ message: 'Failed to update status. Change rolled back.', type: 'error' });
+  } finally {
+    // Always re-enable — whether success or failure
+    setUpdatingIds((s) => { const n = new Set(s); n.delete(id); return n; });
+  }
+};
 
   useEffect(() => {
     if (loading || !user) return;
@@ -301,18 +322,26 @@ export default function AdminBugs() {
                 <div className="max-w-2xl mx-auto">
                   <p className="text-xs text-stone-400 mb-2">Change status</p>
                   <div className="flex gap-2">
-                    <button onClick={() => handleMobileStatusChange('open')}
-                      className={`flex-1 py-2 rounded-full text-sm ${mobilePicker.status === 'open' ? 'bg-stone-900 text-white' : 'border border-stone-200 text-stone-700'}`}>
-                      Open
-                    </button>
-                    <button onClick={() => handleMobileStatusChange('in-progress')}
-                      className={`flex-1 py-2 rounded-full text-sm ${mobilePicker.status === 'in-progress' ? 'bg-stone-900 text-white' : 'border border-stone-200 text-stone-700'}`}>
-                      In Progress
-                    </button>
-                    <button onClick={() => handleMobileStatusChange('resolved')}
-                      className={`flex-1 py-2 rounded-full text-sm ${mobilePicker.status === 'resolved' ? 'bg-stone-900 text-white' : 'border border-stone-200 text-stone-700'}`}>
-                      Resolved
-                    </button>
+                    {['open', 'in-progress', 'resolved'].map((s) => {
+  const isActive   = mobilePicker.status === s;
+  const isUpdating = updatingIds.has(mobilePicker.id);
+  const label      = s === 'in-progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1);
+  return (
+    <button
+      key={s}
+      onClick={() => handleMobileStatusChange(s)}
+      disabled={isUpdating}
+      aria-pressed={isActive}
+      aria-label={`Set status to ${label}`}
+      className={`flex-1 py-2 rounded-full text-sm transition-opacity
+        focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-1
+        ${isUpdating ? 'opacity-40 cursor-not-allowed' : ''}
+        ${isActive ? 'bg-stone-900 text-white' : 'border border-stone-200 text-stone-700'}`}
+    >
+      {isUpdating ? '…' : label}
+    </button>
+  );
+})}
                   </div>
                   <div className="mt-3 text-center">
                     <button onClick={closeMobilePicker} className="text-xs text-stone-500">Cancel</button>
@@ -373,42 +402,55 @@ export default function AdminBugs() {
                       <span className="text-xs text-stone-500 line-clamp-2">{bug.description}</span>
                     </td>
                     <td className="px-6 py-5">
-                      <div className="flex items-center justify-center">
-                        <select
-                          value={bug.status}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value;
-                            // optimistic update
-                            const prev = bug.status;
-                            bug.status = newStatus;
-                            setBugs((cur) => cur.map(b => (b._id === bug._id ? { ...b, status: newStatus } : b)));
-                            try {
-                              const token = await user.getIdToken();
-                              const res = await fetch(`${API}/api/bugs/${bug._id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ status: newStatus }),
-                              });
-                              if (!res.ok) {
-                                let body = null;
-                                try { body = await res.json(); } catch (e) { body = await res.text(); }
-                                console.error('PATCH failed', { url: `${API}/api/bugs/${bug._id}`, status: res.status, body });
-                                throw new Error(`update failed (${res.status})`);
-                              }
-                            } catch (err) {
-                              console.error(err);
-                              // rollback
-                              setBugs((cur) => cur.map(b => (b._id === bug._id ? { ...b, status: prev } : b)));
-                              alert('Failed to update status');
-                            }
-                          }}
-                          className="text-xs border border-stone-200 rounded-full px-3 py-1 bg-white"
-                        >
-                          <option value="open">Open</option>
-                          <option value="in-progress">In Progress</option>
-                          <option value="resolved">Resolved</option>
-                        </select>
-                      </div>
+                      <div className="flex items-center justify-center gap-2">
+  <select
+    value={bug.status}
+    disabled={updatingIds.has(bug._id)}
+    aria-label={`Status for: ${bug.title}`}
+    aria-busy={updatingIds.has(bug._id)}
+    onChange={async (e) => {
+      const newStatus = e.target.value;
+      const prev = bug.status;
+      const id = bug._id;
+
+      // Mark as updating
+      setUpdatingIds((s) => new Set([...s, id]));
+
+      // Optimistic update
+      setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: newStatus } : b)));
+
+      try {
+        const token = await user.getIdToken();
+        await patchBugStatus(id, newStatus, token);
+        setToast({ message: 'Status updated.', type: 'success' });
+      } catch (err) {
+        console.error(err);
+        // Rollback
+        setBugs((cur) => cur.map(b => (b._id === id ? { ...b, status: prev } : b)));
+        setToast({ message: 'Failed to update status. Change rolled back.', type: 'error' });
+      } finally {
+        setUpdatingIds((s) => { const n = new Set(s); n.delete(id); return n; });
+      }
+    }}
+    className={`text-xs border rounded-full px-3 py-1 bg-white
+      focus:outline-none focus:ring-2 focus:ring-stone-400 transition-opacity
+      ${updatingIds.has(bug._id)
+        ? 'border-stone-100 opacity-40 cursor-not-allowed'
+        : 'border-stone-200 cursor-pointer hover:border-stone-400'}`}
+  >
+    <option value="open">Open</option>
+    <option value="in-progress">In Progress</option>
+    <option value="resolved">Resolved</option>
+  </select>
+
+  {/* Tiny spinner — only visible while this specific row is saving */}
+  {updatingIds.has(bug._id) && (
+    <span
+      aria-label="Saving…"
+      className="inline-block w-3 h-3 border-2 border-stone-400 border-t-transparent rounded-full animate-spin"
+    />
+  )}
+</div>
                     </td>
                     <td className="px-6 py-5 text-right text-stone-400 text-xs whitespace-nowrap">
                       {new Date(bug.createdAt).toLocaleDateString("en-IN", {
@@ -441,11 +483,7 @@ export default function AdminBugs() {
                               onClick={e => e.stopPropagation()}
                               className="inline-block"
                             >
-                              <img
-                                src={url}
-                                alt="Screenshot"
-                                className="w-12 h-8 object-cover rounded border border-stone-200 hover:opacity-80 transition-opacity"
-                              />
+                            <BugScreenshot url={url} title={bug.title} />
                             </a>
                           );
                         })()
@@ -460,6 +498,13 @@ export default function AdminBugs() {
           </div>
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
