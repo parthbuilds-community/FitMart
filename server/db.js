@@ -17,7 +17,7 @@ async function connect() {
     console.log("MongoDB connected successfully");
   } catch (err) {
     console.error("MongoDB connection failed:", err.message);
-    process.exit(1);
+    console.warn("⚠️ Server continuing without active MongoDB connection. Database features will be unavailable.");
   }
 }
 

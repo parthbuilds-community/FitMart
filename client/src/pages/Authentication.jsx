@@ -323,6 +323,23 @@ export default function Authentication() {
         <div className={`auth-panel ${visible ? "visible" : ""} w-full max-w-sm`}>
 
           {/* Mode Tabs */}
+          {import.meta.env.MODE === 'development' && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center shadow-sm">
+              <span className="text-[10px] font-semibold tracking-wider uppercase bg-amber-100 text-amber-800 px-2.5 py-1 rounded mb-2 inline-block">
+                Local Development
+              </span>
+              <p className="text-xs text-amber-700 leading-relaxed mb-3">
+                Since Firebase credentials are placeholders in your local environment, use the dev admin bypass.
+              </p>
+              <button
+                onClick={() => navigate('/dev-login')}
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors cursor-pointer"
+              >
+                Go to Dev Login
+              </button>
+            </div>
+          )}
+
           {mode !== "reset" && mode !== "pending-verification" && (
             <div className="flex border-b border-stone-200 mb-6 sm:mb-8">
               {["signin", "signup"].map((m) => (
