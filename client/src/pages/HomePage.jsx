@@ -592,10 +592,9 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
-                               hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
-                               text-center">
-              Learn More
+           <button onClick={() => alert("Loyalty Program details coming soon!")}
+            className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto text-center">
+            Learn More
             </button>
           </div>
         </section>
@@ -651,13 +650,16 @@ export default function HomePage() {
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
-            ))}
-          </div>
+  {["Privacy", "Terms", "Support"].map(l => (
+    <button
+      key={l}
+      onClick={() => alert(`${l} page coming soon!`)}
+      className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+    >
+      {l}
+    </button>
+  ))}
+</div>
         </div>
       </footer>
 
