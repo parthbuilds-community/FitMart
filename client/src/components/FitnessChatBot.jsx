@@ -1,5 +1,7 @@
 // src/components/FitnessChatBot.jsx
 import { useState, useEffect, useRef } from "react";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -28,6 +30,30 @@ const QUICK_REPLIES = [
     prompt: "How do I lose weight sustainably?",
   },
 ]
+
+const BOT_MARKDOWN_OPTIONS = {
+  breaks: true,
+  gfm: true,
+};
+
+const BOT_MARKDOWN_SANITIZE_OPTIONS = {
+  ALLOWED_TAGS: [
+    "a",
+    "blockquote",
+    "br",
+    "code",
+    "em",
+    "li",
+    "ol",
+    "p",
+    "pre",
+    "strong",
+    "ul",
+  ],
+  ALLOWED_ATTR: ["href", "rel", "title"],
+};
+
+const normalizeMessageText = (text) => (typeof text === "string" ? text : "");
 
 export default function FitnessChatBot() {
   const [open, setOpen] = useState(false);
@@ -104,55 +130,43 @@ export default function FitnessChatBot() {
     }
   };
 
-  const formatMessageText = (text) => {
-    const lines = text.split("\n");
-    return lines.map((line, lineIndex) => {
-      const parts = [];
-      const boldRegex = /\*\*(.*?)\*\*|__(.*?)__/g;
-      const matches = [];
-      let matchFound;
-      while ((matchFound = boldRegex.exec(line)) !== null) {
-        matches.push({
-          start: matchFound.index,
-          end: matchFound.index + matchFound[0].length,
-          text: matchFound[1] || matchFound[2],
-        });
+  const renderUserMessageText = (text) => {
+    const safeText = normalizeMessageText(text);
+
+    return <span className="whitespace-pre-wrap break-words">{safeText}</span>;
+  };
+
+  const renderBotMessageText = (text) => {
+    const safeText = normalizeMessageText(text);
+
+    try {
+      const parsedHtml = marked.parse(safeText, BOT_MARKDOWN_OPTIONS);
+      const sanitizedHtml = DOMPurify.sanitize(
+        parsedHtml,
+        BOT_MARKDOWN_SANITIZE_OPTIONS
+      ).trim();
+
+      if (!sanitizedHtml && safeText.trim()) {
+        return (
+          <div className="fm-bot-content whitespace-pre-wrap break-words">
+            {safeText}
+          </div>
+        );
       }
-      if (matches.length === 0) {
-        parts.push(<span key={`line-${lineIndex}`}>{line}</span>);
-      } else {
-        let currentPos = 0;
-        matches.forEach((match, idx) => {
-          if (match.start > currentPos) {
-            parts.push(
-              <span key={`text-${lineIndex}-${idx}`}>
-                {line.substring(currentPos, match.start)}
-              </span>
-            );
-          }
-          parts.push(
-            <strong key={`bold-${lineIndex}-${idx}`}
-              className="font-semibold text-stone-900">
-              {match.text}
-            </strong>
-          );
-          currentPos = match.end;
-        });
-        if (currentPos < line.length) {
-          parts.push(
-            <span key={`text-${lineIndex}-end`}>
-              {line.substring(currentPos)}
-            </span>
-          );
-        }
-      }
+
       return (
-        <span key={lineIndex}>
-          {parts}
-          {lineIndex < lines.length - 1 && <br />}
-        </span>
+        <div
+          className="fm-bot-content"
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+        />
       );
-    });
+    } catch {
+      return (
+        <div className="fm-bot-content whitespace-pre-wrap break-words">
+          {safeText}
+        </div>
+      );
+    }
   };
 
   return (
@@ -195,6 +209,52 @@ export default function FitnessChatBot() {
         .fm-scrollbar::-webkit-scrollbar { width: 4px; }
         .fm-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .fm-scrollbar::-webkit-scrollbar-thumb { background: #e7e5e3; border-radius: 99px; }
+        .fm-bot-content {
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+        .fm-bot-content > :first-child { margin-top: 0; }
+        .fm-bot-content > :last-child { margin-bottom: 0; }
+        .fm-bot-content p { margin: 0 0 0.75rem; }
+        .fm-bot-content ul,
+        .fm-bot-content ol {
+          margin: 0 0 0.75rem;
+          padding-left: 1.25rem;
+        }
+        .fm-bot-content li + li { margin-top: 0.25rem; }
+        .fm-bot-content strong { font-weight: 600; }
+        .fm-bot-content em { font-style: italic; }
+        .fm-bot-content code {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+          font-size: 0.875em;
+          background: #f5f5f4;
+          border-radius: 0.375rem;
+          padding: 0.1rem 0.35rem;
+        }
+        .fm-bot-content pre {
+          margin: 0 0 0.75rem;
+          overflow-x: auto;
+          background: #1c1917;
+          color: #fafaf9;
+          border-radius: 0.875rem;
+          padding: 0.75rem;
+        }
+        .fm-bot-content pre code {
+          background: transparent;
+          padding: 0;
+          color: inherit;
+        }
+        .fm-bot-content blockquote {
+          margin: 0 0 0.75rem;
+          padding-left: 0.75rem;
+          border-left: 3px solid #d6d3d1;
+          color: inherit;
+          opacity: 0.9;
+        }
+        .fm-bot-content a {
+          color: inherit;
+          text-decoration: underline;
+        }
       `}</style>
 
       {/* ── Chat Window ── */}
@@ -269,7 +329,9 @@ export default function FitnessChatBot() {
                       : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
                   }`}
               >
-                {formatMessageText(msg.text)}
+                {msg.role === "bot"
+                  ? renderBotMessageText(msg.text)
+                  : renderUserMessageText(msg.text)}
               </div>
             </div>
           ))}
