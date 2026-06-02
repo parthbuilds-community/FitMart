@@ -1,8 +1,13 @@
 const express = require("express");
 const router = express.Router();
-
+const cache = require("../lib/cache");
+const dotenv = require("dotenv");
+dotenv.config();
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || "exercisedb.p.rapidapi.com";
+
+// Cache configuration
+const EXERCISES_CACHE_TTL = process.env.EXERCISES_CACHE_TTL; // 24 hours in seconds
 
 /**
  * Maps UI category names to RapidAPI ExerciseDB body parts.
@@ -100,6 +105,7 @@ function deduplicateExercises(exercises) {
  * GET /api/exercises/:category
  * Fetches exercises for a specific UI category.
  * Handles category mapping and deduplication.
+ * Caches results in Redis for 24 hours to improve performance and protect API quota.
  * 
  * Supported categories:
  * - chest, back, arms, shoulders, legs, abs, cardio
@@ -124,6 +130,17 @@ router.get("/:category", async (req, res) => {
   }
 
   try {
+    const cacheKey = `exercises:${category.toLowerCase()}`;
+    
+    // Check Redis cache first
+    const cachedExercises = await cache.get(cacheKey);
+    if (cachedExercises && Array.isArray(cachedExercises)) {
+      console.log(
+        `✅ [Cache HIT] Returning ${cachedExercises.length} cached exercises for category "${category}"`
+      );
+      return res.json(cachedExercises);
+    }
+
     const bodyParts = CATEGORY_MAPPING[category.toLowerCase()];
     const allExercises = [];
 
@@ -176,6 +193,13 @@ router.get("/:category", async (req, res) => {
     console.log(
       `✅ Fetched ${deduplicatedExercises.length} unique exercises for category "${category}"`
     );
+
+    // Store in cache with 24-hour TTL
+    await cache.set(cacheKey, deduplicatedExercises, EXERCISES_CACHE_TTL);
+    console.log(
+      `✅ [Cache SET] Cached ${deduplicatedExercises.length} exercises for category "${category}" (TTL: 24 hours)`
+    );
+
     res.json(deduplicatedExercises);
   } catch (error) {
     console.error(`❌ Error fetching exercises for category "${category}":`, error);
