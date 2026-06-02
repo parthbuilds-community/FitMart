@@ -192,6 +192,9 @@ export default function HomePage() {
   const [backendError, setBackendError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [loyaltyModalOpen, setLoyaltyModalOpen] = useState(false);
+  const [membershipModalOpen, setMembershipModalOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState(null);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
 
@@ -592,7 +595,9 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+            <button
+              onClick={() => setLoyaltyModalOpen(true)}
+              className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
                                hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
                                text-center">
               Learn More
@@ -633,7 +638,12 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <button
+                  onClick={() => {
+                    setSelectedTier(p.tier);
+                    setMembershipModalOpen(true);
+                  }}
+                  className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
                                    transition-all self-start min-h-10">
                   {p.cta}
@@ -660,6 +670,54 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* ── Loyalty Modal ── */}
+      {loyaltyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-sm fade-in show">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
+            <button
+              onClick={() => setLoyaltyModalOpen(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              ✕
+            </button>
+            <h3 className="font-['DM_Serif_Display'] text-2xl text-stone-900 mb-3">FitRewards Program</h3>
+            <p className="text-stone-500 mb-6 text-sm leading-relaxed">
+              Earn 10 points for every ₹1000 spent on purchases, or by hitting your daily milestone goals. Redeem your points at checkout for free supplements, premium gym gear, or direct discounts on coaching sessions!
+            </p>
+            <button
+              onClick={() => setLoyaltyModalOpen(false)}
+              className="w-full bg-stone-900 text-white py-3 rounded-full hover:bg-stone-700 transition-colors text-sm"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Membership Modal ── */}
+      {membershipModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-sm fade-in show">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
+            <button
+              onClick={() => setMembershipModalOpen(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              ✕
+            </button>
+            <h3 className="font-['DM_Serif_Display'] text-2xl text-stone-900 mb-3">Upgrade to {selectedTier}</h3>
+            <p className="text-stone-500 mb-6 text-sm leading-relaxed">
+              We are currently integrating our secure payment gateway! Premium membership upgrades will be available soon. Check back later to unlock exclusive {selectedTier} features.
+            </p>
+            <button
+              onClick={() => setMembershipModalOpen(false)}
+              className="w-full bg-stone-900 text-white py-3 rounded-full hover:bg-stone-700 transition-colors text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <CartDrawer
         isOpen={cartOpen} onClose={() => setCartOpen(false)}
