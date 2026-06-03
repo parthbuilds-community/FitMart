@@ -8,16 +8,23 @@ import {
   getRecommendedCategory,
 } from "../utils/healthUtils";
 
-const BMICalculator = () => {
-  const [formData, setFormData] = useState({
-    weight: "",
-    height: "",
-    age: "",
-    gender: "male",
-    activityLevel: 1.2,
-  });
+const BMICalculator = ({ baselineData, setBaselineData }) => {
+  const [formData, setFormData] = useState(
+    baselineData || {
+      weight: "",
+      height: "",
+      age: "",
+      gender: "male",
+      activityLevel: 1.2,
+    }
+  );
 
   const [result, setResult] = useState(null);
+  const handleChange = (updates) => {
+  const updated = { ...formData, ...updates };
+  setFormData(updated);
+  if (setBaselineData) setBaselineData(updated);
+};
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -81,7 +88,7 @@ const BMICalculator = () => {
                   <button
                     key={g}
                     type="button"
-                    onClick={() => setFormData({ ...formData, gender: g })}
+                   onClick={() => handleChange({ gender: g })}
                     className={`flex-1 py-3 px-4 sm:px-8 rounded-full text-xs tracking-widest
                                 uppercase transition-all duration-300 border min-h-11
                                 active:scale-[0.98]
@@ -111,7 +118,7 @@ const BMICalculator = () => {
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 70.5"
                   value={formData.weight}
-                  onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                 onChange={(e) => handleChange({ weight: e.target.value })} 
                 />
               </div>
 
@@ -127,7 +134,7 @@ const BMICalculator = () => {
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 175"
                   value={formData.height}
-                  onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                 onChange={(e) => handleChange({ height: e.target.value })}
                 />
               </div>
 
@@ -143,7 +150,7 @@ const BMICalculator = () => {
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 28"
                   value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                onChange={(e) => handleChange({ age: e.target.value })}
                 />
               </div>
 
@@ -156,9 +163,7 @@ const BMICalculator = () => {
                              text-sm text-stone-900 focus:outline-none focus:border-stone-900
                              transition-colors appearance-none min-h-11"
                   value={formData.activityLevel}
-                  onChange={(e) =>
-                    setFormData({ ...formData, activityLevel: e.target.value })
-                  }
+                  onChange={(e) => handleChange({ activityLevel: e.target.value })}
                 >
                   <option value={1.2}>Sedentary (0 days)</option>
                   <option value={1.375}>Lightly Active (1–2 days)</option>

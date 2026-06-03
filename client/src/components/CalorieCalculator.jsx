@@ -7,8 +7,9 @@ import {
   calculateWeightGainCalories,
 } from "../utils/healthUtils";
 
-const CalorieCalculator = () => {
-  const [formData, setFormData] = useState({
+const CalorieCalculator = ({ baselineData }) => {
+  const [sameAsBaseline, setSameAsBaseline] = useState(false);
+  const [localData, setLocalData] = useState({
     weight: "",
     height: "",
     age: "",
@@ -17,6 +18,19 @@ const CalorieCalculator = () => {
   });
 
   const [result, setResult] = useState(null);
+  useEffect(() => {
+  if (sameAsBaseline && baselineData) {
+    setLocalData({
+      weight: baselineData.weight,
+      height: baselineData.height,
+      age: baselineData.age,
+      gender: baselineData.gender,
+      activityLevel: String(baselineData.activityLevel),
+    });
+  }
+}, [sameAsBaseline, baselineData]);
+
+const formData = localData;
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -104,6 +118,30 @@ const CalorieCalculator = () => {
               : "border-stone-200 shadow-sm hover:border-stone-300"
             }`}
         >
+          <label className="flex items-center gap-3 mb-6 cursor-pointer select-none group w-fit">
+          <div className="relative">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={sameAsBaseline}
+              onChange={(e) => setSameAsBaseline(e.target.checked)}
+            />
+            <div className="w-4 h-4 border border-stone-300 rounded
+                            peer-checked:bg-stone-900 peer-checked:border-stone-900
+                            transition-all duration-200 flex items-center justify-center">
+              {sameAsBaseline && (
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5"
+                    strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <span className="text-xs text-stone-500 tracking-wide group-hover:text-stone-700 transition-colors">
+            Use same data as Baseline Metrics
+          </span>
+        </label>
+
           <form onSubmit={handleCalculate} className="space-y-6 sm:space-y-8">
 
             {/* Gender Selection */}
@@ -119,7 +157,8 @@ const CalorieCalculator = () => {
                   <button
                     key={g}
                     type="button"
-                    onClick={() => setFormData({ ...formData, gender: g })}
+               disabled={sameAsBaseline}
+              onClick={() => setLocalData({ ...localData, gender: g })}
                     className={`flex-1 py-3 px-4 sm:px-8 rounded-full text-xs tracking-widest
                                 uppercase transition-all duration-300 border min-h-11
                                 active:scale-[0.98]
@@ -148,10 +187,9 @@ const CalorieCalculator = () => {
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 70.5"
+                 disabled={sameAsBaseline}
                   value={formData.weight}
-                  onChange={(e) =>
-                    setFormData({ ...formData, weight: e.target.value })
-                  }
+                  onChange={(e) => setLocalData({ ...localData, weight: e.target.value })}
                 />
               </div>
 
@@ -166,10 +204,9 @@ const CalorieCalculator = () => {
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 175"
+                  disabled={sameAsBaseline}
                   value={formData.height}
-                  onChange={(e) =>
-                    setFormData({ ...formData, height: e.target.value })
-                  }
+                  onChange={(e) => setLocalData({ ...localData, height: e.target.value })}
                 />
               </div>
 
@@ -184,10 +221,9 @@ const CalorieCalculator = () => {
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 28"
+                 disabled={sameAsBaseline}
                   value={formData.age}
-                  onChange={(e) =>
-                    setFormData({ ...formData, age: e.target.value })
-                  }
+                  onChange={(e) => setLocalData({ ...localData, age: e.target.value })}
                 />
               </div>
 
@@ -199,10 +235,9 @@ const CalorieCalculator = () => {
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 focus:outline-none focus:border-stone-900
                              transition-colors appearance-none min-h-11"
+                  disabled={sameAsBaseline}
                   value={formData.activityLevel}
-                  onChange={(e) =>
-                    setFormData({ ...formData, activityLevel: e.target.value })
-                  }
+                  onChange={(e) => setLocalData({ ...localData, activityLevel: e.target.value })}
                 >
                   {activityOptions.map((option) => (
                     <option key={option.value} value={option.value}>
