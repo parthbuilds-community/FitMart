@@ -1,8 +1,6 @@
 // src/auth/useWelcomeDiscount.js
 import { useState, useEffect, useRef } from "react";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiFetch } from "../lib/apiClient";
 
 export function useWelcomeDiscount(user) {
   const [showBanner, setShowBanner] = useState(false);
@@ -16,15 +14,15 @@ export function useWelcomeDiscount(user) {
 
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/login`, {
+        const result = await apiFetch("/api/user/login", {
           method: "POST",
-          headers,
+          auth: true,
           credentials: "include",
-          body: JSON.stringify({ userId: user.uid }),
+          body: { userId: user.uid },
+          throwOnError: false,
         });
-        if (!res.ok) return;
-        const data = await res.json();
+        if (!result.ok) return;
+        const data = result.data;
         if (data.showBanner && !data.discountUsed) {
           setShowBanner(true);
           setDiscountEligible(true);
@@ -40,12 +38,11 @@ export function useWelcomeDiscount(user) {
     setShowBanner(false);
     if (!user) return;
     try {
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/user/dismiss-banner`, {
+      await apiFetch("/api/user/dismiss-banner", {
         method: "POST",
-        headers,
+        auth: true,
         credentials: "include",
-        body: JSON.stringify({ userId: user.uid }),
+        body: { userId: user.uid },
       });
     } catch (err) {
       console.error("dismissBanner error:", err);

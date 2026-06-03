@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { auth } from "../auth/firebase";
 import { useAuth } from "../auth/useAuth";
+import { apiFetch } from "../lib/apiClient";
 import { fmt } from "../utils/formatters";
 import { useGithubStats } from "../utils/useGithubStats";
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
@@ -132,9 +132,7 @@ export default function LandingPage() {
       setLoadingProducts(true);
       setBackendError(false);
       try {
-        const res = await fetch(`${API}/api/products?all=true`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const data = await apiFetch("/api/products?all=true");
         setProducts(data.map(p => ({ ...p, id: p.productId || p.id })));
       } catch (err) {
         console.error("Error loading products:", err);

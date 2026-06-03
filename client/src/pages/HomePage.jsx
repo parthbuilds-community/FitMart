@@ -6,8 +6,8 @@ import Navbar from "../components/Navbar";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import CartDrawer from "../components/CartDrawer";
+import { apiFetch } from "../lib/apiClient";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessChatBot from "../components/FitnessChatBot";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
@@ -18,11 +18,6 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
-
-
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
 const CATEGORIES = [
   { name: "All", value: "all" },
   { name: "Equipment", value: "Equipment" },
@@ -241,10 +236,13 @@ export default function HomePage() {
     if (!user || !products.length) return;
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) return;
-        const cartDoc = await res.json();
+        const result = await apiFetch(`/api/cart/${user.uid}`, {
+          auth: true,
+          credentials: "include",
+          throwOnError: false,
+        });
+        if (!result.ok) return;
+        const cartDoc = result.data;
         setCart(mapCart(cartDoc, products));
       } catch (err) {
         console.error("Error loading cart:", err);
@@ -264,13 +262,12 @@ export default function HomePage() {
   const addToCart = async (product) => {
     if (!user) return;
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/add`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
+      const cartDoc = await apiFetch(`/api/cart/${user.uid}/add`, {
+        method: "POST",
+        auth: true,
+        credentials: "include",
+        body: { productId: product.productId || product.id, quantity: 1 },
       });
-      if (!res.ok) throw new Error("Failed to add to cart");
-      const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
     } catch (err) { console.error("Add to cart failed:", err); }
   };
@@ -279,13 +276,12 @@ export default function HomePage() {
     if (!user) return;
     try {
       const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
+      const cartDoc = await apiFetch(`/api/cart/${user.uid}/remove`, {
+        method: "POST",
+        auth: true,
+        credentials: "include",
+        body: { productId: id, quantity: existing?.qty || 1 },
       });
-      if (!res.ok) throw new Error("Failed to remove");
-      const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
     } catch (err) { console.error("Remove from cart failed:", err); }
   };
@@ -294,13 +290,16 @@ export default function HomePage() {
     if (!user) return;
     try {
       const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
+      await apiFetch(`/api/cart/${user.uid}/${url}`, {
+        method: "POST",
+        auth: true,
+        credentials: "include",
+        body: { productId: id, quantity: Math.abs(delta) },
       });
-      const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
-      const cartDoc = await res.json();
+      const cartDoc = await apiFetch(`/api/cart/${user.uid}`, {
+        auth: true,
+        credentials: "include",
+      });
       setCart(mapCart(cartDoc, products));
     } catch (err) { console.error("Update qty failed:", err); }
   };

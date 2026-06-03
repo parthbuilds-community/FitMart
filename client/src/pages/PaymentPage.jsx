@@ -2,10 +2,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 function useRazorpayScript() {
@@ -53,12 +52,11 @@ export default function PaymentPage() {
 
   const finishOrder = async (userId, paymentId) => {
     try {
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/payment/clear-cart`, {
+      await apiFetch("/api/payment/clear-cart", {
         method: "POST",
-        headers,
+        auth: true,
         credentials: "include",
-        body: JSON.stringify({ userId }),
+        body: { userId },
       });
     } catch (err) {
       console.error('clear-cart failed:', err);
@@ -66,12 +64,11 @@ export default function PaymentPage() {
 
     if (discountApplied) {
       try {
-        const headers = await getAuthHeaders();
-        await fetch(`${API}/api/user/use-discount`, {
+        await apiFetch("/api/user/use-discount", {
           method: "POST",
-          headers,
+          auth: true,
           credentials: "include",
-          body: JSON.stringify({ userId }),
+          body: { userId },
         });
       } catch (err) {
         console.error("use-discount error:", err);
@@ -89,14 +86,12 @@ export default function PaymentPage() {
     setBypassing(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/api/payment/demo-success`, {
+      const data = await apiFetch("/api/payment/demo-success", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ userId: user.uid }),
+        body: { userId: user.uid },
+        errorMessage: "Demo order failed",
       });
-      if (!res.ok) throw new Error("Demo order failed");
-      const data = await res.json();
       await finishOrder(user.uid, data.paymentId);
     } catch (err) {
       setError(err.message);
@@ -113,18 +108,12 @@ export default function PaymentPage() {
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
-      const orderRes = await fetch(`${API}/api/payment/create-order`, {
+      const order = await apiFetch("/api/payment/create-order", {
         method: "POST",
-        headers,
+        auth: true,
         credentials: "include",
-        body: JSON.stringify({ amount: total, currency: "INR", userId }),
+        body: { amount: total, currency: "INR", userId },
       });
-      if (!orderRes.ok) {
-        const e = await orderRes.json().catch(() => ({}));
-        throw new Error(e.error || "Could not create order");
-      }
-      const order = await orderRes.json();
 
       const options = {
         key: RAZORPAY_KEY,
@@ -137,14 +126,13 @@ export default function PaymentPage() {
         theme: { color: "#1c1917" },
         handler: async (response) => {
           try {
-            const headers = await getAuthHeaders();
-            const verifyRes = await fetch(`${API}/api/payment/verify-payment`, {
+            await apiFetch("/api/payment/verify-payment", {
               method: "POST",
-              headers,
+              auth: true,
               credentials: "include",
-              body: JSON.stringify({ ...response, userId }),
+              body: { ...response, userId },
+              errorMessage: "Payment verification failed",
             });
-            if (!verifyRes.ok) throw new Error("Payment verification failed");
             await finishOrder(userId, response.razorpay_payment_id);
           } catch (err) {
             setError(err.message);

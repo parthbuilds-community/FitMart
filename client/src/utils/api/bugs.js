@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { apiFetch } from '../../lib/apiClient';
 
 /**
  * Fetch all bug reports
@@ -6,17 +6,10 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
  * @returns {Promise<Array>} Array of bug objects
  */
 export async function getBugs(token) {
-  const res = await fetch(`${API}/api/bugs`, {
+  const data = await apiFetch('/api/bugs', {
     headers: { Authorization: `Bearer ${token}` }
   });
-  
-  if (!res.ok) {
-    let body = null;
-    try { body = await res.json(); } catch { body = await res.text(); }
-    throw new Error(body?.message || body || `Failed to fetch bugs (${res.status})`);
-  }
-  
-  const data = await res.json();
+
   return data.bugs || [];
 }
 
@@ -28,20 +21,11 @@ export async function getBugs(token) {
  * @returns {Promise<Object>} Updated bug object
  */
 export async function patchBugStatus(id, status, token) {
-  const res = await fetch(`${API}/api/bugs/${id}`, {
+  return await apiFetch(`/api/bugs/${id}`, {
     method: 'PATCH',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ status })
+    body: { status }
   });
-  
-  if (!res.ok) {
-    let body = null;
-    try { body = await res.json(); } catch { body = await res.text(); }
-    throw new Error(body?.message || body || `Failed to update bug status (${res.status})`);
-  }
-  
-  return await res.json();
 }

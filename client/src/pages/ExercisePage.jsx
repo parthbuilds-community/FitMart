@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { apiFetch } from "../lib/apiClient";
 import { addExerciseToWorkout, getWorkoutByDate } from "../utils/workoutStorage";
 
 const CATEGORIES = [
@@ -50,15 +51,15 @@ export default function ExercisePage() {
     setImageErrors(new Set());
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const response = await fetch(`${apiUrl}/api/exercises/${bodyPart}`);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch exercises. Status: ${response.status}`);
+      const result = await apiFetch(`/api/exercises/${bodyPart}`, {
+        throwOnError: false,
+      });
+      if (!result.ok) {
+        const errorData = result.data && typeof result.data === "object" ? result.data : {};
+        throw new Error(errorData.error || `Failed to fetch exercises. Status: ${result.status}`);
       }
 
-      const data = await response.json();
+      const data = result.data;
 
       // Client-side debug logging
       if (data && data.length > 0) {

@@ -3,14 +3,13 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { apiFetch } from "../lib/apiClient";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
 import SkeletonItem from "../components/SkeletonItem";
 import SkeletonSummary from "../components/SkeletonSummary";
 import AddressSelector from "../components/AddressSelector";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const PLACEHOLDER_IMG = "https://placehold.co/96x96/f5f5f4/78716c?text=No+Image";
 
 export default function Checkout() {
@@ -44,23 +43,23 @@ export default function Checkout() {
       setCartError(null);
 
       try {
-        const headers = await getAuthHeaders();
-
-        const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
-          fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
-          fetch(`${API}/api/products?all=true`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
-          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
+        const [cart, products, discountRes] = await Promise.all([
+          apiFetch(`/api/cart/${userId}`, {
+            auth: true,
+            credentials: "include",
+            errorMessage: "Failed to fetch cart",
+          }),
+          apiFetch("/api/products?all=true", {
+            errorMessage: "Failed to fetch products",
+          }),
+          apiFetch(`/api/user/discount-status/${userId}`, {
+            credentials: "include",
+            throwOnError: false,
+          }),
         ]);
 
-        if (!cartRes.ok) throw new Error("Failed to fetch cart");
-        if (!prodRes.ok) throw new Error("Failed to fetch products");
-
-        const cart = await cartRes.json();
-        const products = await prodRes.json();
-
         if (discountRes.ok) {
-          const d = await discountRes.json();
+          const d = discountRes.data;
           setDiscountEligible(d.eligible);
           setDiscountPercent(d.discountPercent ?? 10);
         }
@@ -84,14 +83,12 @@ export default function Checkout() {
       setProfileError(null);
 
       try {
-        const headers = await getAuthHeaders();
-        const profileRes = await fetch(`${API}/api/user/profile/${userId}`, {
-          headers, credentials: "include", signal,
+        const p = await apiFetch(`/api/user/profile/${userId}`, {
+          auth: true,
+          credentials: "include",
+          signal,
+          errorMessage: "Failed to load profile",
         });
-
-        if (!profileRes.ok) throw new Error("Failed to load profile");
-
-        const p = await profileRes.json();
         setProfile(p);
         const def = p?.defaultAddressId
           ? (p.addresses || []).find(a => a.id === p.defaultAddressId)

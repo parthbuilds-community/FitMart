@@ -2,10 +2,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
+import { apiFetch } from "../lib/apiClient";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
-
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const SEGMENT_STYLES = {
   "high-value": "bg-stone-900 text-white",
@@ -150,9 +148,7 @@ export default function AdminCustomerDetail() {
   useEffect(() => {
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers/${userId}`, { headers });
-        const json = await res.json();
+        const json = await apiFetch(`/api/customers/${userId}`, { auth: true });
         if (!json.success) throw new Error(json.error || "Failed to load customer");
         setData(json.data);
         setLoading(false);
@@ -171,11 +167,15 @@ export default function AdminCustomerDetail() {
     const ids = [...new Set(ordersList.flatMap(o => o.items.map(i => i.productId)).filter(Boolean))];
     if (ids.length === 0) return;
     const map = {};
-    Promise.all(ids.map(id =>
-      fetch(`${API_BASE}/products/${id}`).then(r => r.ok ? r.json() : null)
-        .then(p => { if (p) map[id] = p; })
-        .catch(() => { })
-    )).then(() => setProductMap(map));
+    Promise.all(ids.map(async (id) => {
+      try {
+        const product = await apiFetch(`/api/products/${id}`);
+        if (product) map[id] = product;
+      } catch {
+        return null;
+      }
+      return null;
+    })).then(() => setProductMap(map));
   }, [data]);
 
   // Generate and open a simple invoice HTML for a given order
@@ -185,11 +185,12 @@ export default function AdminCustomerDetail() {
       // Try to fetch saved profile/address for the user to include in invoice
       let profileAddrHtml = "";
       try {
-        const root = API_BASE.replace(/\/api$/, "");
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${root}/api/user/profile/${userId}`, { headers });
-        if (res.ok) {
-          const p = await res.json();
+        const profileResult = await apiFetch(`/api/user/profile/${userId}`, {
+          auth: true,
+          throwOnError: false,
+        });
+        if (profileResult.ok) {
+          const p = profileResult.data;
           const addr = (p?.addresses || []).find(a => a.id === p?.defaultAddressId) || (p?.addresses || [])[0];
           if (addr) {
             profileAddrHtml = `<div style="margin-top:6px">${addr.label || ''}</div>` +
@@ -251,17 +252,11 @@ export default function AdminCustomerDetail() {
     setSendingReminder(true);
     setReminderError(null);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/customers/${userId}/send-reminder`, {
+      await apiFetch(`/api/customers/${userId}/send-reminder`, {
         method: "POST",
-        headers,
+        auth: true,
         credentials: "include",
       });
-      const resData = await res.json();
-      if (!res.ok) {
-        setReminderError(resData.error || "Failed to send reminder");
-        return;
-      }
       setReminderSent(true);
       // Clear success message after 3 seconds
       setTimeout(() => setReminderSent(false), 3000);

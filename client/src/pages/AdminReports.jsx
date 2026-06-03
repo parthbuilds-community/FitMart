@@ -3,9 +3,7 @@ import { useState, useEffect } from "react";
 import { fmt } from "../utils/formatters";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
-
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
+import { apiFetch } from "../lib/apiClient";
 
 const RANGE_LABELS = {
   daily: "Last 24 Hours",
@@ -89,9 +87,9 @@ export default function AdminReports() {
       setLoading(true);
       setError(null);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/reports/sales?range=${range}`, { headers });
-        const json = await res.json();
+        const json = await apiFetch(`/api/reports/sales?range=${range}`, {
+          auth: true,
+        });
         setData(json);
         setLoading(false);
       } catch (err) {
@@ -109,11 +107,15 @@ export default function AdminReports() {
     const ids = [...new Set(productPerformance.map(p => p.productId).filter(Boolean))];
     if (ids.length === 0) return;
     const map = {};
-    Promise.all(ids.map(id =>
-      fetch(`${API_BASE}/products/${id}`).then(r => r.ok ? r.json() : null)
-        .then(p => { if (p) map[id] = p; })
-        .catch(() => { })
-    )).then(() => setProductMap(map));
+    Promise.all(ids.map(async (id) => {
+      try {
+        const product = await apiFetch(`/api/products/${id}`);
+        if (product) map[id] = product;
+      } catch {
+        return null;
+      }
+      return null;
+    })).then(() => setProductMap(map));
   }, [productPerformance]);
 
   return (
