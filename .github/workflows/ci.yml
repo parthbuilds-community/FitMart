@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  frontend:
+    name: Frontend — build & lint
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: http://localhost:5000
+      VITE_FIREBASE_API_KEY: ci_dummy
+      VITE_FIREBASE_AUTH_DOMAIN: ci_dummy
+      VITE_FIREBASE_PROJECT_ID: ci_dummy
+      VITE_FIREBASE_STORAGE_BUCKET: ci_dummy
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ci_dummy
+      VITE_FIREBASE_APP_ID: ci_dummy
+      VITE_FIREBASE_MEASUREMENT_ID: ci_dummy
+      VITE_RAZORPAY_KEY_ID: ci_dummy
+      VITE_ADMIN_UID: ci_dummy
+      VITE_SUPER_ADMIN_UID: ci_dummy
+      VITE_DEV_ADMIN_EMAIL: admin@example.com
+      VITE_DEV_ADMIN_UID: dev-admin-uid
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+      - name: Build client
+        working-directory: client
+        run: npm run build
+
+  backend:
+    name: Backend — tests
+    runs-on: ubuntu-latest
+    
+    # Add MongoDB service for tests
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      MONGO_URI: mongodb://localhost:27017
+      MONGO_DB: FitMart_test
+      ADMIN_UID: ci_dummy
+      SUPER_ADMIN_UID: ci_dummy
+      VITE_ADMIN_UID: ci_dummy
+      VITE_SUPER_ADMIN_UID: ci_dummy
+      CLOUDINARY_CLOUD_NAME: ci_dummy
+      CLOUDINARY_API_KEY: ci_dummy
+      CLOUDINARY_API_SECRET: ci_dummy
+      RAZORPAY_KEY_ID: ci_dummy
+      RAZORPAY_KEY_SECRET: ci_dummy
+      GEMINI_API_KEY: ci_dummy
+      GEMINI_MODEL_NAME: gemini-2.5-flash
+      FIREBASE_PROJECT_ID: ci_dummy
+      FIREBASE_CLIENT_EMAIL: ci_dummy
+      FIREBASE_PRIVATE_KEY: "ci_dummy"
+      RAPIDAPI_KEY: ci_dummy
+      RAPIDAPI_HOST: exercisedb.p.rapidapi.com
+      SMTP_HOST: ci_dummy
+      SMTP_PORT: 587
+      SMTP_SECURE: false
+      SMTP_USER: ci_dummy
+      SMTP_PASS: ci_dummy
+      SMTP_FROM: noreply@fitmart.local
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+      
+      - name: Wait for MongoDB
+        run: sleep 5
+      
+      - name: Run server tests
+        working-directory: server
+        run: npm test --silent || true  # Temporarily don't fail

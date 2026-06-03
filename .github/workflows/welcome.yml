@@ -1,0 +1,22 @@
+name: Welcome Bot
+
+on:
+issues:
+types: [opened]
+
+pull_request_target:
+types: [opened, closed]
+
+jobs:
+welcome:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - uses: actions/checkout@v4
+
+  - uses: behaviorbot/welcome@v1
+    with:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CONFIG_FILE: .github/config.yml
+```

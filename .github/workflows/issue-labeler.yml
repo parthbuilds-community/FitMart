@@ -1,0 +1,53 @@
+name: Issue Auto-Labeler
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  label-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Apply multiple labels based on issue content
+        uses: github/issue-labeler@v3.4
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          configuration-path: .github/issue-labeler.yml
+          enable-versioned-regex: 0
+          include-title: 1
+          include-body: 1
+          sync-labels: 0
+
+  add-help-wanted-for-complex-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
+    steps:
+      - name: Add help wanted to complex issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || "";
+            const title = issue.title || "";
+            
+            const complexityKeywords = ['complex', 'difficult', 'multiple files', 'architectural', 'redesign'];
+            const isComplex = complexityKeywords.some(keyword => 
+              body.toLowerCase().includes(keyword) || title.toLowerCase().includes(keyword)
+            );
+            
+            if (isComplex && !body.toLowerCase().includes('good first issue')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                labels: ['help wanted']
+              });
+            }
