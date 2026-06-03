@@ -229,8 +229,8 @@ export default function LandingPage() {
               <button
                 onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
                 className="bg-stone-900 text-white text-sm px-8 py-3.5 rounded-full
-                           hover:bg-stone-700 transition-colors w-full sm:w-auto text-center
-                           min-h-12 active:scale-[0.98]"
+                 hover:bg-stone-700 transition-colors w-full sm:w-auto text-center
+                 min-h-12 active:scale-[0.98] cursor-pointer"
               >
                 Start Shopping
               </button>
