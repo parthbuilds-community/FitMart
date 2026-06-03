@@ -1,4 +1,5 @@
 // src/components/FitnessChatBot.jsx
+import MarkdownMessage from "./MarkdownMessage";
 import { useState, useEffect, useRef } from "react";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -7,8 +8,6 @@ const WELCOME = {
   role: "bot",
   text: "Hello! I'm your FitMart fitness assistant. Ask me anything about workouts, diet, protein, weight loss, or muscle gain.",
 };
-
-
 
 const QUICK_REPLIES = [
   {
@@ -27,7 +26,7 @@ const QUICK_REPLIES = [
     label: "⚖️ Lose weight",
     prompt: "How do I lose weight sustainably?",
   },
-]
+];
 
 export default function FitnessChatBot() {
   const [open, setOpen] = useState(false);
@@ -104,57 +103,6 @@ export default function FitnessChatBot() {
     }
   };
 
-  const formatMessageText = (text) => {
-    const lines = text.split("\n");
-    return lines.map((line, lineIndex) => {
-      const parts = [];
-      const boldRegex = /\*\*(.*?)\*\*|__(.*?)__/g;
-      const matches = [];
-      let matchFound;
-      while ((matchFound = boldRegex.exec(line)) !== null) {
-        matches.push({
-          start: matchFound.index,
-          end: matchFound.index + matchFound[0].length,
-          text: matchFound[1] || matchFound[2],
-        });
-      }
-      if (matches.length === 0) {
-        parts.push(<span key={`line-${lineIndex}`}>{line}</span>);
-      } else {
-        let currentPos = 0;
-        matches.forEach((match, idx) => {
-          if (match.start > currentPos) {
-            parts.push(
-              <span key={`text-${lineIndex}-${idx}`}>
-                {line.substring(currentPos, match.start)}
-              </span>
-            );
-          }
-          parts.push(
-            <strong key={`bold-${lineIndex}-${idx}`}
-              className="font-semibold text-stone-900">
-              {match.text}
-            </strong>
-          );
-          currentPos = match.end;
-        });
-        if (currentPos < line.length) {
-          parts.push(
-            <span key={`text-${lineIndex}-end`}>
-              {line.substring(currentPos)}
-            </span>
-          );
-        }
-      }
-      return (
-        <span key={lineIndex}>
-          {parts}
-          {lineIndex < lines.length - 1 && <br />}
-        </span>
-      );
-    });
-  };
-
   return (
     <>
       <style>{`
@@ -198,18 +146,14 @@ export default function FitnessChatBot() {
       `}</style>
 
       {/* ── Chat Window ── */}
-      {/* Full-screen on mobile, fixed-size floating window on sm+ */}
       <div
         className={`fm-chat-window fixed z-50 bg-white border border-stone-200
                     shadow-2xl flex flex-col overflow-hidden
-                    /* Mobile: full screen minus FAB area */
                     bottom-20 right-3 left-3 rounded-2xl
-                    /* sm+: floating panel anchored to bottom-right */
                     sm:bottom-24 sm:right-5 sm:left-auto sm:w-90
                     ${open ? "open" : "closed"}`}
         style={{
           fontFamily: "'DM Sans', sans-serif",
-          /* Mobile height fills available space; fixed on sm+ */
           height: "calc(100vh - 6rem)",
           maxHeight: "520px",
         }}
@@ -269,12 +213,14 @@ export default function FitnessChatBot() {
                       : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
                   }`}
               >
-                {formatMessageText(msg.text)}
+                {msg.role === "bot" ? (
+                  <MarkdownMessage content={msg.text} />
+                ) : (
+                  <span>{msg.text}</span>
+                )}
               </div>
             </div>
           ))}
-
-
 
           {/* Typing Indicator */}
           {typing && (
@@ -297,8 +243,7 @@ export default function FitnessChatBot() {
 
         <div className="h-px bg-stone-100 shrink-0" />
 
-        {/*  Show quick replies only before the conversation starts
-         to keep the chat area clean after interaction begins */}
+        {/* Quick Replies */}
         {msgs.length === 1 && (
           <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-hide">
             {QUICK_REPLIES.map((reply) => (
@@ -323,12 +268,10 @@ export default function FitnessChatBot() {
             onKeyDown={onKeyDown}
             placeholder="Ask about workouts, diet, protein…"
             disabled={typing}
-            className="flex-1 min-w-0  resize-none border border-stone-200 bg-stone-50 rounded-xl
+            className="flex-1 min-w-0 resize-none border border-stone-200 bg-stone-50 rounded-xl
                        px-3.5 sm:px-4 py-2.5 text-sm text-stone-900 placeholder-stone-300
                        focus:outline-none focus:border-stone-900 transition-colors
                        disabled:opacity-50 leading-relaxed"
-            // min-w-0 allows the textarea to shrink correctly
-            // inside flex layouts and prevents layout overflow
             style={{ maxHeight: "96px", overflowY: "hidden" }}
             onInput={(e) => {
               e.target.style.height = "auto";
@@ -336,8 +279,6 @@ export default function FitnessChatBot() {
             }}
           />
           <button
-            // Wrap send() in an arrow function to avoid
-            // React automatically passing the click event object
             onClick={() => send()}
             disabled={!input.trim() || typing}
             className="w-10 h-10 sm:w-9 sm:h-9 bg-stone-900 text-white rounded-full
