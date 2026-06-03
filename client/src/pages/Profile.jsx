@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiFetch } from "../lib/apiClient";
 import {
   getRewardTier,
   getTierProgress,
@@ -12,8 +12,6 @@ import {
   getTransactionIcon,
 } from "../utils/rewardsUtils";
 import Navbar from "../components/Navbar";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function Toast({ message, onClose }) {
   useEffect(() => {
@@ -140,10 +138,11 @@ const [rewardsError, setRewardsError] = useState("");
       setPhotoURL(user.photoURL);
       setLoading(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/profile/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load profile");
-        const data = await res.json();
+        const data = await apiFetch(`/api/user/profile/${user.uid}`, {
+          auth: true,
+          credentials: "include",
+          errorMessage: "Failed to load profile",
+        });
         setProfile({
           name: data.name || user.displayName || "",
           phone: data.phone || "",
@@ -167,18 +166,11 @@ const [rewardsError, setRewardsError] = useState("");
       setRewardsLoading(true);
       setRewardsError("");
 
-      const headers = await getAuthHeaders();
-
-      const response = await fetch(`${API}/api/rewards/me`, {
-        headers,
+      const data = await apiFetch("/api/rewards/me", {
+        auth: true,
         credentials: "include",
+        errorMessage: "Failed to fetch rewards data",
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch rewards data");
-      }
-
-      const data = await response.json();
       setRewardsData(data);
     } catch (error) {
       setRewardsError(error.message || "Could not load FitRewards");
@@ -203,10 +195,11 @@ const [rewardsError, setRewardsError] = useState("");
       
       setLoadingOrders(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load orders");
-        const data = await res.json();
+        const data = await apiFetch(`/api/orders/${user.uid}`, {
+          auth: true,
+          credentials: "include",
+          errorMessage: "Failed to load orders",
+        });
         setOrders(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
@@ -225,20 +218,18 @@ const [rewardsError, setRewardsError] = useState("");
     setError(null);
     setSaving(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/profile/${user.uid}`, {
+      const data = await apiFetch(`/api/user/profile/${user.uid}`, {
         method: "PUT",
-        headers,
+        auth: true,
         credentials: "include",
-        body: JSON.stringify({
+        errorMessage: "Failed to save profile",
+        body: {
           name: profile.name,
           phone: profile.phone,
           addresses: profile.addresses,
           defaultAddressId: profile.defaultAddressId,
-        }),
+        },
       });
-      if (!res.ok) throw new Error("Failed to save profile");
-      const data = await res.json();
       setProfile((prev) => ({ ...prev, ...data }));
       setToast("Profile updated successfully");
     } catch (err) {
@@ -263,22 +254,12 @@ const [rewardsError, setRewardsError] = useState("");
       const formData = new FormData();
       formData.append("photo", file);
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/upload-photo/${user.uid}`, {
+      const data = await apiFetch(`/api/user/upload-photo/${user.uid}`, {
         method: "POST",
-        headers: {
-          "Authorization": headers.Authorization,
-        },
+        auth: true,
         credentials: "include",
         body: formData,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to upload photo");
-      }
-
-      const data = await res.json();
       const photoURL = data.photoURL;
 
       // Update local state with returned photo URL

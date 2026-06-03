@@ -1,16 +1,14 @@
-import { getAuthHeaders } from "./getAuthHeaders";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiFetch } from "../lib/apiClient";
 
 /**
  * Retrieves all stored workout logs from the backend.
  */
 export const getWorkoutLogs = async () => {
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API}/api/workouts`, { headers });
-    if (!res.ok) throw new Error("Failed to fetch workouts");
-    return await res.json();
+    return await apiFetch("/api/workouts", {
+      auth: true,
+      errorMessage: "Failed to fetch workouts",
+    });
   } catch (err) {
     console.error(err);
     return {};
@@ -36,14 +34,12 @@ export const getWorkoutByDate = async (date) => {
  */
 export const saveWorkout = async (entry) => {
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API}/api/workouts`, {
+    return await apiFetch("/api/workouts", {
       method: "POST",
-      headers,
-      body: JSON.stringify(entry),
+      auth: true,
+      body: entry,
+      errorMessage: "Failed to save workout",
     });
-    if (!res.ok) throw new Error("Failed to save workout");
-    return await res.json();
   } catch (err) {
     console.error(err);
   }
@@ -54,12 +50,11 @@ export const saveWorkout = async (entry) => {
  */
 export const deleteWorkout = async (date) => {
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${API}/api/workouts/${date}`, {
+    await apiFetch(`/api/workouts/${date}`, {
       method: "DELETE",
-      headers,
+      auth: true,
+      errorMessage: "Failed to delete workout",
     });
-    if (!res.ok) throw new Error("Failed to delete workout");
   } catch (err) {
     console.error(err);
   }

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch } from '../lib/apiClient';
 
 export default function DevAdminLogin() {
   const navigate = useNavigate();
   const defaultEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL || '';
-  const apiUrl = import.meta.env.VITE_API_URL || '';
   const [email, setEmail] = useState(defaultEmail);
   const [error, setError] = useState('');
 
@@ -12,13 +12,10 @@ export default function DevAdminLogin() {
     e.preventDefault();
     setError('');
     try {
-      const resp = await fetch(`${apiUrl}/api/dev/login`, {
+      const data = await apiFetch('/api/dev/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: { email },
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Login failed');
 
       // Store dev token for local requests
       localStorage.setItem('dev_token', data.token);

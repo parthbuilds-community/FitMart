@@ -1,11 +1,9 @@
 // src/pages/AdminCustomers.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/apiClient";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import AdminNavbar from "../components/AdminNavbar";
-
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const SEGMENT_STYLES = {
   "high-value": "bg-stone-900 text-white",
@@ -126,9 +124,7 @@ export default function AdminCustomers() {
   useEffect(() => {
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers`, { headers });
-        const json = await res.json();
+        const json = await apiFetch("/api/customers", { auth: true });
         if (!json.success) {
           throw new Error(json.error || "Failed to load customers");
         }
@@ -148,20 +144,11 @@ export default function AdminCustomers() {
     setSendingReminderId(customerId);
 
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/customers/${customerId}/send-reminder`, {
+      await apiFetch(`/api/customers/${customerId}/send-reminder`, {
         method: "POST",
-        headers,
+        auth: true,
         credentials: "include",
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setReminderError(prev => ({ ...prev, [customerId]: data.error || "Failed to send" }));
-        setSendingReminderId(null);
-        return;
-      }
 
       setReminderSent(prev => ({ ...prev, [customerId]: true }));
       setReminderError(prev => ({ ...prev, [customerId]: null }));
@@ -178,7 +165,7 @@ export default function AdminCustomers() {
         setReminderSent(prev => ({ ...prev, [customerId]: false }));
       }, 3000);
     } catch (err) {
-      setReminderError(prev => ({ ...prev, [customerId]: err.message }));
+      setReminderError(prev => ({ ...prev, [customerId]: err.message || "Failed to send" }));
     } finally {
       setSendingReminderId(null);
     }
