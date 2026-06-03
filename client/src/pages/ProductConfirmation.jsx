@@ -69,10 +69,7 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FitMart Invoice – ${paymentId || "ORDER"}</title>
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap"
-    rel="stylesheet"
-  />
+  
 
   <style>
     :root {
@@ -598,7 +595,6 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
         .fade-up {
           opacity: 0;
           transform: translateY(28px);
