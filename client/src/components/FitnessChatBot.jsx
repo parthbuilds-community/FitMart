@@ -1,5 +1,7 @@
 // src/components/FitnessChatBot.jsx
 import { useState, useEffect, useRef } from "react";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -27,7 +29,23 @@ const QUICK_REPLIES = [
     label: "⚖️ Lose weight",
     prompt: "How do I lose weight sustainably?",
   },
-]
+];
+
+/**
+ * Renders markdown text to sanitized HTML
+ * @param {string} text - Raw markdown text
+ * @returns {string} - Sanitized HTML string
+ */
+const renderMarkdown = (text) => {
+  try {
+    const parsed = marked.parse(text);
+    return DOMPurify.sanitize(parsed);
+  } catch (error) {
+    console.error("Markdown parsing error:", error);
+    // Fallback to plain text if parsing fails
+    return DOMPurify.sanitize(text.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+  }
+};
 
 export default function FitnessChatBot() {
   const [open, setOpen] = useState(false);
@@ -104,57 +122,6 @@ export default function FitnessChatBot() {
     }
   };
 
-  const formatMessageText = (text) => {
-    const lines = text.split("\n");
-    return lines.map((line, lineIndex) => {
-      const parts = [];
-      const boldRegex = /\*\*(.*?)\*\*|__(.*?)__/g;
-      const matches = [];
-      let matchFound;
-      while ((matchFound = boldRegex.exec(line)) !== null) {
-        matches.push({
-          start: matchFound.index,
-          end: matchFound.index + matchFound[0].length,
-          text: matchFound[1] || matchFound[2],
-        });
-      }
-      if (matches.length === 0) {
-        parts.push(<span key={`line-${lineIndex}`}>{line}</span>);
-      } else {
-        let currentPos = 0;
-        matches.forEach((match, idx) => {
-          if (match.start > currentPos) {
-            parts.push(
-              <span key={`text-${lineIndex}-${idx}`}>
-                {line.substring(currentPos, match.start)}
-              </span>
-            );
-          }
-          parts.push(
-            <strong key={`bold-${lineIndex}-${idx}`}
-              className="font-semibold text-stone-900">
-              {match.text}
-            </strong>
-          );
-          currentPos = match.end;
-        });
-        if (currentPos < line.length) {
-          parts.push(
-            <span key={`text-${lineIndex}-end`}>
-              {line.substring(currentPos)}
-            </span>
-          );
-        }
-      }
-      return (
-        <span key={lineIndex}>
-          {parts}
-          {lineIndex < lines.length - 1 && <br />}
-        </span>
-      );
-    });
-  };
-
   return (
     <>
       <style>{`
@@ -195,6 +162,75 @@ export default function FitnessChatBot() {
         .fm-scrollbar::-webkit-scrollbar { width: 4px; }
         .fm-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .fm-scrollbar::-webkit-scrollbar-thumb { background: #e7e5e3; border-radius: 99px; }
+        
+        /* Markdown styles for bot messages */
+        .fm-bot-content {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        .fm-bot-content p {
+          margin: 0;
+          display: inline;
+        }
+        .fm-bot-content strong {
+          font-weight: 600;
+          color: inherit;
+        }
+        .fm-bot-content em {
+          font-style: italic;
+        }
+        .fm-bot-content ul, 
+        .fm-bot-content ol {
+          margin: 0.5rem 0;
+          padding-left: 1.5rem;
+        }
+        .fm-bot-content li {
+          margin: 0.25rem 0;
+          line-height: 1.5;
+        }
+        .fm-bot-content code {
+          background-color: rgba(0, 0, 0, 0.06);
+          padding: 0.125rem 0.375rem;
+          border-radius: 0.25rem;
+          font-family: 'Monaco', 'Courier New', monospace;
+          font-size: 0.875em;
+        }
+        .fm-bot-content pre {
+          background-color: rgba(0, 0, 0, 0.06);
+          padding: 0.75rem;
+          border-radius: 0.375rem;
+          overflow-x: auto;
+          margin: 0.5rem 0;
+          font-family: 'Monaco', 'Courier New', monospace;
+          font-size: 0.875em;
+          line-height: 1.4;
+        }
+        .fm-bot-content pre code {
+          background-color: transparent;
+          padding: 0;
+          font-size: 1em;
+        }
+        .fm-bot-content blockquote {
+          border-left: 3px solid currentColor;
+          padding-left: 0.75rem;
+          margin: 0.5rem 0;
+          opacity: 0.8;
+          font-style: italic;
+        }
+        .fm-bot-content a {
+          color: inherit;
+          text-decoration: underline;
+        }
+        .fm-bot-content h1, 
+        .fm-bot-content h2, 
+        .fm-bot-content h3, 
+        .fm-bot-content h4, 
+        .fm-bot-content h5, 
+        .fm-bot-content h6 {
+          margin: 0.5rem 0 0.25rem 0;
+          font-weight: 600;
+          line-height: 1.3;
+        }
       `}</style>
 
       {/* ── Chat Window ── */}
@@ -269,7 +305,16 @@ export default function FitnessChatBot() {
                       : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
                   }`}
               >
-                {formatMessageText(msg.text)}
+                {msg.role === "bot" ? (
+                  <div
+                    className="fm-bot-content"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(msg.text),
+                    }}
+                  />
+                ) : (
+                  <span>{msg.text}</span>
+                )}
               </div>
             </div>
           ))}
