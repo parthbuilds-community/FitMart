@@ -5,19 +5,16 @@ import DOMPurify from "dompurify";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
+
 const WELCOME = {
   role: "bot",
   text: "Hello! I'm your FitMart fitness assistant. Ask me anything about workouts, diet, protein, weight loss, or muscle gain.",
 };
 
-// Maximum number of history entries (messages) to send to the server.
-// Matches the server-side MAX_HISTORY_TURNS cap.
-const MAX_HISTORY = 6;
-// Configure marked options once
-marked.setOptions({
-  breaks: true,   // convert \n to <br>
-  gfm: true,      // GitHub-flavored markdown
-});
 
 
 const QUICK_REPLIES = [
@@ -37,7 +34,7 @@ const QUICK_REPLIES = [
     label: "⚖️ Lose weight",
     prompt: "How do I lose weight sustainably?",
   },
-];
+]
 
 export default function FitnessChatBot() {
   const [open, setOpen] = useState(false);
@@ -47,7 +44,6 @@ export default function FitnessChatBot() {
   const [visible, setVisible] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
-  const historyRef = useRef([]);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 120);
@@ -72,17 +68,10 @@ export default function FitnessChatBot() {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  /** Resets the chat to its initial state and wipes conversation history. */
-  const clearChat = () => {
-    setMsgs([WELCOME]);
-    setInput("");
-    historyRef.current = [];
-  };
-
   const send = async (customText = input) => {
     // customText is passed from quick replies,
-    // otherwise fallback to manual textarea input.
-    // Prevent crashes if non-string values are passed into send
+    // otherwise fallback to manual textarea input
+    // Prevent crashes if non-string values are passed into send()
     const text =
       typeof customText === "string"
         ? customText.trim()
@@ -92,28 +81,15 @@ export default function FitnessChatBot() {
     setMsgs((prev) => [...prev, { role: "user", text }]);
     setInput("");
     setTyping(true);
-
-    // Snapshot and cap history before the fetch so the ref can't mutate mid-flight.
-    const historySnapshot = historyRef.current.slice(-MAX_HISTORY);
-
     try {
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: historySnapshot }),
+        body: JSON.stringify({ message: text }),
       });
       if (!res.ok) throw new Error("Request failed");
       const data = await res.json();
-      const botText = data.reply;
-
-      setMsgs((prev) => [...prev, { role: "bot", text: botText }]);
-
-      // Append both turns to history after a successful round-trip.
-      historyRef.current = [
-        ...historyRef.current,
-        { role: "user", parts: [{ text }] },
-        { role: "assistant", parts: [{ text: botText }] },
-      ];
+      setMsgs((prev) => [...prev, { role: "bot", text: data.reply }]);
     } catch {
       setMsgs((prev) => [
         ...prev,
@@ -135,29 +111,36 @@ export default function FitnessChatBot() {
     }
   };
 
-  // Renders bot messages as sanitized HTML markdown, user messages as plain text
-  const formatMessageText = (text, isBot = false) => {
-    if (!isBot) return <span>{text}</span>;
-    try {
-      const rawHtml = marked.parse(text);
-      const cleanHtml = DOMPurify.sanitize(rawHtml, {
-        ALLOWED_TAGS: [
-          "strong", "em", "ul", "ol", "li", "p", "br",
-          "code", "pre", "blockquote", "h1", "h2", "h3",
-        ],
-        ALLOWED_ATTR: ["class"],
-      });
-      return (
-        <div
-          className="fm-bot-content"
-          dangerouslySetInnerHTML={{ __html: cleanHtml }}
-        />
-      );
-    } catch {
-      // Fallback to plain text if markdown parsing fails
-      return <span>{text}</span>;
-    }
-  };
+  const renderMarkdown = (text) => {
+  try {
+    const rawHtml = marked.parse(text || "");
+
+    return DOMPurify.sanitize(rawHtml, {
+      ALLOWED_TAGS: [
+        "strong",
+        "em",
+        "ul",
+        "ol",
+        "li",
+        "p",
+        "br",
+        "code",
+        "pre",
+        "blockquote",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+      ],
+      ALLOWED_ATTR: ["class"],
+    });
+  } catch (error) {
+    console.error("Markdown render failed:", error);
+    return text;
+  }
+};
 
   return (
     <>
@@ -199,52 +182,47 @@ export default function FitnessChatBot() {
         .fm-scrollbar::-webkit-scrollbar { width: 4px; }
         .fm-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .fm-scrollbar::-webkit-scrollbar-thumb { background: #e7e5e3; border-radius: 99px; }
-        .fm-clear-btn {
-          transition: color 0.15s ease, background 0.15s ease;
+        .fm-bot-content ul {
+          list-style-type: disc;
+          margin: 0.5rem 0 0.5rem 1.25rem;
+          padding-left: 0;
         }
-        .fm-clear-btn:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
 
-        /* ── Markdown styles scoped to bot messages only ── */
-        .fm-bot-content ul { list-style-type: disc; margin: 0.5rem 0 0.5rem 1.25rem; padding-left: 0; }
-        .fm-bot-content ol { list-style-type: decimal; margin: 0.5rem 0 0.5rem 1.25rem; padding-left: 0; }
-        .fm-bot-content li { margin-bottom: 0.25rem; }
-        .fm-bot-content p  { margin: 0.25rem 0; }
-        .fm-bot-content p:first-child { margin-top: 0; }
-        .fm-bot-content p:last-child  { margin-bottom: 0; }
-        .fm-bot-content strong { font-weight: 600; color: #1c1917; }
-        .fm-bot-content em { font-style: italic; }
+        .fm-bot-content ol {
+          list-style-type: decimal;
+          margin: 0.5rem 0 0.5rem 1.25rem;
+          padding-left: 0;
+        }
+
+        .fm-bot-content li {
+          margin-bottom: 0.25rem;
+        }
+
+        .fm-bot-content p {
+          margin-bottom: 0.5rem;
+        }
+
         .fm-bot-content code {
-          background: #f5f5f4;
+          background-color: #f5f5f4;
           padding: 0.125rem 0.25rem;
           border-radius: 0.25rem;
           font-family: monospace;
           font-size: 0.875em;
         }
+
         .fm-bot-content pre {
-          background: #f5f5f4;
+          background-color: #f5f5f4;
           padding: 0.75rem;
           border-radius: 0.5rem;
           overflow-x: auto;
           margin: 0.5rem 0;
         }
-        .fm-bot-content pre code {
-          background: none;
-          padding: 0;
-          font-size: 0.8em;
-        }
+
         .fm-bot-content blockquote {
-          border-left: 3px solid #d6d3d1;
-          padding-left: 0.75rem;
+          border-left: 4px solid #d4d4d4;
+          padding-left: 1rem;
           margin: 0.5rem 0;
-          color: #78716c;
-          font-style: italic;
-        }
-        .fm-bot-content h1,
-        .fm-bot-content h2,
-        .fm-bot-content h3 {
-          font-weight: 600;
-          color: #1c1917;
-          margin: 0.5rem 0 0.25rem;
+          color: #555;
         }
       `}</style>
 
@@ -279,30 +257,11 @@ export default function FitnessChatBot() {
               Fitness Assistant
             </h3>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <span className="flex items-center gap-1.5 text-[10px] text-stone-400 mr-1">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="flex items-center gap-1.5 text-[10px] text-stone-400">
               <span className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-pulse" />
               Online
             </span>
-            {msgs.length > 1 && (
-              <button
-                onClick={clearChat}
-                className="fm-clear-btn text-stone-400 text-[10px] tracking-wide uppercase
-                           min-w-8 min-h-8 flex items-center justify-center
-                           rounded-full px-2 gap-1"
-                aria-label="Clear chat history"
-                title="Clear conversation"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 6h18" />
-                  <path d="M8 6V4h8v2" />
-                  <path d="M19 6l-1 14H6L5 6" />
-                </svg>
-                <span className="hidden sm:inline">Clear</span>
-              </button>
-            )}
-
             <button
               onClick={() => setOpen(false)}
               className="text-stone-400 hover:text-white transition-colors text-2xl
@@ -339,10 +298,21 @@ export default function FitnessChatBot() {
                       : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
                   }`}
               >
-                {formatMessageText(msg.text, msg.role === "bot")}
+                {msg.role === "bot" ? (
+                  <div
+                    className="fm-bot-content"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(msg.text),
+                    }}
+                  />
+                ) : (
+                  <span>{msg.text}</span>
+                )}
               </div>
             </div>
           ))}
+
+
 
           {/* Typing Indicator */}
           {typing && (
@@ -365,8 +335,8 @@ export default function FitnessChatBot() {
 
         <div className="h-px bg-stone-100 shrink-0" />
 
-        {/* Show quick replies only before the conversation starts
-            to keep the chat area clean after interaction begins */}
+        {/*  Show quick replies only before the conversation starts
+         to keep the chat area clean after interaction begins */}
         {msgs.length === 1 && (
           <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-hide">
             {QUICK_REPLIES.map((reply) => (
