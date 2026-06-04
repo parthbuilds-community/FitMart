@@ -40,6 +40,17 @@ const BMICalculator = () => {
     });
   };
 
+  const handleReset = () => {
+    setFormData({
+      weight: "",
+      height: "",
+      age: "",
+      gender: "male",
+      activityLevel: 1.2,
+    });
+    setResult(null);
+  };
+
   return (
     <div
       className={`transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
@@ -168,14 +179,28 @@ const BMICalculator = () => {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-stone-900 text-white text-sm tracking-widest uppercase
-                         py-4 rounded-full hover:bg-stone-700 transition-colors shadow-sm
-                         min-h-13 active:scale-[0.98]"
-            >
-              Generate Analysis
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="flex-[2] bg-stone-900 text-white text-xs tracking-widest uppercase
+                           py-4 rounded-full hover:bg-stone-700 transition-colors shadow-sm
+                           min-h-13 active:scale-[0.98]"
+              >
+                Generate Analysis
+              </button>
+              {result && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex-1 bg-white border border-stone-200 text-stone-500
+                             text-xs tracking-widest uppercase py-4 rounded-full
+                             hover:border-stone-400 hover:text-stone-900
+                             transition-all min-h-13 active:scale-[0.98]"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </form>
         </div>
 
