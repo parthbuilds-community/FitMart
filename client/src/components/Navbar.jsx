@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
+import PropTypes from "prop-types";
 import { auth } from "../auth/firebase";
 import { useAuth } from "../auth/useAuth";
 
@@ -213,3 +214,13 @@ export default function Navbar({
     </nav>
   );
 }
+Navbar.propTypes = {
+  variant: PropTypes.oneOf(["landing", "app"]),
+  navOpaque: PropTypes.bool,
+  onSearchToggle: PropTypes.func,
+  cartCount: PropTypes.number,
+  onCartOpen: PropTypes.func,
+  menuOpen: PropTypes.bool,
+  setMenuOpen: PropTypes.func,
+  onSignOut: PropTypes.func,
+};
