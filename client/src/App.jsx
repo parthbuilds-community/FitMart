@@ -1,126 +1,59 @@
-// src/App.jsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import LandingPage from "./pages/LandingPage";
-import Authentication from "./pages/Authentication";
-import HomePage from "./pages/HomePage";
-import ProductPage from "./pages/ProductPage";
-import Checkout from "./pages/Checkout";
-import Payment from "./pages/PaymentPage";
-import ProductConfirmation from "./pages/ProductConfirmation";
-import NotFound from "./pages/NotFound";
-import AdminInventory from "./pages/AdminInventory";
-import Profile from "./pages/Profile";
-import AdminRoute from "./components/AdminRoute";
-import WeightLossPlans from "./pages/WeightLossPlans";
-import MuscleBuildingPlans from "./pages/MuscleBuildingPlans";
-import MobilityRecoveryPlans from "./pages/MobilityRecoveryPlans";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminReports from "./pages/AdminReports";
-import AdminCustomers from "./pages/AdminCustomers";
-import AdminCustomerDetail from "./pages/AdminCustomerDetail";
-import AdminMarketing from "./pages/AdminMarketing";
-import AdminBugs from "./pages/AdminBugs";
-import NonAdminRoute from "./components/NonAdminRoute";
-import WorkoutNotes from "./pages/NotesPage";
-import WorkoutTracker from "./pages/TrackerPage";
-import ExercisePage from "./pages/ExercisePage";
-import ErrorBoundary from "./components/ErrorBoundary";
-import LegalTerms from "./pages/LegalTerms";
-import LegalPrivacy from "./pages/LegalPrivacy";
-import DevAdminLogin from "./components/DevAdminLogin";
+import { Link } from "react-router-dom";
 
-export default function App() {
-  const queryClient = new QueryClient();
+export default function LandingPage() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes (redirect admin users to admin dashboard) */}
-            <Route path="/" element={<NonAdminRoute><LandingPage /></NonAdminRoute>} />
-            <Route path="/auth" element={<Authentication />} />
-            <Route path="/home" element={<NonAdminRoute><HomePage /></NonAdminRoute>} />
-            <Route path="/product/:productId" element={<NonAdminRoute><ProductPage /></NonAdminRoute>} />
-            <Route path="/checkout" element={<NonAdminRoute><Checkout /></NonAdminRoute>} />
-            <Route path="/profile" element={<NonAdminRoute><Profile /></NonAdminRoute>} />
-            <Route path="/payment" element={<NonAdminRoute><Payment /></NonAdminRoute>} />
-            <Route path="/payment-confirmation" element={<NonAdminRoute><ProductConfirmation /></NonAdminRoute>} />
-            <Route path="/plans/weight-loss" element={<WeightLossPlans />} />
-            <Route path="/plans/muscle-building" element={<MuscleBuildingPlans />} />
-            <Route path="/plans/mobility-recovery" element={<MobilityRecoveryPlans />} />
-            <Route path="/tracker" element={<NonAdminRoute><WorkoutTracker /></NonAdminRoute>} />
-            <Route path="/notes" element={<NonAdminRoute><WorkoutNotes /></NonAdminRoute>} />
-            <Route path="/exercises" element={<NonAdminRoute><ExercisePage /></NonAdminRoute>} />
-            <Route path="/terms" element={<NonAdminRoute><LegalTerms /></NonAdminRoute>} />
-            <Route path="/privacy-policy" element={<NonAdminRoute><LegalPrivacy /></NonAdminRoute>} />
-
-            {/* Admin routes (guarded) */}
-            {import.meta.env.MODE === 'development' && (
-              <Route path="/dev-login" element={<DevAdminLogin />} />
-            )}
-            <Route
-              path="/admin/dashboard"
-              element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/reports"
-              element={
-                <AdminRoute>
-                  <AdminReports />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/marketing"
-              element={
-                <AdminRoute>
-                  <AdminMarketing />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/bugs"
-              element={
-                <AdminRoute>
-                  <AdminBugs />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/customers"
-              element={
-                <AdminRoute>
-                  <AdminCustomers />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/customers/:userId"
-              element={
-                <AdminRoute>
-                  <AdminCustomerDetail />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/inventory"
-              element={
-                <AdminRoute>
-                  <AdminInventory />
-                </AdminRoute>
-              }
-            />
-
-            {/* Redirect unknown routes to NotFound */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      fontFamily: 'sans-serif'
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '50px',
+        borderRadius: '20px',
+        textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        maxWidth: '500px',
+        margin: '20px'
+      }}>
+        <h1 style={{ fontSize: '48px', marginBottom: '10px' }}>
+          🏋️‍♂️ FITMART
+        </h1>
+        <p style={{ fontSize: '18px', color: '#666', marginBottom: '30px' }}>
+          Your Fitness Journey Starts Here
+        </p>
+        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+          <Link to="/auth">
+            <button style={{
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              padding: '12px 30px',
+              fontSize: '16px',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}>
+              Get Started 💪
+            </button>
+          </Link>
+          <Link to="/home">
+            <button style={{
+              background: 'transparent',
+              color: '#667eea',
+              border: '2px solid #667eea',
+              padding: '12px 30px',
+              fontSize: '16px',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}>
+              Explore →
+            </button>
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
