@@ -9,3 +9,44 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+/* ========== MY CONTRIBUTION ========== */
+/* Visible UI Changes */
+
+/* 1. Background Gradient */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  min-height: 100vh;
+}
+
+/* 2. Modern Card Styling */
+.card, div[class*="card"] {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
+}
+
+/* 3. Button Enhancement */
+button {
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  transition: transform 0.2s !important;
+}
+
+button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
+}
+
+/* 4. Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.logo, img[class*="logo"] {
+  animation: float 3s ease-in-out infinite;
+}
