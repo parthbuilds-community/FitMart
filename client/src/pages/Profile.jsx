@@ -342,7 +342,7 @@ const [rewardsError, setRewardsError] = useState("");
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <Navbar variant="home" menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}</style>
+      <style>{``}</style>
 
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
