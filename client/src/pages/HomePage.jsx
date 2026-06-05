@@ -195,6 +195,14 @@ export default function HomePage() {
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
 
+  const [baselineData, setBaselineData] = useState({
+  weight: "",
+  height: "",
+  age: "",
+  gender: "male",
+  activityLevel: 1.2,
+});
+
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedQuery(searchQuery), 300);
@@ -602,12 +610,12 @@ export default function HomePage() {
 
         {/* ── BMI Calculator ── */}
         <section>
-          <BMICalculator />
+           <BMICalculator baselineData={baselineData} setBaselineData={setBaselineData} />
         </section>
 
         {/* ── Calorie Calculator ── */}
         <section>
-          <CalorieCalculator />
+          <CalorieCalculator baselineData={baselineData} />
         </section>
 
         {/* ── Membership upgrade ── */}
