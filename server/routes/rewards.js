@@ -36,6 +36,8 @@ function calculatePoints(source, amount = 0) {
 router.get("/:userId", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.params;
+    const { cursor, limit: queryLimit } = req.query;
+    const limit = Math.min(Math.max(parseInt(queryLimit) || 20, 1), 100);
 
     let rewards = await Rewards.findOne({ userId });
 
@@ -47,15 +49,38 @@ router.get("/:userId", verifyFirebaseToken, async (req, res) => {
       });
     }
 
-    const transactions = [...rewards.transactions].sort(
+    // Sort transactions newest-first
+    const sorted = [...rewards.transactions].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
+
+    // Cursor-based pagination: find the index after the cursor transaction
+    let startIndex = 0;
+    if (cursor) {
+      const cursorIndex = sorted.findIndex(
+        (t) => t._id && t._id.toString() === cursor
+      );
+      if (cursorIndex !== -1) {
+        startIndex = cursorIndex + 1;
+      }
+    }
+
+    const pagedTransactions = sorted.slice(startIndex, startIndex + limit);
+    const hasMore = startIndex + limit < sorted.length;
+    const nextCursor =
+      pagedTransactions.length > 0
+        ? pagedTransactions[pagedTransactions.length - 1]._id.toString()
+        : null;
 
     return res.status(200).json({
       userId: rewards.userId,
       pointsBalance: rewards.pointsBalance,
       tier: getTier(rewards.pointsBalance),
-      transactions,
+      transactions: pagedTransactions,
+      pagination: {
+        hasMore,
+        nextCursor,
+      },
     });
   } catch (error) {
     console.error("Get rewards error:", error);
