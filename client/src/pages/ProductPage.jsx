@@ -230,7 +230,6 @@ export default function ProductPage() {
     <>
       <Shell cartCount={cartCount} onCartOpen={() => setCartOpen(true)}>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
           .pd-fade { opacity:0; transform:translateY(20px); transition:opacity .6s ease,transform .6s ease; }
           .pd-fade.in { opacity:1; transform:translateY(0); }
           .pd-fade-img { opacity:0; transition:opacity .5s ease; }
