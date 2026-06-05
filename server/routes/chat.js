@@ -92,7 +92,7 @@ const chatSchema = z.object({
 
 router.post("/", chatLimiter, async (req, res) => {
   try {
-    // Request validation (from origin/main)
+    // Request validation
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({ error: 'Invalid request', details: ['body: JSON object expected'] });
     }
@@ -106,7 +106,7 @@ router.post("/", chatLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid request', details: [`message: Message must be ${MAX_MESSAGE_LENGTH} characters or fewer`] });
     }
 
-    // Schema validation if available (from origin/main)
+    // Schema validation if available
     let message;
     if (typeof chatSchema !== 'undefined' && chatSchema) {
       const parse = chatSchema.safeParse(req.body);
@@ -119,7 +119,7 @@ router.post("/", chatLimiter, async (req, res) => {
       message = inputMessage;
     }
 
-    // History handling (from HEAD)
+    // History handling
     const { history: rawHistory } = req.body;
     const history = sanitiseHistory(rawHistory);
 
@@ -129,7 +129,7 @@ router.post("/", chatLimiter, async (req, res) => {
       timestamp: Date.now(),
     });
 
-    // Sanitization / neutralization (from origin/main)
+    // Sanitization / neutralization
     function sanitizeMessage(input) {
       let s = input;
 
@@ -155,19 +155,16 @@ router.post("/", chatLimiter, async (req, res) => {
 
     const sanitized = sanitizeMessage(message);
 
-    // Build the full prompt (combining both approaches)
+    // Build the full prompt combining safety guidelines and conversation history
     const historyBlock = buildHistoryBlock(history);
 
     let prompt;
-    if (typeof SAFETY_INSTRUCTION !== 'undefined' && SAFETY_INSTRUCTION) {
-      // Use the safer prompt construction from origin/main
-      prompt = `${SYSTEM_PROMPT}\n\n${SAFETY_INSTRUCTION}\n\n[USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
-    } else if (historyBlock) {
-      // Use the history-aware prompt from HEAD
-      prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${historyBlock}\n\nUser: ${message}`;
+    if (historyBlock) {
+      prompt = `${SYSTEM_PROMPT}\n\n${SAFETY_INSTRUCTION}\n\nConversation so far:\n${historyBlock}\n\nUser: [USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
     } else {
-      prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}`;
+      prompt = `${SYSTEM_PROMPT}\n\n${SAFETY_INSTRUCTION}\n\n[USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
     }
+
 
     let reply;
     let usedFallback = false;
