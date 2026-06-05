@@ -12,6 +12,7 @@ import {
   getTransactionIcon,
 } from "../utils/rewardsUtils";
 import Navbar from "../components/Navbar";
+import useInfiniteTransactions from "../hooks/useInfiniteTransactions";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -128,9 +129,17 @@ export default function Profile() {
   const [photoURL, setPhotoURL] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
-  const [rewardsData, setRewardsData] = useState(null);
-const [rewardsLoading, setRewardsLoading] = useState(false);
-const [rewardsError, setRewardsError] = useState("");
+const user = auth.currentUser;
+  const {
+    data: rewardsInfiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: infiniteRewardsLoading,
+    error: infiniteRewardsError,
+  } = useInfiniteTransactions(
+    activeTab === "fitrewards" ? user?.uid : undefined
+  );
 
   useEffect(() => { document.title = "Profile – FitMart"; }, []);
 
@@ -162,36 +171,7 @@ const [rewardsError, setRewardsError] = useState("");
     });
     return () => unsub();
   }, [navigate]);
-    const fetchRewardsData = async () => {
-    try {
-      setRewardsLoading(true);
-      setRewardsError("");
-
-      const headers = await getAuthHeaders();
-
-      const response = await fetch(`${API}/api/rewards/me`, {
-        headers,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch rewards data");
-      }
-
-      const data = await response.json();
-      setRewardsData(data);
-    } catch (error) {
-      setRewardsError(error.message || "Could not load FitRewards");
-    } finally {
-      setRewardsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === "fitrewards" && !rewardsData) {
-      fetchRewardsData();
-    }
-  }, [activeTab]);
+    // rewards fetching is now managed by useInfiniteTransactions hook
 
   // Fetch orders when orders tab is active
   useEffect(() => {
@@ -517,9 +497,12 @@ const [rewardsError, setRewardsError] = useState("");
                 {/* ── FITREWARDS TAB ── */}
         {activeTab === "fitrewards" && (
           <FitRewardsTab
-            rewardsData={rewardsData}
-            rewardsLoading={rewardsLoading}
-            rewardsError={rewardsError}
+            rewardsInfiniteData={rewardsInfiniteData}
+            rewardsLoading={infiniteRewardsLoading}
+            rewardsError={infiniteRewardsError}
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
           />
         )}
 
@@ -722,7 +705,14 @@ const [rewardsError, setRewardsError] = useState("");
     </div>
   );
 }
-const FitRewardsTab = ({ rewardsData, rewardsLoading, rewardsError }) => {
+const FitRewardsTab = ({
+  rewardsInfiniteData,
+  rewardsLoading,
+  rewardsError,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+}) => {
   if (rewardsLoading) {
     return (
       <div className="space-y-6">
@@ -758,18 +748,23 @@ const FitRewardsTab = ({ rewardsData, rewardsLoading, rewardsError }) => {
   if (rewardsError) {
     return (
       <div className="rounded-3xl border border-stone-200 bg-white p-6 text-stone-700">
-        {rewardsError}
+        {rewardsError?.message || String(rewardsError)}
       </div>
     );
   }
 
+  // Extract the first page for the rewards summary (points, tier)
+  const firstPage = rewardsInfiniteData?.pages?.[0];
+
   const points =
-    rewardsData?.points ??
-    rewardsData?.balance ??
-    rewardsData?.currentPoints ??
+    firstPage?.points ??
+    firstPage?.pointsBalance ??
+    firstPage?.currentPoints ??
     0;
 
-  const transactions = rewardsData?.transactions || [];
+  // Flatten transactions from all pages
+  const transactions =
+    rewardsInfiniteData?.pages?.flatMap((p) => p.transactions) || [];
 
   const { currentTier } = getRewardTier(points);
   const tierProgress = getTierProgress(points);
@@ -848,6 +843,19 @@ const FitRewardsTab = ({ rewardsData, rewardsLoading, rewardsError }) => {
                 </p>
               </div>
             ))}
+
+            {/* Load More button */}
+            {hasNextPage && (
+              <div className="pt-2 text-center">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="border border-stone-200 text-stone-700 text-sm px-6 py-2.5 rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isFetchingNextPage ? "Loading…" : "Load More"}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
