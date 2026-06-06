@@ -1,19 +1,59 @@
 name: Deploy FitMart
 
 on:
-  push:
-    branches:
-      - main
+push:
+branches:
+- main
 
 jobs:
-  deploy-client:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Client Deployment
-        run: curl -X POST "${{ secrets.VERCEL_CLIENT_DEPLOY_HOOK }}"
+build-and-deploy-client:
+runs-on: ubuntu-latest
 
-  deploy-server:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Server Deployment
-        run: curl -X POST "${{ secrets.VERCEL_SERVER_DEPLOY_HOOK }}"
+```
+defaults:
+  run:
+    working-directory: ./client
+
+steps:
+  - name: Checkout Repository
+    uses: actions/checkout@v4
+
+  - name: Setup Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 22
+      cache: npm
+      cache-dependency-path: client/package-lock.json
+
+  - name: Install Dependencies
+    run: npm ci
+
+  - name: Build Client
+    env:
+      VITE_API_URL: http://localhost:5000
+      VITE_FIREBASE_API_KEY: ci_dummy
+      VITE_FIREBASE_AUTH_DOMAIN: ci_dummy
+      VITE_FIREBASE_PROJECT_ID: ci_dummy
+      VITE_FIREBASE_STORAGE_BUCKET: ci_dummy
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ci_dummy
+      VITE_FIREBASE_APP_ID: ci_dummy
+      VITE_FIREBASE_MEASUREMENT_ID: ci_dummy
+      VITE_RAZORPAY_KEY_ID: ci_dummy
+      VITE_ADMIN_UID: ci_dummy
+      VITE_SUPER_ADMIN_UID: ci_dummy
+      VITE_DEV_ADMIN_EMAIL: admin@example.com
+      VITE_DEV_ADMIN_UID: dev-admin-uid
+    run: npm run build
+
+  - name: Trigger Client Deployment
+    run: curl -X POST "${{ secrets.VERCEL_CLIENT_DEPLOY_HOOK }}"
+```
+
+deploy-server:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - name: Trigger Server Deployment
+    run: curl -X POST "${{ secrets.VERCEL_SERVER_DEPLOY_HOOK }}"
+```

@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
 
 function CartDrawer({
   isOpen,
@@ -224,7 +225,5 @@ function CartDrawer({
         )}
       </aside>
     </>
-  );
+  );  
 }
-
-export default CartDrawer;
