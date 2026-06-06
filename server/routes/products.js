@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const cache = require('../lib/cache');
 
 // Your New Constant Import
-const { LOW_STOCK_THRESHOLD } = require('../config/constants');
+const LOW_STOCK_THRESHOLD = Number(process.env.LOW_STOCK_THRESHOLD) || 5;
 
 // Parth's New Security & Validation Imports
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
