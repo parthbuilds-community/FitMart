@@ -1,78 +1,63 @@
-// server/middleware/logger.js
+const SENSITIVE_FIELDS = [
+  "token",
+  "password",
+  "secret",
+  "authorization",
+  "accessToken",
+  "refreshToken",
+];
 
-// server/middleware/logger.js
+// Recursive function to redact sensitive fields
+function redactSensitiveFields(data) {
+  if (data === null || data === undefined) return data;
 
-// Function to get base route only
-const getBaseRoute = (url) => {
-  // Match patterns like /api/cart, /api/products, /api/orders
-  const match = url.match(/^(\/api\/(?:cart|products|orders))/);
-  if (match) {
-    // If it's a cart route with additional path, append the action
-    if (url.includes('/cart/') && !url.match(/^\/api\/cart\/?$/)) {
-      if (url.includes('/add')) return '/api/cart/add';
-      if (url.includes('/remove')) return '/api/cart/remove';
-    }
-    return match[1];
+  if (Array.isArray(data)) {
+    return data.map(redactSensitiveFields);
   }
-  return url;
-};
 
-// Simple logger with colors (without timestamps)
-const logger = (req, res, next) => {
-  const start = Date.now();
+  if (typeof data === "object") {
+    const redacted = {};
 
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    const status = res.statusCode;
-    const simplifiedUrl = getBaseRoute(req.originalUrl);
-    const timestamp = new Date().toISOString();
-
-    const methodColor = {
-      'GET': '\x1b[34m',
-      'POST': '\x1b[32m',
-      'PUT': '\x1b[33m',
-      'DELETE': '\x1b[31m',
-      'PATCH': '\x1b[35m',
-    }[req.method] || '\x1b[0m';
-
-    const statusColor = status >= 500 ? '\x1b[31m' :
-      status >= 400 ? '\x1b[33m' :
-        status >= 300 ? '\x1b[36m' :
-          status >= 200 ? '\x1b[32m' :
-            '\x1b[0m';
-
-    console.log(
-      `[${timestamp}] ` +
-      `${methodColor}${req.method.padEnd(6)}\x1b[0m ` +
-      `${statusColor}${status}\x1b[0m ` +
-      `${simplifiedUrl} (${duration}ms)`
-    );
-
-    if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
-      try {
-        const sensitiveKeys = ['password', 'token', 'secret', 'apiKey'];
-        const safeBody = { ...req.body };
-
-        sensitiveKeys.forEach((key) => {
-          if (safeBody[key]) {
-            safeBody[key] = '[REDACTED]';
-          }
-        });
-
-        const bodyStr = JSON.stringify(safeBody);
-
-        if (bodyStr.length < 1000) {
-          console.log(`   Body: ${bodyStr}`);
-        } else {
-          console.log(`   Body: [too large to log]`);
-        }
-      } catch (err) {
-        console.log(`   Body: [error parsing body]`);
+    for (const [key, value] of Object.entries(data)) {
+      if (SENSITIVE_FIELDS.includes(key)) {
+        redacted[key] = "[REDACTED]";
+      } else {
+        redacted[key] = redactSensitiveFields(value);
       }
     }
-  });
+
+    return redacted;
+  }
+
+  return data;
+}
+
+// Logger middleware
+function logger(req, res, next) {
+  const timestamp = new Date().toISOString();
+  const prefix = `[${timestamp}] ${req.method} ${req.url}`;
+
+  // Log GET requests (no body)
+  if (req.method === "GET") {
+    console.log(prefix);
+    return next();
+  }
+
+  try {
+    const safeBody = redactSensitiveFields(req.body || {});
+    const bodyStr = JSON.stringify(safeBody);
+
+    // Size guard
+    if (bodyStr.length < 1000) {
+      console.log(prefix, safeBody);
+    } else {
+      console.log(`${prefix} [body too large to log]`);
+    }
+  } catch (error) {
+    console.log(`${prefix} [body could not be logged safely]`);
+  }
 
   next();
-};
+}
 
 module.exports = logger;
