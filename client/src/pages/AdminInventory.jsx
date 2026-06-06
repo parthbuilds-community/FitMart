@@ -1,10 +1,10 @@
 // src/pages/AdminInventory.jsx
+import { LOW_STOCK_THRESHOLD } from '../constants/inventory';
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 
-const LOW_STOCK_THRESHOLD = 5;
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const statusConfig = (p) => {
@@ -127,7 +127,7 @@ export default function AdminInventory() {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE}/products`, { headers });
       const data = await res.json();
-      setProducts(data);
+      setProducts(data.data || []);
       setLoading(false);
     } catch (err) {
       setError('Failed to load inventory');
@@ -138,13 +138,13 @@ export default function AdminInventory() {
   useEffect(() => { fetchProducts(); }, []);
 
   const stats = {
-    total: products.length,
-    low: products.filter(p => getStatus(p).label === 'Low Stock').length,
-    inStock: products.filter(p => getStatus(p).label === 'In Stock').length,
-    unlimited: products.filter(p => getStatus(p).label === 'Not Available').length,
+    total: products?.length || 0,
+    low: (products || []).filter(p => getStatus(p).label === 'Low Stock').length,
+    inStock: (products || []).filter(p => getStatus(p).label === 'In Stock').length,
+    unlimited: (products || []).filter(p => getStatus(p).label === 'Not Available').length,
   };
 
-  const filtered = products.filter(p => {
+  const filtered = (products || []).filter(p => {
     const status = getStatus(p).label;
     if (filter === "low") return status === 'Low Stock';
     if (filter === "in") return status === 'In Stock';

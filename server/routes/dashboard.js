@@ -50,7 +50,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     const totalCustomers = uniqueCustomers.length;
 
     // ── 3. KPI: Products Low on Stock ─────────────────────────────────────
-    const LOW_STOCK_THRESHOLD = 10;
+    const LOW_STOCK_THRESHOLD = Number(process.env.LOW_STOCK_THRESHOLD) || 5;
     const lowStockCount = await Product.countDocuments({
       stock: { $ne: null, $lt: LOW_STOCK_THRESHOLD },
     });
