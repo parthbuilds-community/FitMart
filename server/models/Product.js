@@ -13,9 +13,9 @@ const ProductSchema = new mongoose.Schema(
     badge: { type: String, default: null },
     image: { type: String, default: '' },
     // total stock available (optional). If null, stock is not enforced.
-    stock: { type: Number, default: null },
+    stock: { type: Number, default: null, min: 0 },
     // quantity reserved by carts (sum of quantities currently in carts)
-    reserved: { type: Number, default: 0 },
+    reserved: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );
