@@ -42,11 +42,55 @@ async function releaseAndClearCart(userId) {
  * @desc    Creates a Razorpay payment order; body: { amount (₹), currency, userId }
  * @access  Private
  */
+/**
+ * @route   POST /create-order
+ * @desc    Creates a Razorpay payment order; optionally accepts pointsToRedeem
+ *          to apply a FitRewards points discount (100 points = ₹10 off).
+ *          Body: { amount (₹), currency, userId, pointsToRedeem? }
+ * @access  Private
+ */
 router.post("/create-order", verifyFirebaseToken, async (req, res) => {
   try {
-    const { amount, currency = "INR", userId } = req.body;
+    let { amount, currency = "INR", userId, pointsToRedeem } = req.body;
+    let pointsDiscount = 0;
+    let pointsRedeemed = 0;
+
     if (!amount || !userId)
       return res.status(400).json({ error: "amount and userId are required" });
+
+    // ── Apply FitRewards points discount ─────────────────────────────────
+    if (pointsToRedeem) {
+      pointsToRedeem = Number(pointsToRedeem);
+
+      // Fetch the user's current rewards
+      const rewards = await Rewards.findOne({ userId });
+
+      if (!rewards) {
+        return res.status(400).json({ error: "No rewards account found" });
+      }
+
+      if (pointsToRedeem < 100) {
+        return res.status(400).json({ error: "Minimum 100 points required to redeem" });
+      }
+
+      if (pointsToRedeem > rewards.pointsBalance) {
+        return res.status(400).json({ error: "Insufficient points balance" });
+      }
+
+      // 100 points = ₹10 off
+      pointsDiscount = Math.floor(pointsToRedeem / 100) * 10;
+      pointsRedeemed = pointsToRedeem;
+
+      // Cap discount so amount stays at least ₹1 (Razorpay minimum)
+      if (pointsDiscount >= amount) {
+        pointsDiscount = Math.floor(amount) - 1; // leave ₹1
+        // Recalculate how many points that uses
+        pointsRedeemed = Math.max(0, Math.floor(pointsDiscount / 10) * 100);
+      }
+
+      // Reduce the order amount before creating the Razorpay order
+      amount = amount - pointsDiscount;
+    }
 
     // receipt must be ≤ 40 chars
     const shortId = userId.slice(-8);
@@ -59,7 +103,12 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
       receipt,
     });
 
-    res.json(order);
+    // Attach redemption metadata to the response so the frontend can use it
+    res.json({
+      ...order,
+      pointsDiscount,
+      pointsRedeemed,
+    });
   } catch (err) {
     console.error("Razorpay create-order error:", err);
     res.status(500).json({ error: err.message });
@@ -75,7 +124,7 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
  */
 router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, pointsRedeemed } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
       return res.status(400).json({ error: "Missing required payment fields" });
@@ -113,7 +162,7 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
     // Update local object to reflect changes
     order.paymentId = razorpay_payment_id;
     order.status = "paid";
-        // STEP 4: Award FitRewards points after successful payment
+        // STEP 4: Handle FitRewards — redeem points + award new points
     try {
       let rewards = await Rewards.findOne({ userId });
 
@@ -125,13 +174,33 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
         });
       }
 
+      // ── Deduct redeemed points first ───────────────────────────────────
+      if (pointsRedeemed && Number(pointsRedeemed) > 0) {
+        const redeemAmount = Number(pointsRedeemed);
+        const actualDeduction = Math.min(redeemAmount, rewards.pointsBalance);
+
+        if (actualDeduction > 0) {
+          rewards.transactions.push({
+            type: "redeemed",
+            points: actualDeduction,
+            source: "redemption",
+            orderId: String(order._id),
+            description: "Points redeemed during checkout",
+            createdAt: new Date(),
+          });
+
+          rewards.pointsBalance -= actualDeduction;
+        }
+      }
+
+      // ── Award new points for purchase ──────────────────────────────────
       const alreadyCredited = rewards.transactions.some(
-        (transaction) => transaction.orderId === String(order._id)
+        (transaction) => transaction.orderId === String(order._id) && transaction.type === "earned"
       );
 
       if (!alreadyCredited) {
         const purchaseAmount =
-          order.totalAmount || order.total || order.amount || 0;
+          order.totalAmount || order.total || 0;
 
         let points = Math.floor(
           Number(purchaseAmount) * rewardsConfig.POINTS_PER_RUPEE
@@ -151,13 +220,14 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
         });
 
         rewards.pointsBalance += points;
-        await rewards.save();
       }
+
+      await rewards.save();
     } catch (rewardError) {
-      console.error("Reward earning failed:", rewardError.message);
+      console.error("Reward processing failed:", rewardError.message);
     }
 
-    // STEP 4: Send first-purchase email (non-blocking)
+    // STEP 5: Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
     sendFirstPurchaseEmail(userId, order).catch((err) => {
       console.error("First-purchase email service error:", err.message);
@@ -206,7 +276,7 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  */
 router.post("/demo-success", async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, pointsRedeemed } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     // Generate a fake payment ID that looks like a real Razorpay one
@@ -234,11 +304,68 @@ router.post("/demo-success", async (req, res) => {
     order.paymentId = fakePaymentId;
     order.status = "paid";
 
+    // ── Handle FitRewards — redeem points + award new points ─────────────
+    try {
+      let rewards = await Rewards.findOne({ userId });
+
+      if (!rewards) {
+        rewards = await Rewards.create({
+          userId,
+          pointsBalance: 0,
+          transactions: [],
+        });
+      }
+
+      if (pointsRedeemed && Number(pointsRedeemed) > 0) {
+        const redeemAmount = Number(pointsRedeemed);
+        const actualDeduction = Math.min(redeemAmount, rewards.pointsBalance);
+
+        if (actualDeduction > 0) {
+          rewards.transactions.push({
+            type: "redeemed",
+            points: actualDeduction,
+            source: "redemption",
+            orderId: String(order._id),
+            description: "Points redeemed during checkout",
+            createdAt: new Date(),
+          });
+
+          rewards.pointsBalance -= actualDeduction;
+        }
+      }
+
+      const alreadyCredited = rewards.transactions.some(
+        (transaction) => transaction.orderId === String(order._id) && transaction.type === "earned"
+      );
+
+      if (!alreadyCredited) {
+        const purchaseAmount = order.total || 0;
+        let points = Math.floor(Number(purchaseAmount) * rewardsConfig.POINTS_PER_RUPEE);
+
+        if (rewards.transactions.length === 0) {
+          points += rewardsConfig.FIRST_PURCHASE_BONUS;
+        }
+
+        rewards.transactions.push({
+          type: "earned",
+          points,
+          source: "purchase",
+          orderId: String(order._id),
+          description: "Points earned from purchase",
+          createdAt: new Date(),
+        });
+
+        rewards.pointsBalance += points;
+      }
+
+      await rewards.save();
+    } catch (rewardError) {
+      console.error("Reward processing failed:", rewardError.message);
+    }
+
     // Send first-purchase email (non-blocking)
-    // Email sending should not fail the payment flow
     sendFirstPurchaseEmail(userId, order).catch((err) => {
       console.error("First-purchase email service error:", err.message);
-      // Don't throw — email failure should not break payment success
     });
 
     res.json({ success: true, paymentId: fakePaymentId, order });

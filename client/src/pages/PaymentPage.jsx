@@ -79,6 +79,8 @@ export default function PaymentPage() {
     discountPercent = 0,
     discountApplied = false,
     address = null,
+    pointsToRedeem = 0,
+    pointsDiscount = 0,
   } = location.state || {};
 
   const busy = paying || bypassing;
@@ -137,6 +139,8 @@ export default function PaymentPage() {
         discountApplied,
         paymentId,
         address,
+        pointsToRedeem,
+        pointsDiscount,
       },
     });
   };
@@ -157,7 +161,10 @@ export default function PaymentPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ userId: user.uid }),
+        body: JSON.stringify({
+          userId: user.uid,
+          pointsRedeemed: pointsToRedeem || undefined,
+        }),
       });
 
       if (!res.ok) throw new Error("Demo order failed");
@@ -205,6 +212,7 @@ export default function PaymentPage() {
           amount: total,
           currency: "INR",
           userId,
+          pointsToRedeem: pointsToRedeem || undefined,
         }),
       });
 
@@ -245,6 +253,7 @@ export default function PaymentPage() {
                 body: JSON.stringify({
                   ...response,
                   userId,
+                  pointsRedeemed: pointsToRedeem || undefined,
                 }),
               }
             );
@@ -393,6 +402,13 @@ export default function PaymentPage() {
               <div className="flex justify-between text-sm text-stone-500">
                 <span>Welcome {discountPercent}% off</span>
                 <span>−{fmt(discountAmt)}</span>
+              </div>
+            )}
+
+            {pointsDiscount > 0 && (
+              <div className="flex justify-between text-sm text-stone-500">
+                <span>FitRewards {pointsToRedeem} pts</span>
+                <span>−{fmt(pointsDiscount)}</span>
               </div>
             )}
 
