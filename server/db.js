@@ -13,7 +13,7 @@ mongoose.set('strictQuery', true);
 
 async function connect() {
   try {
-    await mongoose.connect(MONGO_URI, MONGO_DB ? { dbName: MONGO_DB } : {});
+    await mongoose.connect(MONGO_URI);
     console.log("MongoDB connected successfully");
   } catch (err) {
     console.error("MongoDB connection failed:", err.message);
