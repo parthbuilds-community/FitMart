@@ -205,6 +205,14 @@ router.put("/profile/:userId", async (req, res) => {
       return res.status(400).json({ error: "Invalid phone number format" });
     }
 
+    if (req.body.addresses !== undefined) {
+      if (!Array.isArray(req.body.addresses)) {
+        return res.status(400).json({
+        error: "Addresses must be an array",
+        });
+      } 
+    }
+
     const update = {};
     const allowed = ["name", "phone", "addresses", "defaultAddressId", "photoURL"];
     for (const k of allowed) {
