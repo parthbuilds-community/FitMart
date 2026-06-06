@@ -178,6 +178,8 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const navigate = useNavigate();
+  const [toast, setToast] = useState("");
+const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
   const [user, setUser] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCategory = searchParams.get("category") || "all";
@@ -592,7 +594,7 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+            <button onClick={() => showToast("FitRewards lets you earn points from purchases and workouts!")} className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
                                hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
                                text-center">
               Learn More
@@ -633,7 +635,7 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <button onClick={() => showToast(`${p.tier} Membership coming soon!`)}className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
                                    transition-all self-start min-h-10">
                   {p.cta}
@@ -653,15 +655,31 @@ export default function HomePage() {
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
               <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
+  onClick={() => {
+    if (l === "Privacy") navigate("/privacy-policy");
+    else if (l === "Terms") navigate("/terms");
+    else showToast("Support page coming soon!");
+  }}
+  className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
+  {l}
+</button>
             ))}
           </div>
         </div>
       </footer>
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: "24px", right: "24px",
+          background: "#1c1917", color: "white",
+          padding: "12px 20px", borderRadius: "999px",
+          zIndex: 9999, fontSize: "13px"
+        }}>
+          {toast}
+        </div>
+      )}
 
       <CartDrawer
+      
         isOpen={cartOpen} onClose={() => setCartOpen(false)}
         cart={cart} cartCount={cartCount} cartTotal={cartTotal}
         updateQty={updateQty} removeFromCart={removeFromCart}
