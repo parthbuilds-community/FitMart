@@ -373,14 +373,8 @@ React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin 
 Make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) v16+
-
-# Optional: Redis caching for products API
-# When set, the server will use Redis to cache product-list responses.
-# Use `REDIS_URL` for a full Redis connection string (e.g. redis://localhost:6379)
-# or `REDIS_HOST` for a host-only configuration. TTL (seconds) is configurable:
-# PRODUCTS_CACHE_TTL=60
-
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- Redis *(optional)* — for product API caching
 - A [MongoDB](https://www.mongodb.com/atlas) connection (Atlas or local)
 - A [Firebase](https://firebase.google.com/) project (for auth)
 - A [Razorpay](https://razorpay.com/) account (for payments)
@@ -548,6 +542,12 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 SMTP_FROM=noreply@fitmart.com
 APP_BASE_URL=http://localhost:5173
+
+# Redis caching — optional, for product API caching
+# Use REDIS_URL for a full connection string or REDIS_HOST for host-only config.
+# REDIS_URL=redis://localhost:6379
+# REDIS_HOST=localhost
+# PRODUCTS_CACHE_TTL=60
 ```
 
 > **Startup behaviour:** The server validates environment variables on startup. `MONGO_URI` is the only truly critical variable — the server will exit if it's missing. All other variables are optional; missing ones produce a warning and disable the corresponding feature gracefully.
