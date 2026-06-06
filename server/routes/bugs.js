@@ -8,7 +8,36 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const admin = require('../firebaseAdmin');
 
+// ── Input sanitization helpers ────────────────────────────────────────────
 
+/**
+ * Strips HTML tags from a string to prevent stored XSS.
+ * React escapes output by default, but sanitizing at the server level
+ * ensures safety regardless of how the data is later consumed.
+ */
+const stripHtml = (str) =>
+  String(str || '').replace(/<[^>]*>/g, '').trim();
+
+/**
+ * Truncates a string to a maximum length after stripping HTML.
+ */
+const sanitize = (str, maxLength = 500) =>
+  stripHtml(str).slice(0, maxLength);
+
+/** Validates a basic email format. */
+const isValidEmail = (email) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+// ── Field length limits ───────────────────────────────────────────────────
+const LIMITS = {
+  title: 150,
+  description: 2000,
+  steps: 2000,
+  pageUrl: 500,
+  browser: 200,
+  reporterName: 100,
+  reporterEmail: 254, // RFC 5321 max email length
+};
 
 // Use memory storage so serverless environments (Vercel) work correctly
 const storage = multer.memoryStorage();
@@ -24,29 +53,47 @@ const upload = multer({
 // ── POST /api/bugs — public, accepts optional screenshot ──────────────────
 router.post('/', upload.single('screenshot'), async (req, res) => {
   try {
-    const { title, description, steps, pageUrl, browser } = req.body;
-    let { reporterName, reporterEmail } = req.body;
+    const rawTitle       = req.body.title;
+    const rawDescription = req.body.description;
+    const rawSteps       = req.body.steps;
+    const rawPageUrl     = req.body.pageUrl;
+    const rawBrowser     = req.body.browser;
+    let   rawName        = req.body.reporterName;
+    let   rawEmail       = req.body.reporterEmail;
 
-    if (!title || !description)
+    // ── Required field validation ─────────────────────────────────────────
+    if (!rawTitle || !rawDescription)
       return res.status(400).json({ error: 'Title and description are required' });
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (req.body.reporterEmail && !emailRegex.test(req.body.reporterEmail)) {
+
+    // ── Email format validation ───────────────────────────────────────────
+    if (rawEmail && !isValidEmail(rawEmail))
       return res.status(400).json({ error: 'Invalid email format' });
-    }
-    // Prefer authenticated name/email from token if present
+
+    // ── Sanitize and truncate all string inputs ───────────────────────────
+    const title       = sanitize(rawTitle,       LIMITS.title);
+    const description = sanitize(rawDescription, LIMITS.description);
+    const steps       = sanitize(rawSteps,       LIMITS.steps);
+    const pageUrl     = sanitize(rawPageUrl,     LIMITS.pageUrl);
+    const browser     = sanitize(rawBrowser,     LIMITS.browser);
+    let reporterName  = sanitize(rawName,        LIMITS.reporterName);
+    let reporterEmail = rawEmail
+      ? String(rawEmail).slice(0, LIMITS.reporterEmail)
+      : '';
+
+    // ── Prefer authenticated name/email from token if present ────────────
     try {
       const authHeader = req.headers.authorization;
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.split('Bearer ')[1];
         const decoded = await admin.auth().verifyIdToken(token);
-        reporterName = decoded.name || decoded.emailName || reporterName || decoded.uid;
+        reporterName  = decoded.name || decoded.emailName || reporterName || decoded.uid;
         reporterEmail = decoded.email || reporterEmail || '';
       }
     } catch {
       // ignore token errors for public submissions
     }
 
+    // ── Screenshot upload ─────────────────────────────────────────────────
     let screenshotUrl = '';
     let screenshotPublicId = '';
     if (req.file && req.file.buffer) {
@@ -109,7 +156,6 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
 // ── PATCH /api/bugs/:id — admin only ─────────────────────────────────────
 router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-
     const { status } = req.body;
     if (!['open', 'in-progress', 'resolved'].includes(status))
       return res.status(400).json({ error: 'Invalid status' });
