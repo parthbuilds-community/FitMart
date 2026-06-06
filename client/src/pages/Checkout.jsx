@@ -28,6 +28,10 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // ── FitRewards redemption state ────────────────────────────────────────
+  const [rewardsBalance, setRewardsBalance] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+
   useEffect(() => { document.title = "My Cart - FitMart"; }, []);
 
   useEffect(() => {
@@ -46,11 +50,12 @@ export default function Checkout() {
       try {
         const headers = await getAuthHeaders();
 
-        const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
+        const [cartRes, prodRes, discountRes, profileRes, rewardsRes] = await Promise.all([
           fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
           fetch(`${API}/api/products?all=true`),
           fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
           fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
+          fetch(`${API}/api/rewards/${userId}`, { headers, credentials: "include" }),
         ]);
 
         if (!cartRes.ok) throw new Error("Failed to fetch cart");
@@ -71,6 +76,12 @@ export default function Checkout() {
             .map(item => ({ ...item, product: productMap[item.productId] }))
             .filter(item => item.product);
           setItems(enriched);
+        }
+
+        // ── Load FitRewards balance ──────────────────────────────────────
+        if (rewardsRes.ok) {
+          const r = await rewardsRes.json();
+          setRewardsBalance(r.pointsBalance || 0);
         }
       } catch (err) {
         if (err.name === 'AbortError') return;
@@ -113,7 +124,8 @@ export default function Checkout() {
 
   const subtotal = items.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
   const discountAmt = discountEligible ? Math.round(subtotal * discountPercent / 100) : 0;
-  const total = subtotal - discountAmt;
+  const pointsDiscount = pointsToRedeem > 0 ? Math.floor(pointsToRedeem / 100) * 10 : 0;
+  const total = subtotal - discountAmt - pointsDiscount;
 
   const handleProceed = () => {
     navigate("/payment", {
@@ -122,6 +134,8 @@ export default function Checkout() {
         discountPercent: discountEligible ? discountPercent : 0,
         discountApplied: discountEligible,
         address: selectedAddress,
+        pointsToRedeem,
+        pointsDiscount,
       },
     });
   };
@@ -224,6 +238,61 @@ export default function Checkout() {
                     </span>
                   </div>
                 </div>
+
+                {/* ── FitRewards Redeem Points ── */}
+                {rewardsBalance >= 100 && !loadingCart && (
+                  <div className="border-t border-stone-700 pt-4 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs tracking-[0.15em] uppercase text-stone-400">
+                        FitRewards Points
+                      </span>
+                      <span className="text-sm font-medium text-amber-400">
+                        {rewardsBalance} pts
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        type="range"
+                        min="0"
+                        max={Math.min(rewardsBalance, Math.floor((subtotal - discountAmt) / 10) * 100)}
+                        step="100"
+                        value={pointsToRedeem}
+                        onChange={(e) => {
+                          setPointsToRedeem(Math.floor(parseInt(e.target.value, 10) / 100) * 100);
+                        }}
+                        className="w-full h-1.5 bg-stone-700 rounded-full appearance-none cursor-pointer
+                                   accent-amber-500 [&::-webkit-slider-thumb]:appearance-none
+                                   [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                                   [&::-webkit-slider-thumb]:bg-amber-500 [&::-webkit-slider-thumb]:rounded-full
+                                   [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer
+                                   [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4
+                                   [&::-moz-range-thumb]:bg-amber-500 [&::-moz-range-thumb]:rounded-full
+                                   [&::-moz-range-thumb]:border-0"
+                        aria-label="Redeem points"
+                      />
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-stone-500">0 pts</span>
+                        <span className="text-stone-300">
+                          {pointsToRedeem > 0 ? `${pointsToRedeem} pts` : 'Slide to redeem'}
+                        </span>
+                        <span className="text-stone-500">
+                          {Math.min(rewardsBalance, Math.floor((subtotal - discountAmt) / 10) * 100)} pts
+                        </span>
+                      </div>
+                      {pointsToRedeem > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-amber-400/80">−{fmt(pointsDiscount)} off</span>
+                          <button
+                            onClick={() => setPointsToRedeem(0)}
+                            className="text-stone-500 hover:text-stone-300 text-xs underline transition-colors"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* No address warning */}
                 {!selectedAddress && !profileError && (
