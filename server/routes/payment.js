@@ -9,6 +9,7 @@ const router = express.Router();
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const verifyAdmin = require("../middleware/verifyAdmin");
 const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
 const { createOrder } = require("../services/orderService");
 
@@ -192,20 +193,29 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /demo-success   ← DEV / TEST ONLY — disabled in production
+// POST /demo-success   ← DEV / TEST ONLY — requires admin authentication + DEMO_MODE env var
 // Body: { userId }
 // Skips Razorpay entirely, fakes a payment ID, clears cart, returns success.
-// NOTE: This route does NOT require Firebase authentication for testing purposes
+// NOTE: This route requires Firebase authentication AND admin verification
+// Can only be accessed when ENABLE_DEMO_MODE=true environment variable is set
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * @route   POST /demo-success
  * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
  *          and returns success without creating an order
- * @access  Public (TESTING ONLY) - No authentication required
+ * @access  Private (Admin only) - Requires Firebase auth + admin verification + ENABLE_DEMO_MODE env var
  */
-router.post("/demo-success", async (req, res) => {
+router.post("/demo-success", verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
+    // Guard: demo mode must be explicitly enabled via environment variable
+    const isDemoModeEnabled = process.env.ENABLE_DEMO_MODE === "true";
+    if (!isDemoModeEnabled) {
+      return res.status(403).json({ 
+        error: "Demo mode is disabled. Set ENABLE_DEMO_MODE=true to enable." 
+      });
+    }
+
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
