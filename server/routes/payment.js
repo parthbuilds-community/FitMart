@@ -9,6 +9,7 @@ const router = express.Router();
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const verifyAdmin = require("../middleware/verifyAdmin");
 const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
 const { createOrder } = require("../services/orderService");
 
@@ -192,61 +193,66 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /demo-success   ← DEV / TEST ONLY — disabled in production
+// POST /demo-success   ← DEV / TEST ONLY
 // Body: { userId }
 // Skips Razorpay entirely, fakes a payment ID, clears cart, returns success.
-// NOTE: This route does NOT require Firebase authentication for testing purposes
+// NOTE: This route is ONLY registered when NODE_ENV !== "production" && DEMO_MODE === "true"
+// Requires Firebase authentication + admin verification
+// Completely disabled in production
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * @route   POST /demo-success
- * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
- *          and returns success without creating an order
- * @access  Public (TESTING ONLY) - No authentication required
- */
-router.post("/demo-success", async (req, res) => {
-  try {
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId is required" });
-
-    // Generate a fake payment ID that looks like a real Razorpay one
-    const fakePaymentId = `pay_DEMO_${Date.now()}`;
-    
-    // Create an order from the user's cart using the shared service
-    const Order = require("../models/Order");
-    let order;
+// Only register this route in development/test mode
+if (process.env.NODE_ENV !== "production" && process.env.DEMO_MODE === "true") {
+  /**
+   * @route   POST /demo-success
+   * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
+   *          and returns success without creating an order
+   * @access  Private (Admin only) - Dev/Test only, requires Firebase auth + admin verification
+   */
+  router.post("/demo-success", verifyFirebaseToken, verifyAdmin, async (req, res) => {
     try {
-      order = await createOrder(userId);
-    } catch (createErr) {
-      if (createErr.message === "Cart is empty") {
-         // Still clear any empty cart just in case
-         await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { new: true });
+      const { userId } = req.body;
+      if (!userId) return res.status(400).json({ error: "userId is required" });
+
+      // Generate a fake payment ID that looks like a real Razorpay one
+      const fakePaymentId = `pay_DEMO_${Date.now()}`;
+      
+      // Create an order from the user's cart using the shared service
+      const Order = require("../models/Order");
+      let order;
+      try {
+        order = await createOrder(userId);
+      } catch (createErr) {
+        if (createErr.message === "Cart is empty") {
+           // Still clear any empty cart just in case
+           await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { new: true });
+        }
+        return res.status(400).json({ error: createErr.message });
       }
-      return res.status(400).json({ error: createErr.message });
+
+      // Attach paymentId to order
+      await Order.findByIdAndUpdate(order._id, {
+        paymentId: fakePaymentId,
+        status: "paid"
+      });
+      
+      order.paymentId = fakePaymentId;
+      order.status = "paid";
+
+      // Send first-purchase email (non-blocking)
+      // Email sending should not fail the payment flow
+      sendFirstPurchaseEmail(userId, order).catch((err) => {
+        console.error("First-purchase email service error:", err.message);
+        // Don't throw — email failure should not break payment success
+      });
+
+      res.json({ success: true, paymentId: fakePaymentId, order });
+    } catch (err) {
+      console.error("demo-success error:", err);
+      res.status(500).json({ error: err.message });
     }
-
-    // Attach paymentId to order
-    await Order.findByIdAndUpdate(order._id, {
-      paymentId: fakePaymentId,
-      status: "paid"
-    });
-    
-    order.paymentId = fakePaymentId;
-    order.status = "paid";
-
-    // Send first-purchase email (non-blocking)
-    // Email sending should not fail the payment flow
-    sendFirstPurchaseEmail(userId, order).catch((err) => {
-      console.error("First-purchase email service error:", err.message);
-      // Don't throw — email failure should not break payment success
-    });
-
-    res.json({ success: true, paymentId: fakePaymentId, order });
-  } catch (err) {
-    console.error("demo-success error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+  });
+}
 
 
 module.exports = router;
