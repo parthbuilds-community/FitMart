@@ -182,6 +182,10 @@ if (process.env.NODE_ENV !== 'production') {
 // Proxy GitHub stats to avoid client-side rate limits and CORS errors
 app.use("/api/github", require("./routes/github"));
 
+// ── Cron Jobs ────────────────────────────────────────────────────────────────
+const { schedulePointsExpiry } = require("./jobs/pointsExpiry");
+schedulePointsExpiry();
+
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => res.send("FitMart server running"));
 
