@@ -62,6 +62,17 @@ export default function FitnessChatBot() {
     if (open) setTimeout(() => inputRef.current?.focus(), 200);
   }, [open]);
 
+  // Auto-expand textarea as user types
+  useEffect(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    const newHeight = Math.min(textarea.scrollHeight, 120);
+    textarea.style.height = `${newHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > 120 ? "auto" : "hidden";
+  }, [input]);
+
   // Prevent body scroll on mobile when chat is open
   useEffect(() => {
     if (open) {
@@ -368,21 +379,25 @@ export default function FitnessChatBot() {
         {/* Show quick replies only before the conversation starts
             to keep the chat area clean after interaction begins */}
         {msgs.length === 1 && (
-          <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-hide">
-            {QUICK_REPLIES.map((reply) => (
-              <button
-                key={reply.label}
-                onClick={() => send(reply.prompt)}
-                className="px-3 py-1.5 text-sm bg-white border border-stone-200 rounded-full shadow-sm hover:bg-stone-100 transition-colors shrink-0"
-              >
-                {reply.label}
-              </button>
-            ))}
+          <div className="px-3 sm:px-4 py-2 bg-stone-50/50 border-t border-stone-100">
+            <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 fm-scrollbar-hide">
+              {QUICK_REPLIES.map((reply) => (
+                <button
+                  key={reply.label}
+                  onClick={() => send(reply.prompt)}
+                  className="px-3.5 py-1.5 text-xs bg-white border border-stone-200 rounded-full
+                             shadow-sm hover:border-stone-900 hover:text-stone-900
+                             transition-all shrink-0 active:scale-[0.95]"
+                >
+                  {reply.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
         {/* ── Input Area ── */}
-        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white flex items-end gap-2 shrink-0 overflow-hidden">
+        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white flex items-end gap-2 shrink-0 overflow-hidden border-t border-stone-100">
           <textarea
             ref={inputRef}
             rows={1}
@@ -391,17 +406,13 @@ export default function FitnessChatBot() {
             onKeyDown={onKeyDown}
             placeholder="Ask about workouts, diet, protein…"
             disabled={typing}
-            className="flex-1 min-w-0  resize-none border border-stone-200 bg-stone-50 rounded-xl
+            className="flex-1 min-w-0 resize-none border border-stone-200 bg-stone-50 rounded-xl
                        px-3.5 sm:px-4 py-2.5 text-sm text-stone-900 placeholder-stone-300
                        focus:outline-none focus:border-stone-900 transition-colors
                        disabled:opacity-50 leading-relaxed"
             // min-w-0 allows the textarea to shrink correctly
             // inside flex layouts and prevents layout overflow
-            style={{ maxHeight: "96px", overflowY: "hidden" }}
-            onInput={(e) => {
-              e.target.style.height = "auto";
-              e.target.style.height = Math.min(e.target.scrollHeight, 96) + "px";
-            }}
+            style={{ maxHeight: "120px" }}
           />
           <button
             // Wrap send() in an arrow function to avoid

@@ -37,6 +37,11 @@ router.get("/:userId", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.params;
 
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ message: "Forbidden — ownership mismatch" });
+    }
+
     let rewards = await Rewards.findOne({ userId });
 
     if (!rewards) {
@@ -71,6 +76,11 @@ router.post("/earn", verifyFirebaseToken, async (req, res) => {
       return res.status(400).json({
         message: "userId and source are required",
       });
+    }
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ message: "Forbidden — ownership mismatch" });
     }
 
     if (!["purchase", "workout", "milestone"].includes(source)) {

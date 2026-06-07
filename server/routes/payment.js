@@ -48,6 +48,11 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
     if (!amount || !userId)
       return res.status(400).json({ error: "amount and userId are required" });
 
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — you can only create orders for yourself" });
+    }
+
     // receipt must be ≤ 40 chars
     const shortId = userId.slice(-8);
     const shortTs = String(Date.now()).slice(-8);
@@ -79,6 +84,11 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
       return res.status(400).json({ error: "Missing required payment fields" });
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — you can only verify payments for yourself" });
+    }
 
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -183,6 +193,11 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — you can only clear your own cart" });
+    }
+
     await releaseAndClearCart(userId);
     res.json({ success: true });
   } catch (err) {
@@ -202,14 +217,20 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  * @route   POST /demo-success
  * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
  *          and returns success without creating an order
- * @access  Public (TESTING ONLY) - No authentication required
+ * @access  Private (TESTING ONLY) - Only available in non-production
  */
-router.post("/demo-success", async (req, res) => {
-  try {
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId is required" });
+if (process.env.NODE_ENV !== "production") {
+  router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) return res.status(400).json({ error: "userId is required" });
 
-    // Generate a fake payment ID that looks like a real Razorpay one
+      // Ownership check
+      if (req.user.uid !== userId) {
+        return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+      }
+
+      // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
     
     // Create an order from the user's cart using the shared service
@@ -242,11 +263,11 @@ router.post("/demo-success", async (req, res) => {
     });
 
     res.json({ success: true, paymentId: fakePaymentId, order });
-  } catch (err) {
-    console.error("demo-success error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
+    } catch (err) {
+      console.error("demo-success error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+}
 
 module.exports = router;

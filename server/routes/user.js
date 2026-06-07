@@ -28,10 +28,15 @@ const upload = multer({
 // - If profile exists and isFirstLogin is false → return showBanner: false
 // Also syncs user email from Firebase to the profile for email sending.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
+router.post("/login", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+    }
 
     // Fetch Firebase user to get email and display name
     let firebaseEmail = null;
@@ -98,10 +103,15 @@ router.post("/login", async (req, res) => {
 // Called when user dismisses the welcome banner.
 // Flips isFirstLogin → false so it never shows again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/dismiss-banner", async (req, res) => {
+router.post("/dismiss-banner", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+    }
 
     await UserProfile.findOneAndUpdate(
       { userId },
@@ -122,10 +132,15 @@ router.post("/dismiss-banner", async (req, res) => {
 // Called after a successful first order.
 // Flips discountUsed → true so it can't be used again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/use-discount", async (req, res) => {
+router.post("/use-discount", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+    }
 
     const profile = await UserProfile.findOneAndUpdate(
       { userId, discountUsed: false },   // only update if not already used
@@ -150,9 +165,15 @@ router.post("/use-discount", async (req, res) => {
 // Returns current discount eligibility for a user.
 // Used by Checkout to decide whether to apply the 10% discount.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/discount-status/:userId", async (req, res) => {
+router.get("/discount-status/:userId", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.params;
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+    }
+
     const profile = await UserProfile.findOne({ userId });
 
     if (!profile) {
@@ -175,10 +196,15 @@ router.get("/discount-status/:userId", async (req, res) => {
 // GET /api/user/profile/:userId
 // Returns stored profile (including addresses) for a user
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/profile/:userId", async (req, res) => {
+router.get("/profile/:userId", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+    }
 
     const profile = await UserProfile.findOne({ userId });
     if (!profile) return res.json({});
@@ -195,10 +221,15 @@ router.get("/profile/:userId", async (req, res) => {
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", async (req, res) => {
+router.put("/profile/:userId", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+    }
 
     const phoneRegex = /^\+?[\d\s\-]{7,15}$/;
     if (req.body.phone && !phoneRegex.test(req.body.phone)) {
@@ -233,6 +264,11 @@ router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo")
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Ownership check
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — ownership mismatch" });
+    }
 
     if (!req.file || !req.file.buffer) {
       return res.status(400).json({ error: "Photo file is required" });
