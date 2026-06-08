@@ -43,8 +43,7 @@ async function releaseAndClearCart(userId) {
  * @access  Private
  */
 router.post("/create-order", verifyFirebaseToken, async (req, res) => {
-  try {
-    const { amount, currency = "INR", userId } = req.body;
+  const { amount, currency = "INR", userId } = req.body;
     if (!amount || !userId)
       return res.status(400).json({ error: "amount and userId are required" });
 
@@ -60,10 +59,6 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
     });
 
     res.json(order);
-  } catch (err) {
-    console.error("Razorpay create-order error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 /**
@@ -179,16 +174,11 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
  * @access  Private
  */
 router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
-  try {
-    const { userId } = req.body;
+  const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     await releaseAndClearCart(userId);
     res.json({ success: true });
-  } catch (err) {
-    console.error("clear-cart error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

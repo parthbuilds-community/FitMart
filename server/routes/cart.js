@@ -23,16 +23,12 @@ async function adjustReserved(productId, delta) {
  * @access  Private
  */
 router.get('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res) => {
-  try {
-    const { userId } = req.params;
+  const { userId } = req.params;
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = await Cart.create({ userId, items: [] });
     }
     res.json(cart);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 /**
@@ -42,7 +38,6 @@ router.get('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res
  */
 router.post('/:userId/add', verifyFirebaseToken, ensureCartOwnership, validateRequest(cartAddSchema), async (req, res) => {
 
-  try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
     if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
@@ -69,10 +64,6 @@ router.post('/:userId/add', verifyFirebaseToken, ensureCartOwnership, validateRe
     await adjustReserved(productId, qty);
     await cart.save();
     res.json(cart);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 /**
@@ -82,7 +73,6 @@ router.post('/:userId/add', verifyFirebaseToken, ensureCartOwnership, validateRe
  */
 router.post('/:userId/remove', verifyFirebaseToken, ensureCartOwnership, validateRequest(cartRemoveSchema), async (req, res) => {
 
-  try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
     if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
@@ -104,10 +94,6 @@ router.post('/:userId/remove', verifyFirebaseToken, ensureCartOwnership, validat
     await cart.save();
 
     res.json(cart);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 /**
@@ -116,8 +102,7 @@ router.post('/:userId/remove', verifyFirebaseToken, ensureCartOwnership, validat
  * @access  Private
  */
 router.delete('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res) => {
-  try {
-    const { userId } = req.params;
+  const { userId } = req.params;
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
 
@@ -128,10 +113,6 @@ router.delete('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, 
     cart.items = [];
     await cart.save();
     res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 module.exports = router;

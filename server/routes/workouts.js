@@ -11,8 +11,7 @@ const { updateWorkoutLogSchema } = require('../validation/requestSchemas');
  * @access  Private
  */
 router.get('/', verifyFirebaseToken, async (req, res) => {
-  try {
-    const logs = await WorkoutLog.find({ userId: req.user.uid });
+  const logs = await WorkoutLog.find({ userId: req.user.uid });
     
     // Format response to match the legacy localStorage format: { 'YYYY-MM-DD': { title, notes, exercises } }
     const formattedLogs = {};
@@ -25,10 +24,6 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
     }
     
     res.json(formattedLogs);
-  } catch (err) {
-    console.error('Error fetching workout logs:', err);
-    res.status(500).json({ error: 'Server error fetching workout logs' });
-  }
 });
 
 /**
@@ -37,8 +32,7 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
  * @access  Private
  */
 router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), async (req, res) => {
-  try {
-    const { date, title, notes, exercises } = req.body;
+  const { date, title, notes, exercises } = req.body;
 
     const logData = {
       title: title || '',
@@ -53,10 +47,6 @@ router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), a
     );
 
     res.json(updatedLog);
-  } catch (err) {
-    console.error('Error saving workout log:', err);
-    res.status(500).json({ error: 'Server error saving workout log' });
-  }
 });
 
 /**
@@ -65,14 +55,9 @@ router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), a
  * @access  Private
  */
 router.delete('/:date', verifyFirebaseToken, async (req, res) => {
-  try {
-    const { date } = req.params;
+  const { date } = req.params;
     await WorkoutLog.findOneAndDelete({ userId: req.user.uid, date });
     res.json({ success: true });
-  } catch (err) {
-    console.error('Error deleting workout log:', err);
-    res.status(500).json({ error: 'Server error deleting workout log' });
-  }
 });
 
 module.exports = router;

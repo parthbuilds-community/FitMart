@@ -123,9 +123,8 @@ router.get("/:category", async (req, res) => {
     });
   }
 
-  try {
-    const bodyParts = CATEGORY_MAPPING[category.toLowerCase()];
-    const allExercises = [];
+  const bodyParts = CATEGORY_MAPPING[category.toLowerCase()];
+  const allExercises = [];
 
     // Fetch exercises for all mapped body parts
     for (const bodyPart of bodyParts) {
@@ -177,12 +176,6 @@ router.get("/:category", async (req, res) => {
       `✅ Fetched ${deduplicatedExercises.length} unique exercises for category "${category}"`
     );
     res.json(deduplicatedExercises);
-  } catch (error) {
-    console.error(`❌ Error fetching exercises for category "${category}":`, error);
-    res.status(500).json({
-      error: "Failed to fetch exercises. Please try again later.",
-    });
-  }
 });
 
 module.exports = router;

@@ -29,8 +29,7 @@ const upload = multer({
 // Also syncs user email from Firebase to the profile for email sending.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
-  try {
-    const { userId } = req.body;
+  const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     // Fetch Firebase user to get email and display name
@@ -85,10 +84,6 @@ router.post("/login", async (req, res) => {
       discountUsed: profile.discountUsed,
       discountPercent: profile.discountPercent,
     });
-  } catch (err) {
-    console.error("user/login error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 
@@ -99,8 +94,7 @@ router.post("/login", async (req, res) => {
 // Flips isFirstLogin → false so it never shows again.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/dismiss-banner", async (req, res) => {
-  try {
-    const { userId } = req.body;
+  const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     await UserProfile.findOneAndUpdate(
@@ -109,10 +103,6 @@ router.post("/dismiss-banner", async (req, res) => {
       { upsert: true }
     );
     res.json({ success: true });
-  } catch (err) {
-    console.error("user/dismiss-banner error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 
@@ -123,8 +113,7 @@ router.post("/dismiss-banner", async (req, res) => {
 // Flips discountUsed → true so it can't be used again.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/use-discount", async (req, res) => {
-  try {
-    const { userId } = req.body;
+  const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     const profile = await UserProfile.findOneAndUpdate(
@@ -138,10 +127,6 @@ router.post("/use-discount", async (req, res) => {
     }
 
     res.json({ success: true });
-  } catch (err) {
-    console.error("user/use-discount error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 
@@ -151,8 +136,7 @@ router.post("/use-discount", async (req, res) => {
 // Used by Checkout to decide whether to apply the 10% discount.
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/discount-status/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
+  const { userId } = req.params;
     const profile = await UserProfile.findOne({ userId });
 
     if (!profile) {
@@ -164,10 +148,6 @@ router.get("/discount-status/:userId", async (req, res) => {
       discountUsed: profile.discountUsed,
       discountPercent: profile.discountPercent,
     });
-  } catch (err) {
-    console.error("user/discount-status error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 
@@ -176,17 +156,12 @@ router.get("/discount-status/:userId", async (req, res) => {
 // Returns stored profile (including addresses) for a user
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/profile/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
+  const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     const profile = await UserProfile.findOne({ userId });
     if (!profile) return res.json({});
     res.json(profile);
-  } catch (err) {
-    console.error("user/profile GET error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 
@@ -196,8 +171,7 @@ router.get("/profile/:userId", async (req, res) => {
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
 router.put("/profile/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
+  const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     const phoneRegex = /^\+?[\d\s\-]{7,15}$/;
@@ -218,10 +192,6 @@ router.put("/profile/:userId", async (req, res) => {
     );
 
     res.json(profile);
-  } catch (err) {
-    console.error("user/profile PUT error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -230,8 +200,7 @@ router.put("/profile/:userId", async (req, res) => {
 // Body: multipart form-data with 'photo' field
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo"), async (req, res) => {
-  try {
-    const { userId } = req.params;
+  const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     if (!req.file || !req.file.buffer) {
@@ -269,10 +238,6 @@ router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo")
       console.error("Cloudinary upload failed:", uploadErr);
       return res.status(500).json({ error: "Failed to upload photo" });
     }
-  } catch (err) {
-    console.error("user/upload-photo error:", err);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 module.exports = router;
