@@ -1,3 +1,6 @@
+// Adjust the path according to the repository's structure
+const redisClient = require('../services/redisClient');
+
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
@@ -155,6 +158,21 @@ router.get('/:id', async (req, res) => {
  * @desc    Creates a new product; body: full product object including unique productId
  * @access  Private (Admin)
  */
+router.post('/api/products', async (req, res) => {
+  try {
+    // ... [Existing code that saves the new product to the database] ...
+
+    // Clear the stale cache
+    if (redisClient.isOpen) {
+      await redisClient.del('products:all'); 
+    }
+
+    res.status(201).json(newProduct);
+  } catch (error) {
+    // ... [Existing error handling] ...
+  }
+});
+
 router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProductSchema), async (req, res) => {
   try {
     const body = req.body;
@@ -175,6 +193,21 @@ router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProduct
  * @desc    Updates an existing product by productId; body: fields to update
  * @access  Private (Admin)
  */
+router.put('/api/products/:id', async (req, res) => {
+  try {
+    // ... [Existing code that updates the product in the database] ...
+
+    // Clear the stale cache
+    if (redisClient.isOpen) {
+      await redisClient.del('products:all'); 
+    }
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    // ... [Existing error handling] ...
+  }
+});
+
 router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProductSchema), async (req, res) => {
   const productId = Number(req.params.id);
 
