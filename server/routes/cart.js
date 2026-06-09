@@ -8,13 +8,17 @@ const validateRequest = require('../middleware/validateRequest');
 const { cartAddSchema, cartRemoveSchema } = require('../validation/requestSchemas');
 const ensureCartOwnership = ensureOwnership('Forbidden — you can only access your own cart');
 
-// Helper: adjust product reserved count
+// Helper: adjust product reserved count (atomic, prevents negatives) — issue #277
 async function adjustReserved(productId, delta) {
-  const prod = await Product.findOne({ productId: Number(productId) });
-  if (!prod) throw new Error('Product not found');
-  prod.reserved = Math.max(0, (prod.reserved || 0) + delta);
-  await prod.save();
-  return prod;
+  // Use an aggregation pipeline update to atomically clamp reserved to zero.
+  // This avoids the read-then-write race condition of fetching the document first.
+  const updated = await Product.findOneAndUpdate(
+    { productId: Number(productId) },
+    [{ $set: { reserved: { $max: [0, { $add: ['$reserved', delta] }] } } }],
+    { new: true }
+  );
+  if (!updated) throw new Error('Product not found');
+  return updated;
 }
 
 /**

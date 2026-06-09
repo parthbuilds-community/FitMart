@@ -56,14 +56,21 @@ async function createOrder(userId, items = null) {
       // Safely calculate new reserved to avoid negative values
       const currentReserved = Number(p.reserved || 0);
       const newReserved = Math.max(0, currentReserved - it.quantity);
-      
-      await Product.findOneAndUpdate(
-        { productId: p.productId },
-        { 
+
+      // Atomic conditional update: only deduct if stock is still sufficient.
+      // The $gte filter prevents stock from going negative under concurrent requests (issue #351).
+      const updated = await Product.findOneAndUpdate(
+        { productId: p.productId, stock: { $gte: it.quantity } },
+        {
           $inc: { stock: -it.quantity },
-          $set: { reserved: newReserved }
+          $set: { reserved: newReserved },
         }
       );
+
+      if (!updated) {
+        // Stock was concurrently depleted between the check and the update
+        console.warn(`[orderService] Stock deduction skipped for productId ${p.productId}: stock may have been concurrently depleted`);
+      }
     }
   }
 
