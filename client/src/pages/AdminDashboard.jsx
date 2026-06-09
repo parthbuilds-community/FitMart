@@ -1,3 +1,4 @@
+import AdminKPIGrid from "../components/AdminKPIGrid";
 // src/pages/AdminDashboard.jsx
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
@@ -292,20 +293,7 @@ export default function AdminDashboard() {
           <div className="fade-in space-y-4 sm:space-y-5">
 
             {/* KPI row — 2×2 on mobile, 4-col on md+ */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-              <KPICard label="Total Revenue" value={fmt(data.kpis.totalRevenue)} icon="₹" />
-              <KPICard label="Total Orders" value={data.kpis.totalOrders.toLocaleString()} icon="◎" />
-              <KPICard label="Customers" value={data.kpis.totalCustomers.toLocaleString()}
-                icon={
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                }
-              />
-              <KPICard label="Low on Stock" value={data.kpis.lowStockCount}
-                sub="Below 5 units" icon="─" />
-            </div>
+            <AdminKPIGrid kpis={data.kpis} />
 
             {/* Charts — stacked on mobile, side-by-side on md+ */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
