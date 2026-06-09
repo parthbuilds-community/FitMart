@@ -106,8 +106,10 @@ app.use(
 );
 
 app.use(helmet());
-app.use(express.json({ limit: "10kb" }));
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+// Body size limit is configurable via BODY_LIMIT env var (issue #360 — 10kb was too restrictive)
+const bodyLimit = process.env.BODY_LIMIT || '50kb';
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 // Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
 
