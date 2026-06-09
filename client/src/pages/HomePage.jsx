@@ -19,6 +19,7 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+import { Link } from "react-router-dom";
 
 
 
@@ -593,7 +594,7 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+            <button onClick={() => alert("Loyalty Program details coming soon!")} className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
                                hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
                                text-center">
               Learn More
@@ -634,7 +635,9 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <button
+                onClick={() => alert(`${p.tier} membership coming soon!`)}
+                 className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
                                    transition-all self-start min-h-10">
                   {p.cta}
@@ -652,13 +655,27 @@ export default function HomePage() {
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
-            ))}
-          </div>
+  <Link
+    to="/LegalPrivacy"
+    className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+  >
+    Privacy
+  </Link>
+
+  <Link
+    to="/LegalTerms"
+    className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+  >
+    Terms
+  </Link>
+
+  <Link
+    to="/NotFound.jsx"
+    className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+  >
+    Support
+  </Link>
+</div>
         </div>
       </footer>
 
