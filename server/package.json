@@ -20,7 +20,7 @@
     "express-rate-limit": "^8.5.2",
     "firebase-admin": "^13.10.0",
     "helmet": "^8.2.0",
-    "mongoose": "^7.0.0",
+    "mongoose": "^9.6.3",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.10",
     "razorpay": "^2.9.6",
