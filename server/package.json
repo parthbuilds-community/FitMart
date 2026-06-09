@@ -15,7 +15,7 @@
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
-    "express": "^4.22.2",
+    "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "firebase-admin": "^13.10.0",
     "helmet": "^8.2.0",
