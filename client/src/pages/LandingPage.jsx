@@ -324,7 +324,7 @@ export default function LandingPage() {
                 </div>
                 <button
                   className={`mt-6 sm:mt-8 self-start text-xs border px-5 py-2.5 rounded-full
-                                transition-colors hover:cursor-pointer ${c.btn} min-h-10 active:scale-[0.97]`}
+                                transition-colors cursor-pointer ${c.btn} min-h-10 active:scale-[0.97]`}
                   onClick={e => {
                     e.stopPropagation();
                     navigate("/home", { state: { category: c.filter } });
