@@ -8,6 +8,7 @@ const rateLimit = require("express-rate-limit");
 const { RATE_LIMIT_WINDOW_MS, API_LIMIT_MAX, PAYMENT_LIMIT_MAX, DEFAULT_PORT } = require("./config/constants");
 const app = express();
 const port = process.env.PORT || DEFAULT_PORT;
+const BODY_LIMIT = "1mb";
 const allowedOrigin = process.env.ALLOWED_ORIGIN || "";
 const allowedOrigins = allowedOrigin
   .split(",")
@@ -106,8 +107,8 @@ app.use(
 );
 
 app.use(helmet());
-app.use(express.json({ limit: "10kb" }));
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: BODY_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: BODY_LIMIT }));
 // Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
 
@@ -188,15 +189,27 @@ app.get("/", (req, res) => res.send("FitMart server running"));
 // ── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
-    return res.status(400).json({ error: "Invalid JSON payload" });
+    return res.status(400).json({
+      success: false,
+      error: "Invalid JSON payload",
+      message: "Invalid JSON payload.",
+    });
   }
 
-  if (err.type === 'entity.too.large' || err.status === 413) {
-    return res.status(413).json({ error: "Payload too large" });
+  if (err.type === "entity.too.large" || err.status === 413) {
+    return res.status(413).json({
+      success: false,
+      error: "Payload too large",
+      message: `Request payload is too large. Maximum size is ${BODY_LIMIT.toUpperCase()}.`,
+    });
   }
 
   console.error("Unhandled error:", err.message);
-  res.status(500).json({ error: "Something went wrong" });
+  return res.status(500).json({
+    success: false,
+    error: "Something went wrong",
+    message: "Internal server error.",
+  });
 });
 
 app.listen(port, () => {
