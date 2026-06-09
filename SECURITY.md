@@ -23,10 +23,10 @@ FitMart is an open-source project that handles real user authentication, payment
 
 FitMart is currently in active development. Security fixes are applied to the latest version on the `main` branch only.
 
-| Branch / Version | Supported |
-|---|---|
-| `main` (latest) | ✅ Yes |
-| Older forks / branches | ❌ No |
+| Branch / Version       | Supported |
+| ---------------------- | --------- |
+| `main` (latest)        | ✅ Yes    |
+| Older forks / branches | ❌ No     |
 
 ---
 
@@ -36,7 +36,7 @@ FitMart is currently in active development. Security fixes are applied to the la
 
 Instead, report vulnerabilities through one of these private channels:
 
-- **GitHub Private Advisory:** Go to the [Security tab](https://github.com/parthbuilds-community/FitMart/security/advisories/new) of the repository and open a new private advisory *(recommended)*.
+- **GitHub Private Advisory:** Go to the [Security tab](https://github.com/parthbuilds-community/FitMart/security/advisories/new) of the repository and open a new private advisory _(recommended)_.
 - **Email:** Send a detailed report to **parthnarkarofficial@gmail.com** with the subject line `[FitMart Security] <brief description>`.
 
 ---
@@ -58,13 +58,13 @@ A good vulnerability report helps us triage and fix the issue quickly. Please in
 
 We aim to handle reports according to the following timeline:
 
-| Stage | Target Timeframe |
-|---|---|
-| Initial acknowledgement | Within 3 business days |
-| Triage and severity assessment | Within 7 days |
-| Fix developed and tested | Within 14–30 days (depending on severity) |
-| Fix deployed to `main` | As soon as it's ready and tested |
-| Credit given (if desired) | At time of disclosure |
+| Stage                          | Target Timeframe                          |
+| ------------------------------ | ----------------------------------------- |
+| Initial acknowledgement        | Within 3 business days                    |
+| Triage and severity assessment | Within 7 days                             |
+| Fix developed and tested       | Within 14–30 days (depending on severity) |
+| Fix deployed to `main`         | As soon as it's ready and tested          |
+| Credit given (if desired)      | At time of disclosure                     |
 
 If you haven't received an acknowledgement within 3 business days, please follow up via email.
 
@@ -124,33 +124,39 @@ The following are **not** considered valid security reports for this project:
 If you're contributing code, please follow these practices to keep FitMart secure:
 
 **Environment Variables**
+
 - Never hardcode API keys, secrets, or credentials in source code
 - Never commit `.env` files — they are gitignored for a reason
 - Only client-safe Firebase config keys belong in `VITE_*` variables; service account credentials must stay server-side only
 - Always document new environment variables in `README.md` and mark them as optional/required appropriately
 
 **Authentication**
+
 - Use the `verifyFirebaseToken` middleware for any endpoint that requires a logged-in user
 - Never trust `userId` values from the request body for privileged actions — always derive identity from the verified Firebase token (`req.user`)
 - Admin actions must verify that the requesting user's UID matches `ADMIN_UID`
 
 **Input Validation**
+
 - Always validate required fields before processing — return a clear `400` error for missing or malformed input
 - Never pass unsanitized user input directly into a MongoDB query
 - Never pass unsanitized user input into logs, emails, or HTML output
 - For AI chat endpoints, apply additional sanitization (control character removal, prompt injection neutralization) — see [AI Chat Security](#-ai-chat-security--prompt-safety)
 
 **Payment Security**
+
 - Always verify Razorpay payments server-side using HMAC-SHA256 — never trust the client to report payment success
 - Never expose `RAZORPAY_KEY_SECRET` to the frontend
 - Remove or gate the demo payment bypass (`POST /api/payment/demo-success`) before any production deployment
 
 **Sensitive Data**
+
 - The request logger automatically redacts `password`, `token`, `secret`, and `apiKey` fields — keep this list updated if you add new sensitive fields
 - Never log full request bodies in production if they may contain PII (emails, addresses, phone numbers)
 - User emails stored in `UserProfile` are used only for transactional emails — do not expose them through unauthenticated API responses
 
 **Dependencies**
+
 - Keep dependencies up to date; run `npm audit` periodically
 - Do not add dependencies with known critical vulnerabilities
 
@@ -160,19 +166,19 @@ If you're contributing code, please follow these practices to keep FitMart secur
 
 Here is a summary of the security measures already in place in FitMart:
 
-| Control | Implementation |
-|---|---|
-| Authentication | Firebase Admin SDK token verification on protected routes |
-| Payment verification | HMAC-SHA256 signature verification server-side |
-| HTTP security headers | `helmet` middleware applied globally |
-| Rate limiting | `express-rate-limit`: 100 req/15 min (API), 20 req/15 min (payment routes) |
-| CORS | Allowlist-based origin validation; rejects unknown origins |
-| Request body size | Capped at `10kb` to mitigate payload flooding |
-| Request logging | Colored structured logger with automatic redaction of sensitive keys |
-| ETag disabled | Prevents conditional 304 responses leaking cached sensitive data |
-| Cache-Control | `no-store` header set on all `/api` responses |
-| Admin route guarding | UID-based guard on both client (React) and server (Admin SDK) |
-| No secrets in client | Service account credentials strictly server-side only |
+| Control               | Implementation                                                             |
+| --------------------- | -------------------------------------------------------------------------- |
+| Authentication        | Firebase Admin SDK token verification on protected routes                  |
+| Payment verification  | HMAC-SHA256 signature verification server-side                             |
+| HTTP security headers | `helmet` middleware applied globally                                       |
+| Rate limiting         | `express-rate-limit`: 100 req/15 min (API), 20 req/15 min (payment routes) |
+| CORS                  | Allowlist-based origin validation; rejects unknown origins                 |
+| Request body size     | Capped at `10kb` to mitigate payload flooding                              |
+| Request logging       | Colored structured logger with automatic redaction of sensitive keys       |
+| ETag disabled         | Prevents conditional 304 responses leaking cached sensitive data           |
+| Cache-Control         | `no-store` header set on all `/api` responses                              |
+| Admin route guarding  | UID-based guard on both client (React) and server (Admin SDK)              |
+| No secrets in client  | Service account credentials strictly server-side only                      |
 
 ---
 
@@ -198,6 +204,7 @@ Document server-side input validation and prompt safety measures for the AI chat
 ### Sanitization Rules
 
 Disallowed control characters are removed (null bytes, unusual unicode control codes), while keeping normal printable characters, tabs, and newlines:
+
 - Multiple consecutive newlines are collapsed to a maximum of two (`\n\n`).
 - Excessive whitespace is collapsed.
 - Fenced code block markers (```) are neutralized to reduce instruction injection vectors.
@@ -206,6 +213,7 @@ Disallowed control characters are removed (null bytes, unusual unicode control c
 ### Prompt Construction Safety
 
 The system maintains a strong system persona (`SYSTEM_PROMPT`) describing the fitness assistant role and allowed topics:
+
 - An additional explicit safety instruction (`SAFETY_INSTRUCTION`) is prepended to the user prompt to tell the model not to follow any instructions embedded in the user's content.
 - User content is wrapped with clear delimiters:
 
