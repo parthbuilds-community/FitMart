@@ -195,19 +195,28 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
 // POST /demo-success   ← DEV / TEST ONLY — disabled in production
 // Body: { userId }
 // Skips Razorpay entirely, fakes a payment ID, clears cart, returns success.
-// NOTE: This route does NOT require Firebase authentication for testing purposes
+// Requires Firebase authentication; userId must match the authenticated user.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * @route   POST /demo-success
  * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
- *          and returns success without creating an order
- * @access  Public (TESTING ONLY) - No authentication required
+ *          and returns success. Disabled in production. Requires Firebase auth.
+ * @access  Private (DEV/TEST ONLY) - Requires authentication
  */
-router.post("/demo-success", async (req, res) => {
+router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
+  // Disabled in production to prevent creation of fake paid orders
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
+
+    // Prevent IDOR: ensure the requesting user can only create orders for themselves
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — userId does not match authenticated user" });
+    }
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;

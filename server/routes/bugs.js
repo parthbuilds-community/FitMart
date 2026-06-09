@@ -7,8 +7,24 @@ const Bug = require('../models/Bug');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const admin = require('../firebaseAdmin');
+const { z } = require('zod');
 
+// Zod schema for bug report submission (issue #352 — Stored XSS prevention)
+const bugReportSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(200, 'Title must be 200 characters or fewer'),
+  description: z.string().trim().min(1, 'Description is required').max(5000, 'Description must be 5000 characters or fewer'),
+  steps: z.string().trim().max(5000, 'Steps must be 5000 characters or fewer').optional(),
+  pageUrl: z.string().trim().url('pageUrl must be a valid URL').max(500).optional().or(z.literal('')),
+  browser: z.string().trim().max(200).optional(),
+  reporterName: z.string().trim().max(100).optional(),
+  reporterEmail: z.string().trim().email('Invalid email format').max(254).optional().or(z.literal('')),
+});
 
+// Sanitize a string by stripping HTML tags to prevent stored XSS
+function sanitizeStr(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/<[^>]*>/g, '').trim();
+}
 
 // Use memory storage so serverless environments (Vercel) work correctly
 const storage = multer.memoryStorage();
@@ -24,16 +40,22 @@ const upload = multer({
 // ── POST /api/bugs — public, accepts optional screenshot ──────────────────
 router.post('/', upload.single('screenshot'), async (req, res) => {
   try {
-    const { title, description, steps, pageUrl, browser } = req.body;
-    let { reporterName, reporterEmail } = req.body;
-
-    if (!title || !description)
-      return res.status(400).json({ error: 'Title and description are required' });
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (req.body.reporterEmail && !emailRegex.test(req.body.reporterEmail)) {
-      return res.status(400).json({ error: 'Invalid email format' });
+    // Validate and sanitize all text fields with Zod (issue #352)
+    const parseResult = bugReportSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const details = parseResult.error.issues.map(i => ({ path: i.path.join('.'), message: i.message }));
+      return res.status(400).json({ error: 'Invalid request', details });
     }
+
+    let { title, description, steps, pageUrl, browser, reporterName, reporterEmail } = parseResult.data;
+
+    // Strip HTML tags from all text fields to prevent stored XSS
+    title = sanitizeStr(title);
+    description = sanitizeStr(description);
+    steps = sanitizeStr(steps);
+    browser = sanitizeStr(browser);
+    reporterName = sanitizeStr(reporterName);
+
     // Prefer authenticated name/email from token if present
     try {
       const authHeader = req.headers.authorization;
