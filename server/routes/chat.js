@@ -91,7 +91,6 @@ const chatSchema = z.object({
 }).strict();
 
 router.post("/", chatLimiter, async (req, res) => {
-  try {
     // Request validation (from origin/main)
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({ error: 'Invalid request', details: ['body: JSON object expected'] });
@@ -182,11 +181,11 @@ router.post("/", chatLimiter, async (req, res) => {
       console.error("Error Status:", apiError.status);
 
       if (apiError.status === 429) {
-        console.warn("⚠️ API quota exceeded, using fallback response");
+        console.warn("API quota exceeded, using fallback response");
         reply = getFallbackResponse(message);
         usedFallback = true;
       } else if (apiError.message?.includes("API key")) {
-        console.error("❌ API key error - please verify your Gemini API key is valid");
+        console.error("API key error - please verify your Gemini API key is valid");
         reply = "I'm having trouble connecting to my knowledge base. Please check if the **API key** is properly configured. In the meantime, I can still help with **general fitness advice**!";
         usedFallback = true;
       } else {
@@ -219,13 +218,6 @@ router.post("/", chatLimiter, async (req, res) => {
     }
 
     res.json({ reply });
-  } catch (err) {
-    console.error("Chat route error:", err);
-    res.status(500).json({
-      error: "Failed to generate response",
-      details: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
-  }
-});
+  });
 
 module.exports = router;

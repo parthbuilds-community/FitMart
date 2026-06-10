@@ -23,7 +23,6 @@ const upload = multer({
 
 // ── POST /api/bugs — public, accepts optional screenshot ──────────────────
 router.post('/', upload.single('screenshot'), async (req, res) => {
-  try {
     const { title, description, steps, pageUrl, browser } = req.body;
     let { reporterName, reporterEmail } = req.body;
 
@@ -89,26 +88,16 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 
     await bug.save();
     res.status(201).json({ ok: true, bug });
-  } catch (err) {
-    console.error('Error saving bug:', err);
-    res.status(500).json({ error: 'Failed to submit bug' });
-  }
-});
+  });
 
 // ── GET /api/bugs — admin only ────────────────────────────────────────────
 router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
-  try {
     const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
     res.json({ ok: true, bugs });
-  } catch (err) {
-    console.error('Error fetching bugs:', err);
-    res.status(500).json({ error: 'Failed to fetch bugs' });
-  }
-});
+  });
 
 // ── PATCH /api/bugs/:id — admin only ─────────────────────────────────────
 router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  try {
 
     const { status } = req.body;
     if (!['open', 'in-progress', 'resolved'].includes(status))
@@ -117,10 +106,6 @@ router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     const bug = await Bug.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!bug) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, bug });
-  } catch (err) {
-    console.error('Error updating bug:', err);
-    res.status(500).json({ error: 'Failed to update bug' });
-  }
-});
+  });
 
 module.exports = router;

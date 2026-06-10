@@ -46,7 +46,6 @@ function computeDistanceScore(userAddr, center) {
 
 // GET /api/fitness-centers/nearby?type=gym
 router.get("/nearby", verifyFirebaseToken, async (req, res) => {
-  try {
     const uid = req.user?.uid;
     if (!uid) return res.status(401).json({ error: "Unauthorized" });
 
@@ -76,10 +75,6 @@ router.get("/nearby", verifyFirebaseToken, async (req, res) => {
 
     const top = scored.slice(0, 10);
     return res.json(top);
-  } catch (err) {
-    console.error("/api/fitness-centers/nearby error:", err);
-    return res.status(500).json({ error: "Server error" });
-  }
-});
+  });
 
 module.exports = router;

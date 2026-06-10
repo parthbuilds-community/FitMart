@@ -43,7 +43,6 @@ async function releaseAndClearCart(userId) {
  * @access  Private
  */
 router.post("/create-order", verifyFirebaseToken, async (req, res) => {
-  try {
     const { amount, currency = "INR", userId } = req.body;
     if (!amount || !userId)
       return res.status(400).json({ error: "amount and userId are required" });
@@ -60,11 +59,7 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
     });
 
     res.json(order);
-  } catch (err) {
-    console.error("Razorpay create-order error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+  });
 
 /**
  * @route   POST /verify-payment
@@ -74,7 +69,6 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
  * @access  Private
  */
 router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
-  try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
@@ -165,12 +159,7 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
     });
 
     res.json({ success: true, order });
-
-  } catch (err) {
-    console.error("verify-payment error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+  });
 
 /**
  * @route   POST /clear-cart
@@ -179,17 +168,12 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
  * @access  Private
  */
 router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
-  try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
     await releaseAndClearCart(userId);
     res.json({ success: true });
-  } catch (err) {
-    console.error("clear-cart error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+  });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /demo-success   ← DEV / TEST ONLY — disabled in production
@@ -205,7 +189,6 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  * @access  Public (TESTING ONLY) - No authentication required
  */
 router.post("/demo-success", async (req, res) => {
-  try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
 
@@ -242,11 +225,7 @@ router.post("/demo-success", async (req, res) => {
     });
 
     res.json({ success: true, paymentId: fakePaymentId, order });
-  } catch (err) {
-    console.error("demo-success error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+  });
 
 
 module.exports = router;

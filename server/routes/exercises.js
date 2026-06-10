@@ -123,7 +123,6 @@ router.get("/:category", async (req, res) => {
     });
   }
 
-  try {
     const bodyParts = CATEGORY_MAPPING[category.toLowerCase()];
     const allExercises = [];
 
@@ -134,7 +133,7 @@ router.get("/:category", async (req, res) => {
         allExercises.push(...exercises);
       } catch (error) {
         console.warn(
-          `⚠️ Failed to fetch exercises for bodyPart "${bodyPart}": ${error.message}`
+          `Failed to fetch exercises for bodyPart "${bodyPart}": ${error.message}`
         );
         // Continue with other body parts even if one fails
       }
@@ -160,29 +159,23 @@ router.get("/:category", async (req, res) => {
       console.log("  Name:", firstEx.name);
       
       if (firstEx.gifUrl) {
-        console.log("  gifUrl: ✅ Present");
+        console.log("  gifUrl: Present");
         console.log("    Value:", firstEx.gifUrl.substring(0, 80) + (firstEx.gifUrl.length > 80 ? "..." : ""));
-        console.log("    Starts with http:", firstEx.gifUrl.startsWith("http") ? "✅ Yes" : "❌ No");
+        console.log("    Starts with http:", firstEx.gifUrl.startsWith("http") ? "Yes" : "No");
       } else {
-        console.log("  gifUrl: ❌ null/empty");
+        console.log("  gifUrl: null/empty");
         console.log("    imageUrl fallback:", firstEx.imageUrl ? `Present: ${firstEx.imageUrl.substring(0, 60)}...` : "null");
       }
       
-      console.log("  imageUrl:", firstEx.imageUrl ? `✅ Present` : "❌ null");
-      console.log("  videoUrl:", firstEx.videoUrl ? `✅ Present` : "❌ null");
+      console.log("  imageUrl:", firstEx.imageUrl ? "Present" : "null");
+      console.log("  videoUrl:", firstEx.videoUrl ? "Present" : "null");
       console.log("");
     }
 
     console.log(
-      `✅ Fetched ${deduplicatedExercises.length} unique exercises for category "${category}"`
+      `Fetched ${deduplicatedExercises.length} unique exercises for category "${category}"`
     );
     res.json(deduplicatedExercises);
-  } catch (error) {
-    console.error(`❌ Error fetching exercises for category "${category}":`, error);
-    res.status(500).json({
-      error: "Failed to fetch exercises. Please try again later.",
-    });
-  }
-});
+  });
 
 module.exports = router;

@@ -19,7 +19,6 @@ const { createProductSchema, updateProductSchema } = require('../validation/requ
  * @access  Public
  */
 router.get('/', async (req, res) => {
-  try {
     // Query parameters
     const all = req.query.all === 'true';
     const page = parseInt(req.query.page) || 1;
@@ -105,11 +104,7 @@ router.get('/', async (req, res) => {
     if (ifNoneMatch && ifNoneMatch === etag) return res.status(304).end();
 
     return res.json(payload);
-  } catch (err) {
-    console.error('[products] GET /api/products error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 /**
  * @route   GET /api/products/low-stock
@@ -118,15 +113,11 @@ router.get('/', async (req, res) => {
  */
 
 router.get('/low-stock', async (req, res) => {
-  try {
     // only check products where stock is not null
     const products = await Product.find({ stock: { $ne: null } });
     const lowStock = products.filter(p => (p.stock - p.reserved) < LOW_STOCK_THRESHOLD);
     res.json(lowStock);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 /**
  * @route   GET /api/products/:id
@@ -141,14 +132,10 @@ router.get('/:id', async (req, res) => {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
 
-  try {
     const product = await Product.findOne({ productId });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 /**
  * @route   POST /api/products
@@ -156,7 +143,6 @@ router.get('/:id', async (req, res) => {
  * @access  Private (Admin)
  */
 router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProductSchema), async (req, res) => {
-  try {
     const body = req.body;
     const existing = await Product.findOne({ productId: body.productId });
     if (existing) return res.status(400).json({ error: 'productId already exists' });
@@ -165,10 +151,7 @@ router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProduct
     // invalidate product caches
     try { await cache.delPattern('products:'); } catch (e) { }
     res.status(201).json(p);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 /**
  * @route   PUT /api/products/:id
@@ -182,15 +165,11 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
 
-  try {
     const updated = await Product.findOneAndUpdate({ productId }, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'Product not found' });
     try { await cache.delPattern('products:'); } catch (e) { }
     res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 /**
  * @route   DELETE /api/products/:id
@@ -204,13 +183,9 @@ router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   if (isNaN(productId)) {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
-  try {
     const deleted = await Product.findOneAndDelete({ productId });
     try { await cache.delPattern('products:'); } catch (e) { }
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 module.exports = router;

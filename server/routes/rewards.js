@@ -34,7 +34,6 @@ function calculatePoints(source, amount = 0) {
 }
 
 router.get("/:userId", verifyFirebaseToken, async (req, res) => {
-  try {
     const { userId } = req.params;
 
     let rewards = await Rewards.findOne({ userId });
@@ -57,14 +56,9 @@ router.get("/:userId", verifyFirebaseToken, async (req, res) => {
       tier: getTier(rewards.pointsBalance),
       transactions,
     });
-  } catch (error) {
-    console.error("Get rewards error:", error);
-    return res.status(500).json({ message: "Failed to fetch rewards" });
-  }
-});
+  });
 
 router.post("/earn", verifyFirebaseToken, async (req, res) => {
-  try {
     const { userId, source, orderId, amount, description } = req.body;
 
     if (!userId || !source) {
@@ -131,10 +125,6 @@ router.post("/earn", verifyFirebaseToken, async (req, res) => {
       tier: getTier(rewards.pointsBalance),
       transaction,
     });
-  } catch (error) {
-    console.error("Earn rewards error:", error);
-    return res.status(500).json({ message: "Failed to earn rewards" });
-  }
-});
+  });
 
 module.exports = router;
