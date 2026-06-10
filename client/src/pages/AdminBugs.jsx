@@ -1,3 +1,4 @@
+import { getBugs, patchBugStatus } from "../utils/api/bugs";
 import React, { useEffect, useState } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
