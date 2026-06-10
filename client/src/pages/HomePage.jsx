@@ -1,4 +1,3 @@
-
 // src/pages/HomePage.jsx
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -20,8 +19,6 @@ import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
 
-
-
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const CATEGORIES = [
@@ -36,7 +33,6 @@ const PLANS = [
   { name: "Muscle Building", duration: "16 Weeks", desc: "Progressive overload training + protein-optimized meal plans", tag: null, route: "/plans/muscle-building" },
   { name: "Mobility & Recovery", duration: "8 Weeks", desc: "Flexibility-first programming, ideal for desk workers", tag: null, route: "/plans/mobility-recovery" },
 ];
-
 
 function mapCart(cartDoc, products) {
   return cartDoc.items.map(it => {
@@ -611,9 +607,13 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
-                               hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
-                               text-center">
+            {/* FIXED: Added onClick feedback */}
+            <button 
+              onClick={() => alert("FitRewards program details are coming soon! Stay tuned.")}
+              className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+                         hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
+                         text-center"
+            >
               Learn More
             </button>
           </div>
@@ -652,9 +652,13 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                {/* FIXED: Added onClick feedback */}
+                <button 
+                  onClick={() => alert(`${p.tier} membership plans will be available shortly!`)}
+                  className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                   transition-all self-start min-h-10">
+                                   transition-all self-start min-h-10"
+                >
                   {p.cta}
                 </button>
               </div>
@@ -669,13 +673,27 @@ export default function HomePage() {
                         flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
+          
+          {/* FIXED: Links updated to use navigate and alert */}
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
-            ))}
+            <button 
+              onClick={() => navigate("/legal-privacy")}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+            >
+              Privacy
+            </button>
+            <button 
+              onClick={() => navigate("/legal-terms")}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+            >
+              Terms
+            </button>
+            <button 
+              onClick={() => alert("Support system coming soon!")}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+            >
+              Support
+            </button>
           </div>
         </div>
       </footer>
