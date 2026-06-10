@@ -676,6 +676,7 @@ export default function HomePage() {
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
               <button key={l}
+                onClick={() => alert(`${l} page coming soon`)}
                 className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
                 {l}
               </button>
