@@ -4,6 +4,7 @@ const {
   createOrderSchema,
   createProductSchema,
   updateProductSchema,
+  updateWorkoutLogSchema,
 } = require('../validation/requestSchemas');
 
 describe('requestSchemas - cartAddSchema', () => {
@@ -501,6 +502,104 @@ describe('requestSchemas - updateProductSchema', () => {
       const result = updateProductSchema.body.safeParse({ name: '  Updated Name  ' });
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Updated Name');
+    });
+  });
+});
+
+describe('requestSchemas - updateWorkoutLogSchema', () => {
+  describe('body validation (workoutLogBodySchema)', () => {
+    test('should pass with valid workout log', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        date: '2026-06-11',
+        title: 'Push Day',
+        notes: 'Good workout',
+        exercises: [
+          {
+            id: '1',
+            name: 'Push Up',
+            bodyPart: 'chest',
+            target: 'pectorals',
+            equipment: 'bodyweight',
+          },
+        ],
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    test('should fail with missing date', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        title: 'Push Day',
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test('should fail with empty date', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        date: '',
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test('should fail when exercise id is missing', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        date: '2026-06-11',
+        exercises: [
+          {
+            name: 'Push Up',
+          },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test('should fail when exercise name is missing', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        date: '2026-06-11',
+        exercises: [
+          {
+            id: '1',
+          },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test('should fail with unknown fields in workout log', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        date: '2026-06-11',
+        extraField: 'unexpected',
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test('should fail with unknown fields in exercise', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        date: '2026-06-11',
+        exercises: [
+          {
+            id: '1',
+            name: 'Push Up',
+            randomField: 'unexpected',
+          },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    test('should pass with empty exercises array', () => {
+      const result = updateWorkoutLogSchema.body.safeParse({
+        date: '2026-06-11',
+        exercises: [],
+      });
+
+      expect(result.success).toBe(true);
     });
   });
 });
