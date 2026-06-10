@@ -52,6 +52,7 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
   const cartItem = cartItems.find(item => item.id === (product.productId || product.id));
   const quantity = cartItem?.qty || 0;
   const productId = product.productId || product.id;
+  
 
   const handleAdd = (e) => {
     e.stopPropagation();
@@ -194,6 +195,11 @@ export default function HomePage() {
   const [showAll, setShowAll] = useState(false);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
+  const [showLoyaltyModal, setShowLoyaltyModal] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [selectedTier, setSelectedTier] = useState("");
+  const [showFooterModal, setShowFooterModal] = useState(false);
+  const [footerItem, setFooterItem] = useState("");
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -592,12 +598,29 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
-                               hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
-                               text-center">
-              Learn More
-            </button>
+            <button onClick={() => setShowLoyaltyModal(true)} className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto text-center" > Learn More </button>
           </div>
+          {showLoyaltyModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl p-6 max-w-md w-[90%] shadow-xl">
+      <h3 className="text-2xl font-semibold mb-3">
+        FitRewards Program
+      </h3>
+
+      <p className="text-stone-600 mb-6">
+        Earn points through purchases and fitness milestones. Redeem rewards
+        for equipment, supplements, and coaching services.
+      </p>
+
+      <button
+        onClick={() => setShowLoyaltyModal(false)}
+        className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-700 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
         </section>
 
         {/* ── BMI Calculator ── */}
@@ -611,39 +634,88 @@ export default function HomePage() {
         </section>
 
         {/* ── Membership upgrade ── */}
-        <section className="pb-6 sm:pb-8">
-          <div className="mb-6 sm:mb-8">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Membership</p>
-            <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl text-stone-900">
-              Upgrade your experience
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-            {[
-              { tier: "Pro", price: "₹499/mo", desc: "Personalized nutrition plans + 5% flat discount on everything.", cta: "Upgrade to Pro" },
-              { tier: "Elite", price: "₹1,499/mo", desc: "1-on-1 coaching, early access to limited equipment drops, biometric sync.", cta: "Upgrade to Elite" },
-            ].map((p, i) => (
-              <div key={i}
-                className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7
-                           flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
-                <div>
-                  <div className="flex items-baseline gap-2 mb-1.5">
-                    <span className="font-['DM_Serif_Display'] text-2xl text-stone-900">{p.tier}</span>
-                    <span className="text-sm text-stone-400">{p.price}</span>
-                  </div>
-                  <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
-                </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
-                                   rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                   transition-all self-start min-h-10">
-                  {p.cta}
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
+<section className="pb-6 sm:pb-8">
+  <div className="mb-6 sm:mb-8">
+    <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+      Membership
+    </p>
+    <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl text-stone-900">
+      Upgrade your experience
+    </h2>
+  </div>
 
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+    {[
+      {
+        tier: "Pro",
+        price: "₹499/mo",
+        desc: "Personalized nutrition plans + 5% flat discount on everything.",
+        cta: "Upgrade to Pro",
+      },
+      {
+        tier: "Elite",
+        price: "₹1,499/mo",
+        desc: "1-on-1 coaching, early access to limited equipment drops, biometric sync.",
+        cta: "Upgrade to Elite",
+      },
+    ].map((p, i) => (
+      <div
+        key={i}
+        className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7
+                   flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5"
+      >
+        <div>
+          <div className="flex items-baseline gap-2 mb-1.5">
+            <span className="font-['DM_Serif_Display'] text-2xl text-stone-900">
+              {p.tier}
+            </span>
+            <span className="text-sm text-stone-400">{p.price}</span>
+          </div>
+
+          <p className="text-sm text-stone-500 leading-relaxed">
+            {p.desc}
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            setSelectedTier(p.tier);
+            setShowMembershipModal(true);
+          }}
+          className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                     rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
+                     transition-all self-start min-h-10"
+        >
+          {p.cta}
+        </button>
+      </div>
+    ))}
+  </div>
+</section>
+
+{/* Membership Modal */}
+{showMembershipModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl p-6 max-w-md w-[90%] shadow-xl">
+      <h3 className="text-2xl font-semibold mb-3">
+        {selectedTier} Membership
+      </h3>
+
+      <p className="text-stone-600 mb-6">
+        Membership upgrades and payment gateway integration will be available
+        in a future release. Stay tuned!
+      </p>
+
+      <button
+        onClick={() => setShowMembershipModal(false)}
+        className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-700 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+</div>
       {/* Footer */}
       <footer className="border-t border-stone-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-7 sm:py-8
@@ -651,14 +723,41 @@ export default function HomePage() {
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
-            ))}
-          </div>
+  {["Privacy", "Terms", "Support"].map((l) => (
+    <button
+      key={l}
+      onClick={() => {
+        setFooterItem(l);
+        setShowFooterModal(true);
+      }}
+      className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+    >
+      {l}
+    </button>
+  ))}
+</div>
         </div>
+        {showFooterModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl p-6 max-w-md w-[90%] shadow-xl">
+      <h3 className="text-2xl font-semibold mb-3">
+        {footerItem}
+      </h3>
+
+      <p className="text-stone-600 mb-6">
+        The {footerItem.toLowerCase()} page is currently under development and
+        will be available in a future release.
+      </p>
+
+      <button
+        onClick={() => setShowFooterModal(false)}
+        className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-700 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
       </footer>
 
       <CartDrawer
