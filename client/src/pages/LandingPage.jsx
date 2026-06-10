@@ -49,7 +49,7 @@ const TESTIMONIALS = [
   { quote: "Set up a complete home gym through FitMart. The setup guide that came with it was genuinely useful.", name: "Rohan K.", role: "Architect, Andheri" },
 ];
 
-// ── SVG Icons ──────────────────────────────────────────────────────────────
+// ── SVG Icons ────────────────────────────────────────────────────────────[...]
 const GithubIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path fillRule="evenodd" clipRule="evenodd"
@@ -229,8 +229,8 @@ export default function LandingPage() {
               <button
                 onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
                 className="bg-stone-900 text-white text-sm px-8 py-3.5 rounded-full
-                           hover:bg-stone-700 transition-colors w-full sm:w-auto text-center
-                           min-h-12 active:scale-[0.98]"
+                 hover:bg-stone-700 transition-colors w-full sm:w-auto text-center
+                 min-h-12 active:scale-[0.98] cursor-pointer"
               >
                 Start Shopping
               </button>
@@ -324,7 +324,7 @@ export default function LandingPage() {
                 </div>
                 <button
                   className={`mt-6 sm:mt-8 self-start text-xs border px-5 py-2.5 rounded-full
-                                transition-colors ${c.btn} min-h-10 active:scale-[0.97]`}
+                                transition-colors cursor-pointer ${c.btn} min-h-10 active:scale-[0.97]`}
                   onClick={e => {
                     e.stopPropagation();
                     navigate("/home", { state: { category: c.filter } });
@@ -673,11 +673,11 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading
             onClick={() => { if (!authLoading) navigate(user ? "/home" : "/auth"); }}
             disabled={authLoading}
             className={`text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full transition-colors
-                           min-h-9 active:scale-[0.97] ${authLoading ? 'opacity-60 pointer-events-none' : ''}
+                           min-h-9 active:scale-[0.97] cursor-pointer ${authLoading ? 'opacity-60 pointer-events-none' : ''}
                            ${isOpaque
                 ? "bg-stone-900 text-white hover:bg-stone-700"
                 : "bg-white text-stone-900 hover:bg-stone-100"
-              }`}
+              }` }
           >
             {authLoading ? '...' : 'Get Started'}
           </button>
