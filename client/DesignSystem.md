@@ -52,10 +52,7 @@ Use this file as context whenever designing or building any UI component, page, 
 ## Typography
 
 ### Font Families
-```css
-/* In every file — import via style tag or index.css */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-```
+ 
 
 | Role | Family | Tailwind Class |
 |---|---|---|
