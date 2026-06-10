@@ -14,7 +14,7 @@ const rewardTransactionSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["purchase", "workout", "milestone"],
+      enum: ["purchase", "workout", "milestone", "redemption", "expiry"],
       required: true,
     },
     orderId: {
