@@ -6,7 +6,7 @@ import { auth } from "../auth/firebase";
 import { useAuth } from "../auth/useAuth";
 import { fmt } from "../utils/formatters";
 import { useGithubStats } from "../utils/useGithubStats";
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+ || "http://localhost:5000";
 
 const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
@@ -132,9 +132,8 @@ export default function LandingPage() {
       setLoadingProducts(true);
       setBackendError(false);
       try {
-        const res = await fetch(`${API}/api/products?all=true`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const res = await apiClient(`/api/products?all=true`);
+        const data = res;
         setProducts(data.map(p => ({ ...p, id: p.productId || p.id })));
       } catch (err) {
         console.error("Error loading products:", err);
@@ -152,6 +151,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white font-['DM_Sans',sans-serif] overflow-x-hidden">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+import apiClient from "../lib/apiClient";
         .fade-up { opacity:0; transform:translateY(28px); transition:opacity .7s ease,transform .7s ease; }
         .fade-up.visible { opacity:1; transform:translateY(0); }
         .delay-1 { transition-delay:.1s; }

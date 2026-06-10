@@ -2,12 +2,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+ || "http://localhost:5000";
 
 const FEATURE_MAP = {
   Equipment: ["Free shipping", "Assembly guide included", "2-year warranty", "Returns within 30 days"],
@@ -16,22 +15,19 @@ const FEATURE_MAP = {
 };
 
 async function apiAddToCart(userId, productId, quantity) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}/add`, {
+  const res = await apiClient(`/api/cart/${userId}/add`, {
     method: "POST", headers, credentials: "include",
     body: JSON.stringify({ productId, quantity }),
   });
   if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
+    const errData = res.catch(() => ({}));
     throw new Error(errData.error || "Failed to add to cart");
   }
   return res.json();
 }
 
 async function apiGetCart(userId) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch cart");
+  const res = await apiClient(`/api/cart/${userId}`, { headers, credentials: "include" });
   return res.json();
 }
 
@@ -100,9 +96,8 @@ export default function ProductPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API}/api/products?all=true`);
-        if (!res.ok) throw new Error("Failed to load products");
-        const all = res.ok ? await res.json() : [];
+        const res = await apiClient(`/api/products?all=true`);
+        const all = res.ok ? res : [];
         const normalised = all.map(p => ({ ...p, id: p.productId }));
         setProducts(normalised);
         const found = normalised.find(p => String(p.productId) === String(productId));
@@ -167,16 +162,15 @@ export default function ProductPage() {
     if (!user) return;
     try {
       const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
+      const res = await apiClient(`/api/cart/${user.uid}/remove`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
+        const errData = res.catch(() => ({}));
         throw new Error(errData.error || "Failed to remove");
       }
-      const cartDoc = await res.json();
+      const cartDoc = res;
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("removeFromCart error:", err);
@@ -189,16 +183,15 @@ export default function ProductPage() {
     if (!user) return;
     try {
       const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
+      const res = await apiClient(`/api/cart/${user.uid}/${url}`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
+        const errData = res.catch(() => ({}));
         throw new Error(errData.error || "Failed to update qty");
       }
-      const cartDoc = await res.json();
+      const cartDoc = res;
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("updateQty error:", err);
@@ -244,6 +237,7 @@ export default function ProductPage() {
       <Shell cartCount={cartCount} onCartOpen={() => setCartOpen(true)}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+import apiClient from "../lib/apiClient";
           .pd-fade { opacity:0; transform:translateY(20px); transition:opacity .6s ease,transform .6s ease; }
           .pd-fade.in { opacity:1; transform:translateY(0); }
           .pd-fade-img { opacity:0; transition:opacity .5s ease; }

@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+ || 'http://localhost:5000';
 
 async function fetchProducts({ pageParam = 1, queryKey }) {
   const [_key, params] = queryKey;
@@ -11,7 +12,6 @@ async function fetchProducts({ pageParam = 1, queryKey }) {
   if (params.search) url.searchParams.set('search', params.search);
   if (params.sort) url.searchParams.set('sort', params.sort);
   const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 

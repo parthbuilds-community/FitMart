@@ -2,7 +2,6 @@
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminNavbar from "../components/AdminNavbar";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -11,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+ || "http://localhost:5000";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", {
@@ -143,10 +142,8 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/api/dashboard?range=${range}`, { headers });
-        if (!res.ok) throw new Error("Failed to fetch dashboard data");
-        setData(await res.json());
+        const res = await apiClient(`/api/api/dashboard?range=${range}`, { headers });
+        setData(res);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -160,6 +157,7 @@ export default function AdminDashboard() {
       <AdminNavbar range={range} setRange={setRange} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+import apiClient from "../lib/apiClient";
         .fitmart-chart .recharts-cartesian-grid-horizontal line,
         .fitmart-chart .recharts-cartesian-grid-vertical line { stroke: #e7e5e3; }
         .fitmart-chart .recharts-tooltip-cursor { fill: #f5f5f4; }
