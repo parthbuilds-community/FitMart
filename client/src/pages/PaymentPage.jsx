@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+ || "http://localhost:5000";
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 function useRazorpayScript() {
@@ -100,9 +99,8 @@ export default function PaymentPage() {
 
   const finishOrder = async (userId, paymentId) => {
     try {
-      const headers = await getAuthHeaders();
 
-      await fetch(`${API}/api/payment/clear-cart`, {
+      await apiClient(`/api/payment/clear-cart`, {
         method: "POST",
         headers,
         credentials: "include",
@@ -114,9 +112,8 @@ export default function PaymentPage() {
 
     if (discountApplied) {
       try {
-        const headers = await getAuthHeaders();
 
-        await fetch(`${API}/api/user/use-discount`, {
+        await apiClient(`/api/user/use-discount`, {
           method: "POST",
           headers,
           credentials: "include",
@@ -153,16 +150,15 @@ export default function PaymentPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${API}/api/payment/demo-success`, {
+      const res = await apiClient(`/api/payment/demo-success`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ userId: user.uid }),
       });
 
-      if (!res.ok) throw new Error("Demo order failed");
 
-      const data = await res.json();
+      const data = res;
 
       await finishOrder(user.uid, data.paymentId);
     } catch (err) {
@@ -195,9 +191,8 @@ export default function PaymentPage() {
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
 
-      const orderRes = await fetch(`${API}/api/payment/create-order`, {
+      const orderRes = await apiClient(`/api/payment/create-order`, {
         method: "POST",
         headers,
         credentials: "include",
@@ -209,11 +204,11 @@ export default function PaymentPage() {
       });
 
       if (!orderRes.ok) {
-        const e = await orderRes.json().catch(() => ({}));
+        const e = orderRes.catch(() => ({}));
         throw new Error(e.error || "Could not create order");
       }
 
-      const order = await orderRes.json();
+      const order = orderRes;
 
       const options = {
         key: RAZORPAY_KEY,
@@ -234,10 +229,8 @@ export default function PaymentPage() {
 
         handler: async (response) => {
           try {
-            const headers = await getAuthHeaders();
 
-            const verifyRes = await fetch(
-              `${API}/api/payment/verify-payment`,
+            const verifyRes = await apiClient(`/api/payment/verify-payment`,
               {
                 method: "POST",
                 headers,
@@ -248,10 +241,6 @@ export default function PaymentPage() {
                 }),
               }
             );
-
-            if (!verifyRes.ok) {
-              throw new Error("Payment verification failed");
-            }
 
             await finishOrder(userId, response.razorpay_payment_id);
           } catch (err) {
@@ -302,6 +291,7 @@ export default function PaymentPage() {
 
       <style>
         {`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}
+import apiClient from "../lib/apiClient";
       </style>
 
       <div className="max-w-xl mx-auto px-4 sm:px-5 py-10 sm:py-16">

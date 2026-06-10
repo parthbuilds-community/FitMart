@@ -1,7 +1,8 @@
 // src/utils/useGithubStats.js
 import { useEffect, useState } from "react";
+import apiClient from "../lib/apiClient";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+ || "http://localhost:5000";
 
 // Used while loading and as a graceful fallback if the API is unreachable or rate-limited.
 const FALLBACK_STATS = {
@@ -21,9 +22,8 @@ export function useGithubStats() {
 
     (async () => {
       try {
-        const res = await fetch(`${API}/api/github/stats`);
-        if (!res.ok) throw new Error(`Proxy ${res.status}`);
-        const payload = await res.json();
+        const res = await apiClient(`/api/github/stats`);
+        const payload = res;
         if (cancelled) return;
 
         const s = payload.stats || {};

@@ -7,7 +7,6 @@ import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import CartDrawer from "../components/CartDrawer";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessChatBot from "../components/FitnessChatBot";
 import ErrorBoundary from "../components/ErrorBoundary";
 import WelcomeBanner from "../components/WelcomeBanner";
@@ -22,7 +21,7 @@ import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
 
 
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+ || "http://localhost:5000";
 
 const CATEGORIES = [
   { name: "All", value: "all" },
@@ -242,10 +241,8 @@ export default function HomePage() {
     if (!user || !products.length) return;
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) return;
-        const cartDoc = await res.json();
+        const res = await apiClient(`/api/cart/${user.uid}`, { headers, credentials: "include" });
+        const cartDoc = res;
         setCart(mapCart(cartDoc, products));
       } catch (err) {
         console.error("Error loading cart:", err);
@@ -265,16 +262,15 @@ export default function HomePage() {
   const addToCart = async (product) => {
     if (!user) return;
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/add`, {
+      const res = await apiClient(`/api/cart/${user.uid}/add`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
       });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
+        const errData = res.catch(() => ({}));
         throw new Error(errData.error || "Failed to add to cart");
       }
-      const cartDoc = await res.json();
+      const cartDoc = res;
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Add to cart failed:", err); 
@@ -286,16 +282,15 @@ export default function HomePage() {
     if (!user) return;
     try {
       const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
+      const res = await apiClient(`/api/cart/${user.uid}/remove`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
+        const errData = res.catch(() => ({}));
         throw new Error(errData.error || "Failed to remove");
       }
-      const cartDoc = await res.json();
+      const cartDoc = res;
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Remove from cart failed:", err); 
@@ -307,16 +302,15 @@ export default function HomePage() {
     if (!user) return;
     try {
       const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
+      const res = await apiClient(`/api/cart/${user.uid}/${url}`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
+        const errData = res.catch(() => ({}));
         throw new Error(errData.error || "Failed to update qty");
       }
-      const cartDoc = await res.json();
+      const cartDoc = res;
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Update qty failed:", err); 
@@ -425,6 +419,7 @@ export default function HomePage() {
       )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+import apiClient from "../lib/apiClient";
         .fade-in { opacity:0; transform:translateY(16px); transition:opacity .5s ease,transform .5s ease; }
         .fade-in.show { opacity:1; transform:translateY(0); }
         .d1{transition-delay:.05s} .d2{transition-delay:.15s} .d3{transition-delay:.25s}

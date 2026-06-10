@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import {
   getRewardTier,
   getTierProgress,
@@ -13,7 +12,7 @@ import {
 } from "../utils/rewardsUtils";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+ || "http://localhost:5000";
 
 function Toast({ message, onClose }) {
   useEffect(() => {
@@ -140,10 +139,8 @@ const [rewardsError, setRewardsError] = useState("");
       setPhotoURL(user.photoURL);
       setLoading(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/user/profile/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load profile");
-        const data = await res.json();
+        const res = await apiClient(`/api/user/profile/${user.uid}`, { headers, credentials: "include" });
+        const data = res;
         setProfile({
           name: data.name || user.displayName || "",
           phone: data.phone || "",
@@ -167,18 +164,13 @@ const [rewardsError, setRewardsError] = useState("");
       setRewardsLoading(true);
       setRewardsError("");
 
-      const headers = await getAuthHeaders();
 
-      const response = await fetch(`${API}/api/rewards/me`, {
+      const response = await apiClient(`/api/rewards/me`, {
         headers,
         credentials: "include",
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch rewards data");
-      }
-
-      const data = await response.json();
+      const data = response;
       setRewardsData(data);
     } catch (error) {
       setRewardsError(error.message || "Could not load FitRewards");
@@ -203,10 +195,8 @@ const [rewardsError, setRewardsError] = useState("");
       
       setLoadingOrders(true);
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load orders");
-        const data = await res.json();
+        const res = await apiClient(`/api/orders/${user.uid}`, { headers, credentials: "include" });
+        const data = res;
         setOrders(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
@@ -225,8 +215,7 @@ const [rewardsError, setRewardsError] = useState("");
     setError(null);
     setSaving(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/profile/${user.uid}`, {
+      const res = await apiClient(`/api/user/profile/${user.uid}`, {
         method: "PUT",
         headers,
         credentials: "include",
@@ -237,8 +226,7 @@ const [rewardsError, setRewardsError] = useState("");
           defaultAddressId: profile.defaultAddressId,
         }),
       });
-      if (!res.ok) throw new Error("Failed to save profile");
-      const data = await res.json();
+      const data = res;
       setProfile((prev) => ({ ...prev, ...data }));
       setToast("Profile updated successfully");
     } catch (err) {
@@ -263,8 +251,7 @@ const [rewardsError, setRewardsError] = useState("");
       const formData = new FormData();
       formData.append("photo", file);
 
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/user/upload-photo/${user.uid}`, {
+      const res = await apiClient(`/api/user/upload-photo/${user.uid}`, {
         method: "POST",
         headers: {
           "Authorization": headers.Authorization,
@@ -273,12 +260,7 @@ const [rewardsError, setRewardsError] = useState("");
         body: formData,
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to upload photo");
-      }
-
-      const data = await res.json();
+      const data = res;
       const photoURL = data.photoURL;
 
       // Update local state with returned photo URL
@@ -343,6 +325,7 @@ const [rewardsError, setRewardsError] = useState("");
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <Navbar variant="home" menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}</style>
+import apiClient from "../lib/apiClient";
 
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 

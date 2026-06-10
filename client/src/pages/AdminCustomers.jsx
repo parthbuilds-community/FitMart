@@ -2,10 +2,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import AdminNavbar from "../components/AdminNavbar";
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 const SEGMENT_STYLES = {
   "high-value": "bg-stone-900 text-white",
@@ -126,9 +124,8 @@ export default function AdminCustomers() {
   useEffect(() => {
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers`, { headers });
-        const json = await res.json();
+        const res = await apiClient(`/api/customers`, { headers });
+        const json = res;
         if (!json.success) {
           throw new Error(json.error || "Failed to load customers");
         }
@@ -148,14 +145,13 @@ export default function AdminCustomers() {
     setSendingReminderId(customerId);
 
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/customers/${customerId}/send-reminder`, {
+      const res = await apiClient(`/api/customers/${customerId}/send-reminder`, {
         method: "POST",
         headers,
         credentials: "include",
       });
 
-      const data = await res.json();
+      const data = res;
 
       if (!res.ok) {
         setReminderError(prev => ({ ...prev, [customerId]: data.error || "Failed to send" }));
@@ -195,6 +191,7 @@ export default function AdminCustomers() {
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+import apiClient from "../lib/apiClient";
       `}</style>
 
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
