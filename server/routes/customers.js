@@ -41,7 +41,6 @@ function calculateInactivityInfo(lastOrderDate) {
 // Admin-only access to protect customer PII
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  try {
     console.log('[API] GET /customers request received');
 
     const customers = await Order.aggregate([
@@ -113,11 +112,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
 
     console.log(`[API] Returning ${result.length} enriched customers`);
     res.json({ success: true, data: result });
-  } catch (err) {
-    console.error('[API] GET /customers error:', err);
-    res.status(500).json({ success: false, error: err.message || 'Server error' });
-  }
-});
+  });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/customers/:userId
@@ -125,7 +120,6 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
 // Admin-only access to protect customer PII
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  try {
     const { userId } = req.params;
 
     const orders = await Order.find({ userId, status: 'paid' })
@@ -173,11 +167,7 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
         orders,
       },
     });
-  } catch (err) {
-    console.error('Customer detail error:', err);
-    res.status(500).json({ success: false, error: err.message || 'Server error' });
-  }
-});
+  });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/customers/:userId/send-reminder
@@ -185,7 +175,6 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
 // Admin-only endpoint: requires Firebase auth token from admin user
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  try {
     const { userId } = req.params;
 
     // Send the reminder email
@@ -196,10 +185,6 @@ router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, async (r
     }
 
     res.json({ success: true, message: result.message });
-  } catch (err) {
-    console.error('send-reminder error:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+  });
 
 module.exports = router;

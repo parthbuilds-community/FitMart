@@ -12,7 +12,6 @@ const verifyAdmin = require('../middleware/verifyAdmin');
  * @access  Public
  */
 router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  try {
     const { range = 'weekly' } = req.query;
 
     // Step 1: Calculate the start date based on range
@@ -113,10 +112,6 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       revenueByDate,
       productPerformance,
     });
-  } catch (err) {
-    console.error('Reports error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 module.exports = router;

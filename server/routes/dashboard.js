@@ -29,7 +29,6 @@ const getStartDate = (range) => {
 // GET /api/dashboard?range=today|week|month
 // Admin-only dashboard metrics
 router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  try {
     const range = req.query.range || 'month';
     const startDate = getStartDate(range);
 
@@ -140,11 +139,6 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       topProducts,
       recentOrders,   // each order now has customerName + customerEmail
     });
-
-  } catch (err) {
-    console.error('Dashboard route error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load dashboard data' });
-  }
-});
+  });
 
 module.exports = router;
