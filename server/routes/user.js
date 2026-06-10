@@ -6,6 +6,7 @@ const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const ensureOwnership = require("../middleware/ownership");
 const router = express.Router();
 
 // Use memory storage for serverless environments
@@ -92,16 +93,22 @@ router.post("/login", async (req, res) => {
 });
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────────
 // POST /api/user/dismiss-banner
 // Body: { userId }
+// Requires authentication. Validates token UID matches userId.
 // Called when user dismisses the welcome banner.
 // Flips isFirstLogin → false so it never shows again.
-// ─────────────────────────────────────────────────────────────────────────────
-router.post("/dismiss-banner", async (req, res) => {
+// ─────────────────────────────────────────────────────────────────────────────────
+router.post("/dismiss-banner", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Prevent one user from dismissing another user's banner
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — userId does not match authenticated user" });
+    }
 
     await UserProfile.findOneAndUpdate(
       { userId },
@@ -116,16 +123,22 @@ router.post("/dismiss-banner", async (req, res) => {
 });
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────────
 // POST /api/user/use-discount
 // Body: { userId }
+// Requires authentication. Validates token UID matches userId.
 // Called after a successful first order.
 // Flips discountUsed → true so it can't be used again.
-// ─────────────────────────────────────────────────────────────────────────────
-router.post("/use-discount", async (req, res) => {
+// ─────────────────────────────────────────────────────────────────────────────────
+router.post("/use-discount", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
+
+    // Prevent one user from consuming another user's discount
+    if (req.user.uid !== userId) {
+      return res.status(403).json({ error: "Forbidden — userId does not match authenticated user" });
+    }
 
     const profile = await UserProfile.findOneAndUpdate(
       { userId, discountUsed: false },   // only update if not already used
@@ -145,12 +158,13 @@ router.post("/use-discount", async (req, res) => {
 });
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────────
 // GET /api/user/discount-status/:userId
 // Returns current discount eligibility for a user.
+// Requires authentication + ownership (cannot read another user's discount status).
 // Used by Checkout to decide whether to apply the 10% discount.
-// ─────────────────────────────────────────────────────────────────────────────
-router.get("/discount-status/:userId", async (req, res) => {
+// ─────────────────────────────────────────────────────────────────────────────────
+router.get("/discount-status/:userId", verifyFirebaseToken, ensureOwnership("Forbidden — you can only access your own discount status"), async (req, res) => {
   try {
     const { userId } = req.params;
     const profile = await UserProfile.findOne({ userId });
@@ -171,11 +185,12 @@ router.get("/discount-status/:userId", async (req, res) => {
 });
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────────
 // GET /api/user/profile/:userId
-// Returns stored profile (including addresses) for a user
-// ─────────────────────────────────────────────────────────────────────────────
-router.get("/profile/:userId", async (req, res) => {
+// Returns stored profile (including addresses) for a user.
+// Requires authentication + ownership (cannot read another user's profile).
+// ─────────────────────────────────────────────────────────────────────────────────
+router.get("/profile/:userId", verifyFirebaseToken, ensureOwnership("Forbidden — you can only access your own profile"), async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -190,12 +205,12 @@ router.get("/profile/:userId", async (req, res) => {
 });
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────────
 // PUT /api/user/profile/:userId
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
-// Creates profile if missing.
-// ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", async (req, res) => {
+// Requires authentication + ownership. Creates profile if missing.
+// ─────────────────────────────────────────────────────────────────────────────────
+router.put("/profile/:userId", verifyFirebaseToken, ensureOwnership("Forbidden — you can only update your own profile"), async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
