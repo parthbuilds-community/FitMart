@@ -1,8 +1,9 @@
 // src/pages/AdminCustomers.jsx
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import useInfiniteCustomers from "../hooks/useInfiniteCustomers";
 import AdminNavbar from "../components/AdminNavbar";
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
@@ -114,33 +115,34 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
 );
 
 export default function AdminCustomers() {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [sendingReminderId, setSendingReminderId] = useState(null);
   const [reminderSent, setReminderSent] = useState({});
   const [reminderError, setReminderError] = useState({});
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers`, { headers });
-        const json = await res.json();
-        if (!json.success) {
-          throw new Error(json.error || "Failed to load customers");
-        }
-        setCustomers(json.data || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Customers fetch error:", err);
-        setError(err.message || "Failed to load customers");
-        setLoading(false);
-      }
-    })();
-  }, []);
+  // Paginated customers via infinite query (mirrors the product catalogue).
+  const {
+    data: pagesData,
+    isLoading: loading,
+    isError,
+    error: queryError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteCustomers({ limit: 24 });
+
+  const customers = useMemo(
+    () => (pagesData?.pages ? pagesData.pages.flatMap((p) => p.data) : []),
+    [pagesData]
+  );
+
+  // Stats are computed server-side across ALL customers and returned on every
+  // page, so the KPI cards and segment breakdown stay accurate even though the
+  // table only holds the pages loaded so far.
+  const stats = pagesData?.pages?.[0]?.stats;
+  const totalCustomers = stats?.total ?? customers.length;
+  const error = isError ? queryError?.message || "Failed to load customers" : null;
 
   // Send reminder email for a customer
   const handleSendReminder = async (e, customerId) => {
@@ -166,13 +168,6 @@ export default function AdminCustomers() {
       setReminderSent(prev => ({ ...prev, [customerId]: true }));
       setReminderError(prev => ({ ...prev, [customerId]: null }));
 
-      // Update customer data to show latest reminder sent time
-      setCustomers(prev => prev.map(c =>
-        c.userId === customerId
-          ? { ...c, lastReminderEmailSentAt: new Date().toISOString() }
-          : c
-      ));
-
       // Clear success message after 3 seconds
       setTimeout(() => {
         setReminderSent(prev => ({ ...prev, [customerId]: false }));
@@ -184,11 +179,10 @@ export default function AdminCustomers() {
     }
   };
 
-  // Derived metrics for visualizations
-  const segmentCounts = customers.reduce((acc, c) => {
-    acc[c.segment] = (acc[c.segment] || 0) + 1;
-    return acc;
-  }, {});
+  // Segment distribution comes from the server-side stats (all customers).
+  // Top spenders are read from the loaded rows — the list is sorted by spend
+  // descending, so the highest spenders are always on the first page.
+  const segmentCounts = stats?.segmentCounts || {};
   const topBySpend = [...customers].sort((a, b) => b.totalSpend - a.totalSpend).slice(0, 5);
 
   return (
@@ -221,9 +215,9 @@ export default function AdminCustomers() {
         {/* KPI Cards — single col on mobile, 3-col on sm+ */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-5 mb-8 sm:mb-10">
           {[
-            { label: "Total Customers", value: customers.length, icon: "◎" },
-            { label: "High Value", value: customers.filter(c => c.segment === "high-value").length, icon: "⭑" },
-            { label: "New Customers", value: customers.filter(c => c.segment === "new").length, icon: "+" },
+            { label: "Total Customers", value: totalCustomers, icon: "◎" },
+            { label: "High Value", value: segmentCounts["high-value"] || 0, icon: "⭑" },
+            { label: "New Customers", value: segmentCounts["new"] || 0, icon: "+" },
           ].map(({ label, value, icon }) => (
             <div key={label}
               className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7
@@ -252,7 +246,7 @@ export default function AdminCustomers() {
             <div className="space-y-3">
               {['high-value', 'returning', 'new'].map(seg => {
                 const count = segmentCounts[seg] || 0;
-                const pct = customers.length ? Math.round((count / customers.length) * 100) : 0;
+                const pct = totalCustomers ? Math.round((count / totalCustomers) * 100) : 0;
                 return (
                   <div key={seg} className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${seg === 'high-value' ? 'bg-stone-900' : seg === 'returning' ? 'bg-stone-100 border border-stone-300' : 'bg-stone-100'}`} />
@@ -308,7 +302,7 @@ export default function AdminCustomers() {
                 All Customers
               </h2>
             </div>
-            {!loading && <p className="text-xs text-stone-400">{customers.length} customers</p>}
+            {!loading && <p className="text-xs text-stone-400">{totalCustomers} customers</p>}
           </div>
 
           {/* Mobile card list */}
@@ -442,6 +436,20 @@ export default function AdminCustomers() {
               </tbody>
             </table>
           </div>
+
+          {/* Load more */}
+          {hasNextPage && (
+            <div className="px-4 sm:px-7 py-5 border-t border-stone-100 flex justify-center">
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="px-6 py-2.5 text-sm font-medium rounded-full bg-stone-900 text-white
+                           hover:bg-stone-800 active:scale-95 transition-all disabled:opacity-60"
+              >
+                {isFetchingNextPage ? "Loading…" : "Load More"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
