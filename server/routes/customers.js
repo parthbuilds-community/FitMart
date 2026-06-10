@@ -42,9 +42,14 @@ function calculateInactivityInfo(lastOrderDate) {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-    console.log('[API] GET /customers request received');
+    const all = req.query.all === 'true';
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 24;
 
-    const customers = await Order.aggregate([
+    // Aggregate every paid-order customer. This stage is cheap (one row per
+    // customer). The expensive part is the per-customer Firebase lookup below,
+    // which we now only run for the requested page instead of every customer.
+    const allCustomers = await Order.aggregate([
       { $match: { status: 'paid' } },
       {
         $group: {
@@ -68,17 +73,32 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     ]);
 
-    console.log(`[API] Found ${customers.length || 0} customers from orders`);
+    const total = allCustomers.length;
 
-    if (!customers || customers.length === 0) {
-      console.log('[API] No customers found, returning empty list');
-      return res.json({ success: true, data: [] });
+    // Segment counts are computed across ALL customers (no Firebase needed) so
+    // the dashboard KPI cards stay accurate even while the table is paginated.
+    const stats = { total, segmentCounts: { 'high-value': 0, returning: 0, new: 0 } };
+    for (const c of allCustomers) {
+      const seg = getSegment(c.orderCount, c.totalSpend);
+      stats.segmentCounts[seg] = (stats.segmentCounts[seg] || 0) + 1;
     }
 
-    // Deduplicate UIDs and resolve Firebase user info + UserProfile in parallel
-    const uniqueUids = [...new Set(customers.map(c => c.userId).filter(Boolean))];
-    console.log(`[API] Resolving ${uniqueUids.length} unique Firebase users...`);
+    if (total === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        meta: { page: 1, limit, total: 0, totalPages: 0 },
+        stats,
+      });
+    }
 
+    // `?all=true` preserves the original full-list behaviour for any caller that
+    // still needs every customer at once; otherwise enrich just the page slice.
+    const start = (page - 1) * limit;
+    const pageSlice = all ? allCustomers : allCustomers.slice(start, start + limit);
+
+    // Resolve Firebase user info + UserProfile for the slice only, in parallel.
+    const uniqueUids = [...new Set(pageSlice.map(c => c.userId).filter(Boolean))];
     const userMap = {};
     const profileMap = {};
 
@@ -95,9 +115,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       })
     );
 
-    console.log('[API] Firebase resolution complete');
-
-    const result = customers.map(c => {
+    const data = pageSlice.map(c => {
       const inactivityInfo = calculateInactivityInfo(c.lastOrder);
       return {
         ...c,
@@ -111,8 +129,17 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       };
     });
 
-    console.log(`[API] Returning ${result.length} enriched customers`);
-    res.json({ success: true, data: result });
+    res.json({
+      success: true,
+      data,
+      meta: {
+        page: all ? 1 : page,
+        limit: all ? total : limit,
+        total,
+        totalPages: all ? 1 : Math.ceil(total / limit),
+      },
+      stats,
+    });
   } catch (err) {
     console.error('[API] GET /customers error:', err);
     res.status(500).json({ success: false, error: err.message || 'Server error' });
