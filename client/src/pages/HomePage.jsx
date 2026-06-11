@@ -206,6 +206,10 @@ export default function HomePage() {
 
   useEffect(() => {
     setTimeout(() => setVisible(true), 80);
+    if (!auth) {
+      setUser(null);
+      return;
+    }
     const unsub = auth.onAuthStateChanged(u => {
       setUser(u);
       if (!u) navigate("/auth");
