@@ -227,7 +227,7 @@ export default function LandingPage() {
             <div className={`fade-up ${visible ? "visible" : ""} delay-4
                              flex flex-col sm:flex-row gap-3`}>
               <button
-                onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
+                onClick={() => navigate(auth?.currentUser ? "/home" : "/auth")}
                 className="bg-stone-900 text-white text-sm px-8 py-3.5 rounded-full
                            hover:bg-stone-700 transition-colors w-full sm:w-auto text-center
                            min-h-12 active:scale-[0.98]"
@@ -402,7 +402,7 @@ export default function LandingPage() {
                 key={i}
                 className="bg-white rounded-2xl p-6 sm:p-8 border border-stone-200 hover:shadow-lg
                            transition-all cursor-pointer active:scale-[0.99]"
-                onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
+                onClick={() => navigate(auth?.currentUser ? "/home" : "/auth")}
               >
                 <span className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-3 block">
                   {program.level}
@@ -531,7 +531,7 @@ export default function LandingPage() {
                     ? "bg-stone-900 text-white hover:bg-stone-800"
                     : "bg-white border border-stone-200 hover:border-stone-300"
                   }`}
-                onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
+                onClick={() => navigate(auth?.currentUser ? "/home" : "/auth")}
               >
                 <div>
                   <p className="text-xs tracking-widest uppercase text-stone-400">{plan.name}</p>
@@ -554,7 +554,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
                 <button
-                  onClick={e => { e.stopPropagation(); navigate(auth.currentUser ? "/home" : "/auth"); }}
+                  onClick={e => { e.stopPropagation(); navigate(auth?.currentUser ? "/home" : "/auth"); }}
                   className={`text-sm py-3 rounded-full transition-colors min-h-11
                                 ${plan.highlight
                       ? "bg-white text-stone-900 hover:bg-stone-100"
@@ -581,7 +581,7 @@ export default function LandingPage() {
           </h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <button
-              onClick={() => navigate(auth.currentUser ? "/home" : "/auth")}
+              onClick={() => navigate(auth?.currentUser ? "/home" : "/auth")}
               className="bg-white text-stone-900 text-sm px-8 sm:px-10 py-4 rounded-full
                            hover:bg-stone-100 transition-colors min-h-12 w-full sm:w-auto
                            active:scale-[0.98]"

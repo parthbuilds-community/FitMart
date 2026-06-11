@@ -12,6 +12,15 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export default app;
+// Only initialize Firebase if an API key is present.
+// Without this guard, Firebase throws auth/invalid-api-key and crashes the app.
+let app = null;
+let auth = null;
+
+if (firebaseConfig.apiKey) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+}
+
+export { auth };
+export default app;

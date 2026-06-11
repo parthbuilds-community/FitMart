@@ -13,7 +13,7 @@ export async function getAuthHeaders() {
     }
   }
 
-  const user = auth.currentUser;
+  const user = auth?.currentUser;
   if (!user) return { "Content-Type": "application/json" };
   const token = await user.getIdToken();
   return {

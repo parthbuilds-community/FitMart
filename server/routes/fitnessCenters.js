@@ -3,6 +3,24 @@ const router = express.Router();
 const FitnessCenter = require("../models/FitnessCenter");
 const UserProfile = require("../models/UserProfile");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const admin = require("../firebaseAdmin");
+
+const optionalFirebaseToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return next();
+  const token = authHeader.split('Bearer ')[1];
+  try {
+    if (process.env.NODE_ENV !== 'production' && token.startsWith('dev:')) {
+      const email = token.slice(4);
+      const uid = process.env.DEV_ADMIN_UID || `dev-admin-${(email || '').replace(/[^a-z0-9]/gi, '')}`;
+      req.user = { uid, email, email_verified: true, name: 'Dev Admin' };
+      return next();
+    }
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.user = decoded;
+  } catch (err) {}
+  next();
+};
 
 // Simple helper to compute a mocked distance score and readable distance
 function computeDistanceScore(userAddr, center) {
@@ -45,15 +63,17 @@ function computeDistanceScore(userAddr, center) {
 }
 
 // GET /api/fitness-centers/nearby?type=gym
-router.get("/nearby", verifyFirebaseToken, async (req, res) => {
+router.get("/nearby", optionalFirebaseToken, async (req, res) => {
   try {
     const uid = req.user?.uid;
-    if (!uid) return res.status(401).json({ error: "Unauthorized" });
+    let userAddress = null;
 
-    const user = await UserProfile.findOne({ userId: uid }).lean();
-    if (!user) return res.status(404).json({ error: "User profile not found" });
-
-    const userAddress = (user.addresses || []).find(a => a.id === user.defaultAddressId) || (user.addresses || [])[0] || null;
+    if (uid) {
+      const user = await UserProfile.findOne({ userId: uid }).lean();
+      if (user) {
+        userAddress = (user.addresses || []).find(a => a.id === user.defaultAddressId) || (user.addresses || [])[0] || null;
+      }
+    }
 
     const typeFilter = req.query.type;
     const query = {};
