@@ -44,6 +44,9 @@ async function releaseAndClearCart(userId) {
  */
 router.post("/create-order", verifyFirebaseToken, async (req, res) => {
   try {
+    if (!razorpay) {
+      return res.status(503).json({ error: "Payment service is not configured" });
+    }
     const { amount, currency = "INR", userId } = req.body;
     if (!amount || !userId)
       return res.status(400).json({ error: "amount and userId are required" });
