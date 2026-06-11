@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { addExerciseToWorkout, getWorkoutByDate } from "../utils/workoutStorage";
+import { addExerciseToWorkout } from "../utils/workoutStorage";
 
 const CATEGORIES = [
   { id: "chest", name: "Chest" },
@@ -24,13 +24,13 @@ export default function ExercisePage() {
     if (b.id === suggestedCategory) return 1;
     return 0;
   });
+
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [imageErrors, setImageErrors] = useState(new Set());
 
-  // Get selected date from localStorage on mount
   useEffect(() => {
     const storedDate = localStorage.getItem("selectedDate");
     if (storedDate) {
@@ -38,7 +38,6 @@ export default function ExercisePage() {
     }
   }, []);
 
-  // Fetch exercises when category changes
   useEffect(() => {
     fetchExercises(selectedCategory);
   }, [selectedCategory]);
@@ -55,24 +54,12 @@ export default function ExercisePage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch exercises. Status: ${response.status}`);
+        throw new Error(
+          errorData.error || `Failed to fetch exercises. Status: ${response.status}`
+        );
       }
 
       const data = await response.json();
-
-      // Client-side debug logging
-      if (data && data.length > 0) {
-        const firstEx = data[0];
-        console.log(`\n[Exercise Client] Received ${data.length} exercises for "${bodyPart}"`);
-        console.log("  First exercise name:", firstEx.name);
-        console.log("  First exercise gifUrl:", firstEx.gifUrl ? `✅ Present` : "❌ null");
-        console.log("  First exercise imageUrl:", firstEx.imageUrl ? `✅ Present` : "❌ null");
-        if (firstEx.gifUrl) {
-          console.log("  GIF URL preview:", firstEx.gifUrl.substring(0, 100));
-        }
-        console.log("");
-      }
-
       setExercises(data || []);
     } catch (err) {
       setError(err.message || "Failed to load exercises. Please try again.");
@@ -88,16 +75,12 @@ export default function ExercisePage() {
       return;
     }
 
-    // Add exercise to the workout
     await addExerciseToWorkout(selectedDate, exercise);
-
-    // Navigate back to notes page
     localStorage.setItem("selectedDate", selectedDate);
     navigate("/notes");
   };
 
   const handleImageError = (exerciseId) => {
-    console.warn(`[Exercise Client] Image failed to load for exercise ID: ${exerciseId}`);
     setImageErrors((prev) => new Set([...prev, exerciseId]));
   };
 
@@ -119,7 +102,9 @@ export default function ExercisePage() {
         </button>
 
         <header className="mb-12 text-center md:text-left">
-          <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2 font-medium">Exercise library</p>
+          <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2 font-medium">
+            Exercise library
+          </p>
           <h1 className="font-['DM_Serif_Display'] text-4xl md:text-5xl lg:text-6xl text-stone-900 leading-tight">
             Choose Your Exercise
           </h1>
@@ -133,9 +118,10 @@ export default function ExercisePage() {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`text-xs px-6 py-3 rounded-full transition-all duration-300 font-medium tracking-wide
-                  ${selectedCategory === cat.id
-                    ? "bg-stone-900 text-white shadow-lg shadow-stone-200"
-                    : "bg-white border border-stone-200 text-stone-600 hover:border-stone-900 hover:text-stone-900"
+                  ${
+                    selectedCategory === cat.id
+                      ? "bg-stone-900 text-white shadow-lg shadow-stone-200"
+                      : "bg-white border border-stone-200 text-stone-600 hover:border-stone-900 hover:text-stone-900"
                   }`}
               >
                 {cat.name}
@@ -144,11 +130,11 @@ export default function ExercisePage() {
           </div>
         </section>
 
-        {/* Exercises Grid */}
+        {/* Loading */}
         {loading && (
           <section className="min-h-100 border-2 border-dashed border-stone-200 rounded-3xl flex items-center justify-center bg-white/50">
             <div className="text-center p-8">
-              <div className="inline-block w-12 h-12 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin mb-4"></div>
+              <div className="inline-block w-12 h-12 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin mb-4" />
               <p className="text-stone-400 text-sm font-medium uppercase tracking-widest">
                 Loading exercises...
               </p>
@@ -156,6 +142,7 @@ export default function ExercisePage() {
           </section>
         )}
 
+        {/* Error */}
         {error && (
           <section className="min-h-100 border-2 border-dashed border-stone-300 rounded-3xl flex items-center justify-center bg-stone-50">
             <div className="text-center p-8">
@@ -173,6 +160,7 @@ export default function ExercisePage() {
           </section>
         )}
 
+        {/* Empty state */}
         {!loading && !error && exercises.length === 0 && (
           <section className="min-h-100 border-2 border-dashed border-stone-200 rounded-3xl flex items-center justify-center bg-white/50">
             <div className="text-center p-8">
@@ -185,6 +173,7 @@ export default function ExercisePage() {
           </section>
         )}
 
+        {/* Exercises Grid */}
         {!loading && !error && exercises.length > 0 && (
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {exercises.map((exercise) => (
@@ -192,9 +181,11 @@ export default function ExercisePage() {
                 key={exercise.id}
                 className="bg-white border border-stone-200 rounded-2xl overflow-hidden hover:border-stone-900 hover:shadow-lg transition-all duration-300 group flex flex-col"
               >
-                {/* Exercise Media Container */}
+                {/* Exercise Media */}
                 <div className="w-full bg-stone-100 overflow-hidden aspect-square flex items-center justify-center">
-                  {exercise.gifUrl && exercise.gifUrl.trim() !== "" && !imageErrors.has(exercise.id) ? (
+                  {exercise.gifUrl &&
+                  exercise.gifUrl.trim() !== "" &&
+                  !imageErrors.has(exercise.id) ? (
                     <img
                       src={exercise.gifUrl}
                       alt={exercise.name}
