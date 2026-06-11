@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Cart = require('../models/Cart');
 const crypto = require('crypto');
 const cache = require('../lib/cache');
 
@@ -116,7 +117,6 @@ router.get('/', async (req, res) => {
  * @desc    Returns all products where available stock (stock - reserved) is below threshold of 5
  * @access  Public
  */
-
 router.get('/low-stock', async (req, res) => {
   try {
     // only check products where stock is not null
@@ -133,7 +133,6 @@ router.get('/low-stock', async (req, res) => {
  * @desc    Returns a single product by its productId
  * @access  Public
  */
-// GET /api/products/:id - get product by productId
 router.get('/:id', async (req, res) => {
   const productId = Number(req.params.id);
 
@@ -194,18 +193,37 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
 
 /**
  * @route   DELETE /api/products/:id
- * @desc    Deletes a product by its productId
+ * @desc    Deletes a product by its productId; clears it from all active carts first
  * @access  Private (Admin)
  */
-
 router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   const productId = Number(req.params.id);
 
   if (isNaN(productId)) {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
+
   try {
+    // Release reserved stock from all carts before deleting
+    const carts = await Cart.find({ 'items.productId': productId });
+    for (const cart of carts) {
+      const item = cart.items.find(i => i.productId === productId);
+      if (item) {
+        await Product.findOneAndUpdate(
+          { productId },
+          { $inc: { reserved: -item.quantity } }
+        );
+        cart.items = cart.items.filter(i => i.productId !== productId);
+        await cart.save();
+      }
+    }
+
     const deleted = await Product.findOneAndDelete({ productId });
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
     try { await cache.delPattern('products:'); } catch (e) { }
     res.json({ success: true });
   } catch (err) {
