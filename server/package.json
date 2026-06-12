@@ -7,7 +7,8 @@
     "dev": "nodemon index.js",
     "seed": "node seed.js",
     "seed:fitness": "node seedFitnessCenters.js",
-    "test": "jest --runInBand"
+    "test:cart": "jest tests/cart.reserved.test.js --forceExit",
+    "test": "jest --runInBand --forceExit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "jest": "^30.4.2",
+    "mongodb-memory-server": "^11.1.0",
     "nodemon": "^3.1.14",
     "supertest": "^6.3.3"
   },

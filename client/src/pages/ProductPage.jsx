@@ -21,7 +21,10 @@ async function apiAddToCart(userId, productId, quantity) {
     method: "POST", headers, credentials: "include",
     body: JSON.stringify({ productId, quantity }),
   });
-  if (!res.ok) throw new Error("Failed to add to cart");
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || "Failed to add to cart");
+  }
   return res.json();
 }
 
@@ -139,6 +142,7 @@ export default function ProductPage() {
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
       console.error("Add to cart failed:", err);
+      alert(err.message);
     } finally {
       setAdding(false);
     }
@@ -153,6 +157,7 @@ export default function ProductPage() {
       navigate("/checkout");
     } catch (err) {
       console.error("Buy Now failed:", err);
+      alert(err.message);
       setBuyingNow(false);
     }
   };
@@ -167,11 +172,15 @@ export default function ProductPage() {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
-      if (!res.ok) throw new Error("Failed to remove");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to remove");
+      }
       const cartDoc = await res.json();
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("removeFromCart error:", err);
+      alert(err.message);
     }
   };
 
@@ -185,11 +194,15 @@ export default function ProductPage() {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });
-      if (!res.ok) throw new Error("Failed to update qty");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to update qty");
+      }
       const cartDoc = await res.json();
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("updateQty error:", err);
+      alert(err.message);
     }
   };
 
