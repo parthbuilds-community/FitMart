@@ -29,6 +29,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import LegalTerms from "./pages/LegalTerms";
 import LegalPrivacy from "./pages/LegalPrivacy";
 import DevAdminLogin from "./components/DevAdminLogin";
+import WishlistPage from "./pages/WishlistPage";
 
 export default function App() {
   const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="/exercises" element={<NonAdminRoute><ExercisePage /></NonAdminRoute>} />
             <Route path="/terms" element={<NonAdminRoute><LegalTerms /></NonAdminRoute>} />
             <Route path="/privacy-policy" element={<NonAdminRoute><LegalPrivacy /></NonAdminRoute>} />
+            <Route path="/wishlist" element={<NonAdminRoute><WishlistPage /></NonAdminRoute>} />
 
             {/* Admin routes (guarded) */}
             {import.meta.env.MODE === 'development' && (

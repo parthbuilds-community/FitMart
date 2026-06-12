@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import { useAuth } from "../auth/useAuth";
@@ -13,13 +13,13 @@ export default function Navbar({
   menuOpen,
   setMenuOpen,
   onSignOut,
+  wishlistIds = new Set(),
 }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [localMenuOpen, setLocalMenuOpen] = useState(false);
 
-  // Treat tracker and notes as limited nav routes (no "Track Fitness" option)
   const isLimitedNavRoute =
     location?.pathname === "/profile" ||
     location?.pathname === "/tracker" ||
@@ -90,6 +90,27 @@ export default function Navbar({
                 <path d="m16.5 16.5 4 4" />
               </svg>
             </button>
+          )}
+
+          {/* Wishlist icon — only shown for logged-in non-admin users */}
+          {user && (
+            <Link
+              to="/wishlist"
+              aria-label={`Wishlist, ${wishlistIds.size} item${wishlistIds.size !== 1 ? "s" : ""}`}
+              className={`relative p-2 transition-colors min-w-10 min-h-10 flex items-center justify-center rounded-full ${iconColor}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              {wishlistIds.size > 0 && (
+                <span
+                  className="absolute top-0.5 right-0.5 bg-stone-900 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-semibold"
+                  aria-hidden
+                >
+                  {wishlistIds.size}
+                </span>
+              )}
+            </Link>
           )}
 
           {onCartOpen && (
