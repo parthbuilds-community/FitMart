@@ -6,7 +6,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 const verifyAdmin = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ error: 'Unauthorized — no user found' });
+    return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized — no user found' } });
   }
 
   // Production check: match UIDs
@@ -21,7 +21,7 @@ const verifyAdmin = (req, res, next) => {
     if (process.env.DEV_ADMIN_UID && req.user.uid === process.env.DEV_ADMIN_UID) return next();
   }
 
-  return res.status(403).json({ error: 'Forbidden — admin access required' });
+  return res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'Forbidden — admin access required' } });
 };
 
 module.exports = verifyAdmin;

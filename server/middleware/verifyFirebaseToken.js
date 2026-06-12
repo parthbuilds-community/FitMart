@@ -12,7 +12,7 @@ const verifyFirebaseToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized — no token provided' });
+    return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized — no token provided' } });
   }
 
   const token = authHeader.split('Bearer ')[1];
@@ -30,13 +30,13 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     // Allow the super-admin UID to bypass email verification
     if (!decoded.email_verified && decoded.uid !== SUPER_ADMIN_UID) {
-      return res.status(403).json({ error: 'Forbidden — email not verified' });
+      return res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'Forbidden — email not verified' } });
     }
 
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Unauthorized — invalid or expired token' });
+    return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized — invalid or expired token' } });
   }
 };
 
