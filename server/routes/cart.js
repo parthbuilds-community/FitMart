@@ -90,9 +90,6 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
       cart = await Cart.create({ userId, items: [] });
     }
     res.json(cart);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 /**
@@ -103,7 +100,6 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
 router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
-  try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
     if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
@@ -145,7 +141,6 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
 router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
-  try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
     if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
@@ -193,10 +188,6 @@ router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
     cart.items = [];
     await cart.save();
     res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 module.exports = router;

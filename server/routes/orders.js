@@ -16,7 +16,7 @@ const ensureOrderOwnership = ensureOwnership('Forbidden — you can only view yo
  *          body: { userId, items?: [{ productId, quantity }] }
  * @access  Private
  */
-router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async (req, res) => {
+router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async (req, res, next) => {
   const { userId, items } = req.body;
 
   if (!userId) return res.status(400).json({ error: 'userId required' });
@@ -38,7 +38,7 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
     ) {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Server error' });
+    next(err);
   }
 });
 
@@ -48,13 +48,9 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
  * @access  Private
  */
 router.get('/:userId', verifyFirebaseToken, ensureOrderOwnership, async (req, res) => {
-  try {
-    const { userId } = req.params;
+  const { userId } = req.params;
     const orders = await Order.find({ userId }).sort({ createdAt: -1 });
     res.json(orders);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
 });
 
 module.exports = router;

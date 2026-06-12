@@ -195,8 +195,11 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ error: "Payload too large" });
   }
 
-  console.error("Unhandled error:", err.message);
-  res.status(500).json({ error: "Something went wrong" });
+  const statusCode = err.statusCode || err.status || 500;
+  console.error(`[${req.method} ${req.path}] Error ${statusCode}:`, err.message);
+  if (process.env.NODE_ENV !== 'production') console.error(err.stack);
+
+  res.status(statusCode).json({ error: err.message || "Something went wrong" });
 });
 
 app.listen(port, () => {

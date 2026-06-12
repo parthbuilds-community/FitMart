@@ -97,30 +97,19 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 
 // ── GET /api/bugs — admin only ────────────────────────────────────────────
 router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
-  try {
     const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
     res.json({ ok: true, bugs });
-  } catch (err) {
-    console.error('Error fetching bugs:', err);
-    res.status(500).json({ error: 'Failed to fetch bugs' });
-  }
 });
 
 // ── PATCH /api/bugs/:id — admin only ─────────────────────────────────────
 router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  try {
-
-    const { status } = req.body;
+  const { status } = req.body;
     if (!['open', 'in-progress', 'resolved'].includes(status))
       return res.status(400).json({ error: 'Invalid status' });
 
     const bug = await Bug.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!bug) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, bug });
-  } catch (err) {
-    console.error('Error updating bug:', err);
-    res.status(500).json({ error: 'Failed to update bug' });
-  }
 });
 
 module.exports = router;
