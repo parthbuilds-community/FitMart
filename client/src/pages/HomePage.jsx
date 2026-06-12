@@ -221,7 +221,11 @@ export default function HomePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteProducts({ limit: 24 });
+  } = useInfiniteProducts({
+    limit: 24,
+    category: activeCategory === "all" ? "" : activeCategory,
+    search: debouncedQuery,
+  });
 
   useEffect(() => {
     setLoading(rqLoading);
@@ -328,13 +332,7 @@ export default function HomePage() {
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
   const firstName = user?.displayName?.split(" ")[0] || "there";
 
-  const filtered = products.filter(p => {
-    const matchCat = activeCategory === "all" || p.category === activeCategory;
-    const matchSearch = !debouncedQuery
-      || p.name.toLowerCase().includes(debouncedQuery.toLowerCase())
-      || p.brand?.toLowerCase().includes(debouncedQuery.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const filtered = products;
 
   const renderProductGrid = () => {
     if (loading) return (
@@ -510,7 +508,7 @@ export default function HomePage() {
                              flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1
                              scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap`}>
               {CATEGORIES.map(c => (
-                <button key={c.value} onClick={() => { setSearchParams({ category: c.value }); setShowAll(false); setSearchQuery(""); }}
+                <button key={c.value} onClick={() => { setSearchParams({ category: c.value }); setShowAll(false); setSearchQuery(""); setDebouncedQuery(""); }}
                   className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap shrink-0
                               ${activeCategory === c.value
                       ? "bg-stone-900 text-white"
