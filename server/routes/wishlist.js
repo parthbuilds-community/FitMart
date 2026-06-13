@@ -4,17 +4,23 @@ const Wishlist = require('../models/Wishlist');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 
+// Ownership guard — user can only touch their own wishlist
+const verifyOwnership = (req, res, next) => {
+  if (req.user.uid !== req.params.userId) {
+    return res.status(403).json({ error: 'Forbidden: cannot access another user\'s wishlist' });
+  }
+  next();
+};
+
 // GET /api/wishlist/:userId
-router.get('/:userId', verifyFirebaseToken, async (req, res) => {
+router.get('/:userId', verifyFirebaseToken, verifyOwnership, async (req, res) => {
   try {
     const wishlist = await Wishlist.findOne({ userId: req.params.userId });
     if (!wishlist || wishlist.items.length === 0) {
       return res.json({ items: [] });
     }
-
     const productIds = wishlist.items.map(item => item.productId);
     const products = await Product.find({ productId: { $in: productIds } });
-
     res.json({ items: products });
   } catch (err) {
     console.error('GET wishlist error:', err);
@@ -23,7 +29,7 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
 });
 
 // POST /api/wishlist/:userId/add
-router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
+router.post('/:userId/add', verifyFirebaseToken, verifyOwnership, async (req, res) => {
   try {
     const { productId } = req.body;
     if (!productId) return res.status(400).json({ error: 'productId is required' });
@@ -33,7 +39,6 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
       { $addToSet: { items: { productId } } },
       { new: true, upsert: true }
     );
-
     res.json({ message: 'Added to wishlist', wishlist });
   } catch (err) {
     console.error('ADD wishlist error:', err);
@@ -42,7 +47,7 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
 });
 
 // POST /api/wishlist/:userId/remove
-router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
+router.post('/:userId/remove', verifyFirebaseToken, verifyOwnership, async (req, res) => {
   try {
     const { productId } = req.body;
     if (!productId) return res.status(400).json({ error: 'productId is required' });
@@ -52,7 +57,6 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
       { $pull: { items: { productId } } },
       { new: true }
     );
-
     res.json({ message: 'Removed from wishlist', wishlist });
   } catch (err) {
     console.error('REMOVE wishlist error:', err);
@@ -61,7 +65,7 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
 });
 
 // DELETE /api/wishlist/:userId
-router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
+router.delete('/:userId', verifyFirebaseToken, verifyOwnership, async (req, res) => {
   try {
     await Wishlist.findOneAndUpdate(
       { userId: req.params.userId },

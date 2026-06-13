@@ -1,32 +1,40 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAuthHeaders } from '../utils/getAuthHeaders';
 
 const API = import.meta.env.VITE_API_URL;
 
 export function useWishlist(user) {
   const [wishlistIds, setWishlistIds] = useState(new Set());
-  const [loading, setLoading] = useState(false);
+  const [loadingIds, setLoadingIds] = useState(new Set()); // per-item loading
+  const [error, setError] = useState(null);
+  
+  // useRef to always have fresh wishlistIds without it being a dependency
+  const wishlistRef = useRef(wishlistIds);
+  useEffect(() => { wishlistRef.current = wishlistIds; }, [wishlistIds]);
 
-  // Fetch wishlist IDs on mount
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const fetchWishlist = async () => {
       try {
         const headers = await getAuthHeaders(user);
         const res = await window.fetch(`${API}/api/wishlist/${user.uid}`, { headers });
+        if (!res.ok) throw new Error('Failed to fetch wishlist');
         const data = await res.json();
         const ids = new Set(data.items.map(p => p.productId));
         setWishlistIds(ids);
       } catch (err) {
-        console.error('Failed to load wishlist', err);
+        setError('Could not load wishlist');
+        console.error(err);
       }
     };
-    fetch();
+    fetchWishlist();
   }, [user]);
 
   const toggle = useCallback(async (productId) => {
     if (!user) return;
-    const isWishlisted = wishlistIds.has(productId);
+    
+    // Read from ref — always fresh, no stale closure
+    const isWishlisted = wishlistRef.current.has(productId);
 
     // Optimistic update
     setWishlistIds(prev => {
@@ -34,6 +42,9 @@ export function useWishlist(user) {
       isWishlisted ? next.delete(productId) : next.add(productId);
       return next;
     });
+
+    // Per-item loading state
+    setLoadingIds(prev => new Set(prev).add(productId));
 
     try {
       const headers = await getAuthHeaders(user);
@@ -44,16 +55,24 @@ export function useWishlist(user) {
         body: JSON.stringify({ productId }),
       });
       if (!res.ok) throw new Error('Request failed');
+      setError(null);
     } catch (err) {
-      // Revert on failure
+      // Revert optimistic update
       setWishlistIds(prev => {
         const next = new Set(prev);
         isWishlisted ? next.add(productId) : next.delete(productId);
         return next;
       });
-      console.error('Wishlist toggle failed', err);
+      setError('Could not update wishlist. Try again.');
+      console.error(err);
+    } finally {
+      setLoadingIds(prev => {
+        const next = new Set(prev);
+        next.delete(productId);
+        return next;
+      });
     }
-  }, [user, wishlistIds]);
+  }, [user]); // ← only `user` as dependency now, not wishlistIds
 
-  return { wishlistIds, toggle, loading };
+  return { wishlistIds, toggle, loadingIds, error };
 }
