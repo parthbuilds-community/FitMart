@@ -163,7 +163,7 @@ Here is a summary of the security measures already in place in FitMart:
 | HTTP security headers | `helmet` middleware applied globally |
 | Rate limiting | `express-rate-limit`: 100 req/15 min (API), 20 req/15 min (payment routes) |
 | CORS | Allowlist-based origin validation; rejects unknown origins |
-| Request body size | Capped at `10kb` to mitigate payload flooding |
+| Request body size | Capped at `1mb` to mitigate payload flooding |
 | Request logging | Colored structured logger with automatic redaction of sensitive keys |
 | ETag disabled | Prevents conditional 304 responses leaking cached sensitive data |
 | Cache-Control | `no-store` header set on all `/api` responses |
