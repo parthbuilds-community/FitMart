@@ -167,7 +167,7 @@ Here is a summary of the security measures already in place in FitMart:
 | HTTP security headers | `helmet` middleware applied globally |
 | Rate limiting | `express-rate-limit`: 100 req/15 min (API), 20 req/15 min (payment routes) |
 | CORS | Allowlist-based origin validation; rejects unknown origins |
-| Request body size | Capped at `10kb` to mitigate payload flooding |
+| Request body size | Capped at `1mb` to mitigate payload flooding |
 | Request logging | Colored structured logger with automatic redaction of sensitive keys |
 | ETag disabled | Prevents conditional 304 responses leaking cached sensitive data |
 | Cache-Control | `no-store` header set on all `/api` responses |
@@ -192,7 +192,7 @@ Document server-side input validation and prompt safety measures for the AI chat
 
 ### Additional Enforcement
 
-- The server enforces a request body size limit via `express.json({ limit: "10kb" })`. Oversized JSON bodies may be rejected by the parser (HTTP 413).
+- The server enforces a request body size limit via `express.json({ limit: "1mb" })`. Oversized JSON bodies may be rejected by the parser (HTTP 413).
 - A global error handler maps parser/body-size errors to HTTP 413 with a `Payload too large` message.
 
 ### Sanitization Rules
@@ -241,7 +241,7 @@ If you discover a security issue related to the chat or prompt handling, please 
   1. Empty input → expect HTTP 400.
   2. Message over 500 characters → expect HTTP 400 and error explaining the max length.
   3. Injection attempts ("Ignore all instructions...") → the message is sanitized and neutralized; the model receives the system prompt and safety instruction first and user input inside delimiters.
-  4. Oversized JSON (over `10kb`) → expect HTTP 413 `Payload too large`.
+  4. Oversized JSON (over `1mb`) → expect HTTP 413 `Payload too large`.
   5. Requests from cross-origin frontends: in development all origins are allowed by default; check `ALLOW_ALL_ORIGINS` and `ALLOWED_ORIGIN` in `server/index.js`.
 
 These measures implement defense-in-depth for prompt safety and cost control when interacting with generative models.
