@@ -423,18 +423,7 @@ export default function HomePage() {
       {jsonLd && (
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       )}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-        .fade-in { opacity:0; transform:translateY(16px); transition:opacity .5s ease,transform .5s ease; }
-        .fade-in.show { opacity:1; transform:translateY(0); }
-        .d1{transition-delay:.05s} .d2{transition-delay:.15s} .d3{transition-delay:.25s}
-        .cart-slide { transform:translateX(100%); transition:transform .35s cubic-bezier(.16,1,.3,1); }
-        .cart-slide.open { transform:translateX(0); }
-        .overlay { opacity:0; pointer-events:none; transition:opacity .3s ease; }
-        .overlay.show { opacity:1; pointer-events:auto; }
-        .search-expand { max-height:0; overflow:hidden; transition:max-height .3s ease; }
-        .search-expand.open { max-height:80px; }
-      `}</style>
+     
 
       {showBanner && <WelcomeBanner onDismiss={dismissBanner} />}
 
