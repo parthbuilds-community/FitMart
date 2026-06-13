@@ -106,8 +106,8 @@ app.use(
 );
 
 app.use(helmet());
-app.use(express.json({ limit: "10kb" }));
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
 
