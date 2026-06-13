@@ -106,7 +106,18 @@ app.use(
 );
 
 app.use(helmet());
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "1mb" }));
+
+app.use((err, req, res, next) => {
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({
+      success: false,
+      message: "Request body exceeds the 1MB limit."
+    });
+  }
+
+  next(err);
+});
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
