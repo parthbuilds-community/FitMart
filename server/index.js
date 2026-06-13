@@ -23,9 +23,6 @@ if (isDev) {
   allowedOrigins.push("http://localhost:5173", "http://127.0.0.1:5173");
 }
 
-// Display missing variables at server startup. Only require truly critical vars
-// to avoid failing entirely in environments where optional services (Razorpay)
-// are intentionally not configured (for example: demo deployments on Vercel).
 const CRITICAL_ENV_VARS = ["MONGO_URI"];
 const OPTIONAL_ENV_VARS = [
   "RAZORPAY_KEY_ID",
@@ -108,10 +105,8 @@ app.use(
 app.use(helmet());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-// Disable automatic ETag generation to avoid conditional 304 responses
 app.disable("etag");
 
-// Ensure API responses are not served from client caches (avoid 304 from conditional requests)
 app.use("/api", (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   next();
@@ -146,7 +141,6 @@ if (process.env.NODE_ENV !== 'production') {
 // ── Logger (after body parsing, before routes) ──────────────────────────────
 const logger = require("./middleware/logger");
 app.use(logger);
-//Dashboard route needs logger to parse query params for logging
 
 const dashboardRoutes = require("./routes/dashboard");
 
@@ -163,10 +157,10 @@ app.use("/api/exercises", require("./routes/exercises"));
 app.use("/api/workouts", require("./routes/workouts"));
 app.use("/api/bugs", require("./routes/bugs"));
 
-// ── // Razorpay / payment routes (prefixed with /api/payment) ─────────────────
-// These handle:  POST /create-order
-//                POST /verify-payment
-//                POST /clear-cart
+// Wishlist
+app.use("/api/wishlist", require("./routes/wishlist"));
+
+// ── Razorpay / payment routes ─────────────────────────────────────────────
 app.use("/api/payment", require("./routes/payment"));
 // FitRewards loyalty points routes
 app.use("/api/rewards", require("./routes/rewards"));

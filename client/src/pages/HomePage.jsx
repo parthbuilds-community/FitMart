@@ -1,4 +1,3 @@
-
 // src/pages/HomePage.jsx
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -19,6 +18,9 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+import WishlistButton from '../components/WishlistButton';
+import { useWishlist } from '../hooks/useWishlist';
+
 
 
 
@@ -47,7 +49,7 @@ function mapCart(cartDoc, products) {
 }
 
 // ── ProductCard ───────────────────────────────────────────────────────────
-const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], updateQty }) {
+const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], updateQty, wishlistIds, toggleWishlist }) {
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
   const cartItem = cartItems.find(item => item.id === (product.productId || product.id));
@@ -100,6 +102,15 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
                            rounded-full border border-stone-200">
             −{discount}%
           </span>
+        )}
+        {wishlistIds && toggleWishlist && (
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+            <WishlistButton
+              productId={productId}
+              wishlistIds={wishlistIds}
+              toggle={toggleWishlist}
+            />
+          </div>
         )}
       </div>
 
@@ -195,6 +206,7 @@ export default function HomePage() {
   const [showAll, setShowAll] = useState(false);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
+  const { wishlistIds, toggle: toggleWishlist } = useWishlist(user);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -388,7 +400,7 @@ export default function HomePage() {
       <div className={`fade-in d3 ${visible ? "show" : ""}
                        grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5`}>
         {displayedProducts.map(p => (
-          <ProductCard key={p.id} product={p} onAdd={addToCart} cartItems={cart} updateQty={updateQty} />
+          <ProductCard key={p.id} product={p} onAdd={addToCart} cartItems={cart} updateQty={updateQty} wishlistIds={wishlistIds} toggleWishlist={toggleWishlist} />
         ))}
       </div>
     );
@@ -445,6 +457,7 @@ export default function HomePage() {
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         onSignOut={handleSignOut}
+        wishlistIds={wishlistIds}
       />
 
       {/* Hero banner */}
