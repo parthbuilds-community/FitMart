@@ -113,7 +113,7 @@ router.get('/', async (req, res) => {
 
 /**
  * @route   GET /api/products/low-stock
- * @desc    Returns all products where available stock (stock - reserved) is below threshold of 5
+ * @desc    Returns all products where available stock (stock - reserved) is below the shared LOW_STOCK_THRESHOLD
  * @access  Public
  */
 
