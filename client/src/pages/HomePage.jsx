@@ -1,5 +1,4 @@
-
-// src/pages/HomePage.jsx
+ // src/pages/HomePage.jsx
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -18,9 +17,6 @@ import NearbyFitnessCenters from "../components/NearbyFitnessCenters";
 import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
-import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
-
-
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -32,25 +28,42 @@ const CATEGORIES = [
 ];
 
 const PLANS = [
-  { name: "Weight Loss", duration: "12 Weeks", desc: "Caloric-deficit nutrition + cardio-focused programming", tag: "MOST POPULAR", route: "/plans/weight-loss" },
-  { name: "Muscle Building", duration: "16 Weeks", desc: "Progressive overload training + protein-optimized meal plans", tag: null, route: "/plans/muscle-building" },
-  { name: "Mobility & Recovery", duration: "8 Weeks", desc: "Flexibility-first programming, ideal for desk workers", tag: null, route: "/plans/mobility-recovery" },
+  {
+    name: "Weight Loss",
+    duration: "12 Weeks",
+    desc: "Caloric-deficit nutrition + cardio-focused programming",
+    tag: "MOST POPULAR",
+    route: "/plans/weight-loss",
+  },
+  {
+    name: "Muscle Building",
+    duration: "16 Weeks",
+    desc: "Progressive overload training + protein-optimized meal plans",
+    tag: null,
+    route: "/plans/muscle-building",
+  },
+  {
+    name: "Mobility & Recovery",
+    duration: "8 Weeks",
+    desc: "Flexibility-first programming, ideal for desk workers",
+    tag: null,
+    route: "/plans/mobility-recovery",
+  },
 ];
 
-
 function mapCart(cartDoc, products) {
-  return cartDoc.items.map(it => {
-    const prod = products.find(p => Number(p.productId) === Number(it.productId));
+  return cartDoc.items.map((it) => {
+    const prod = products.find((p) => Number(p.productId) === Number(it.productId));
     if (!prod) return { id: it.productId, qty: it.quantity, name: "Unknown", price: 0 };
     return { ...prod, id: prod.id || prod.productId, qty: it.quantity };
   });
 }
 
-// ── ProductCard ───────────────────────────────────────────────────────────
+// ── ProductCard ───────────────────────────────────────────────────────────────
 const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], updateQty }) {
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
-  const cartItem = cartItems.find(item => item.id === (product.productId || product.id));
+  const cartItem = cartItems.find((item) => item.id === (product.productId || product.id));
   const quantity = cartItem?.qty || 0;
   const productId = product.productId || product.id;
 
@@ -66,10 +79,11 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
     : null;
 
   return (
-    <div className="group bg-white border border-stone-100 rounded-2xl overflow-hidden
-            hover:border-stone-200 hover:shadow-lg transition-all duration-300
-            flex flex-col h-full">
-
+    <div
+      className="group bg-white border border-stone-100 rounded-2xl overflow-hidden
+                 hover:border-stone-200 hover:shadow-lg transition-all duration-300
+                 flex flex-col h-full"
+    >
       {/* Clickable image */}
       <div
         onClick={() => navigate(`/product/${productId}`)}
@@ -78,10 +92,15 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
       >
         {product.image ? (
           <img
-            src={product.image} alt={product.name}
-            loading="lazy" decoding="async"
+            src={product.image}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = "none"; }}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.style.display = "none";
+            }}
           />
         ) : (
           <div className="text-4xl sm:text-5xl opacity-20 select-none group-hover:scale-110 transition-transform duration-500">
@@ -89,15 +108,19 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
           </div>
         )}
         {product.badge && (
-          <span className="absolute top-2 left-2 sm:top-3 sm:left-3 text-[9px] sm:text-[10px]
-                           tracking-widest uppercase bg-stone-900 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full">
+          <span
+            className="absolute top-2 left-2 sm:top-3 sm:left-3 text-[9px] sm:text-[10px]
+                       tracking-widest uppercase bg-stone-900 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full"
+          >
             {product.badge}
           </span>
         )}
         {discount && (
-          <span className="absolute top-2 right-2 sm:top-3 sm:right-3 text-[9px] sm:text-[10px]
-                           font-medium text-stone-600 bg-white px-1.5 sm:px-2 py-0.5 sm:py-1
-                           rounded-full border border-stone-200">
+          <span
+            className="absolute top-2 right-2 sm:top-3 sm:right-3 text-[9px] sm:text-[10px]
+                       font-medium text-stone-600 bg-white px-1.5 sm:px-2 py-0.5 sm:py-1
+                       rounded-full border border-stone-200"
+          >
             −{discount}%
           </span>
         )}
@@ -111,8 +134,15 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
         {/* Clickable name */}
         <h3
           onClick={() => navigate(`/product/${productId}`)}
-          onPointerDown={(e) => { if (e?.nativeEvent?.pointerType === 'touch') e.preventDefault(); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/product/${productId}`); } }}
+          onPointerDown={(e) => {
+            if (e?.nativeEvent?.pointerType === "touch") e.preventDefault();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate(`/product/${productId}`);
+            }
+          }}
           role="button"
           tabIndex={0}
           className="text-xs sm:text-sm font-medium text-stone-900 leading-snug mb-1.5 sm:mb-2
@@ -127,10 +157,16 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
         </div>
 
         <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-1 mt-auto w-full">
-          <div className="min-w-0 pr-2 text-left sm:text-left w-full sm:w-auto">
-            <div className="text-sm sm:text-base font-semibold text-stone-900 truncate">{fmt(product.price)}</div>
+          <div className="min-w-0 pr-2 text-left w-full sm:w-auto">
+            <div className="text-sm sm:text-base font-semibold text-stone-900 truncate">
+              {fmt(product.price)}
+            </div>
             <div className="text-[10px] sm:text-xs text-stone-400 line-through mt-0.5">
-              {product.originalPrice ? fmt(product.originalPrice) : <span className="invisible">&nbsp;</span>}
+              {product.originalPrice ? (
+                fmt(product.originalPrice)
+              ) : (
+                <span className="invisible">&nbsp;</span>
+              )}
             </div>
           </div>
 
@@ -138,18 +174,26 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
             {quantity > 0 ? (
               <div
                 className="flex items-center border border-stone-300 rounded-full overflow-hidden"
-                onClick={e => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <button
-                  onClick={e => { e.stopPropagation(); updateQty(productId, -1); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateQty(productId, -1);
+                  }}
                   className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center
                              text-stone-600 hover:bg-stone-100 transition-colors"
                 >
                   <span className="text-base sm:text-lg leading-none">−</span>
                 </button>
-                <span className="w-6 sm:w-8 text-xs text-stone-900 text-center font-medium">{quantity}</span>
+                <span className="w-6 sm:w-8 text-xs text-stone-900 text-center font-medium">
+                  {quantity}
+                </span>
                 <button
-                  onClick={e => { e.stopPropagation(); updateQty(productId, 1); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateQty(productId, 1);
+                  }}
                   className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center
                              text-stone-600 hover:bg-stone-100 transition-colors"
                 >
@@ -159,12 +203,14 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
             ) : (
               <button
                 onClick={handleAdd}
-                className={`relative z-10 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 text-center text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2
+                className={`relative z-10 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 text-center
+                            text-[10px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2
                             rounded-full transition-all duration-200 whitespace-nowrap
-                            ${added
-                    ? "bg-stone-900 text-white"
-                    : "border border-stone-300 text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900"
-                  }`}
+                            ${
+                              added
+                                ? "bg-stone-900 text-white"
+                                : "border border-stone-300 text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900"
+                            }`}
               >
                 {added ? "Added ✓" : "Add to Cart"}
               </button>
@@ -202,16 +248,22 @@ export default function HomePage() {
     return () => clearTimeout(debounceRef.current);
   }, [searchQuery]);
 
-  useEffect(() => { document.title = "FitMart - Fitness & Nutrition Store"; }, []);
+  useEffect(() => {
+    document.title = "FitMart - Fitness & Nutrition Store";
+  }, []);
 
   useEffect(() => {
     setTimeout(() => setVisible(true), 80);
-    const unsub = auth.onAuthStateChanged(u => {
+    const unsub = auth.onAuthStateChanged((u) => {
       setUser(u);
       if (!u) navigate("/auth");
     });
     return () => unsub();
   }, [navigate]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
 
   // React Query: infinite products
   const {
@@ -228,10 +280,11 @@ export default function HomePage() {
     setBackendError(rqError);
   }, [rqLoading, rqError]);
 
-  // Flatten pages into products array
   const loadedProducts = useMemo(() => {
-    if (!pagesData || !pagesData.pages) return [];
-    return pagesData.pages.flatMap(p => p.data.map(it => ({ ...it, id: it.productId || it.id })));
+    if (!pagesData?.pages) return [];
+    return pagesData.pages.flatMap((p) =>
+      p.data.map((it) => ({ ...it, id: it.productId || it.id }))
+    );
   }, [pagesData]);
 
   useEffect(() => {
@@ -243,7 +296,10 @@ export default function HomePage() {
     (async () => {
       try {
         const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
+        const res = await fetch(`${API}/api/cart/${user.uid}`, {
+          headers,
+          credentials: "include",
+        });
         if (!res.ok) return;
         const cartDoc = await res.json();
         setCart(mapCart(cartDoc, products));
@@ -252,10 +308,6 @@ export default function HomePage() {
       }
     })();
   }, [user, products]);
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, []);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -267,7 +319,9 @@ export default function HomePage() {
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API}/api/cart/${user.uid}/add`, {
-        method: "POST", headers, credentials: "include",
+        method: "POST",
+        headers,
+        credentials: "include",
         body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
       });
       if (!res.ok) {
@@ -276,8 +330,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Add to cart failed:", err); 
+    } catch (err) {
+      console.error("Add to cart failed:", err);
       alert(err.message);
     }
   };
@@ -285,10 +339,12 @@ export default function HomePage() {
   const removeFromCart = async (id) => {
     if (!user) return;
     try {
-      const existing = cart.find(i => i.id === id);
+      const existing = cart.find((i) => i.id === id);
       const headers = await getAuthHeaders();
       const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
-        method: "POST", headers, credentials: "include",
+        method: "POST",
+        headers,
+        credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
       if (!res.ok) {
@@ -297,8 +353,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Remove from cart failed:", err); 
+    } catch (err) {
+      console.error("Remove from cart failed:", err);
       alert(err.message);
     }
   };
@@ -309,7 +365,9 @@ export default function HomePage() {
       const url = delta > 0 ? "add" : "remove";
       const headers = await getAuthHeaders();
       const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
+        method: "POST",
+        headers,
+        credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });
       if (!res.ok) {
@@ -318,8 +376,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Update qty failed:", err); 
+    } catch (err) {
+      console.error("Update qty failed:", err);
       alert(err.message);
     }
   };
@@ -328,73 +386,15 @@ export default function HomePage() {
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
   const firstName = user?.displayName?.split(" ")[0] || "there";
 
-  const filtered = products.filter(p => {
+  const filtered = products.filter((p) => {
     const matchCat = activeCategory === "all" || p.category === activeCategory;
-    const matchSearch = !debouncedQuery
-      || p.name.toLowerCase().includes(debouncedQuery.toLowerCase())
-      || p.brand?.toLowerCase().includes(debouncedQuery.toLowerCase());
+    const matchSearch =
+      !debouncedQuery ||
+      p.name.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+      p.brand?.toLowerCase().includes(debouncedQuery.toLowerCase());
     return matchCat && matchSearch;
   });
 
-  const renderProductGrid = () => {
-    if (loading) return (
-      <>
-        {/* Skeleton category pills */}
-        <div className="flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
-          {["w-12", "w-24", "w-20", "w-24"].map((w, i) => (
-            <div
-              key={i}
-              className={`bg-stone-200 animate-pulse h-8 ${w} rounded-full flex-shrink-0`}
-              style={{ animationDelay: `${i * 60}ms` }}
-            />
-          ))}
-        </div>
-
-        {/* Skeleton product grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <ProductCardSkeleton key={i} index={i} />
-          ))}
-        </div>
-      </>
-    );
-
-    if (backendError) return (
-      <div className="text-center py-12 text-stone-400">
-        <p className="text-3xl mb-2">🔌</p>
-        <p className="text-sm mb-1">Cannot connect to the server</p>
-        <p className="text-xs">Make sure the backend is running on port 5000</p>
-        <button onClick={() => window.location.reload()}
-          className="mt-4 text-xs bg-stone-900 text-white px-4 py-2 rounded-full
-                     hover:bg-stone-700 transition-colors">
-          Retry Connection
-        </button>
-      </div>
-    );
-    if (!filtered.length) return (
-      <div className="text-center py-12 text-stone-400">
-        <p className="text-3xl mb-2">∅</p>
-        <p className="text-sm">No products match your search.</p>
-      </div>
-    );
-
-    // Limit to 8 products if in "all" category and showAll is false
-    const displayedProducts = activeCategory === "all" && !showAll
-      ? filtered.slice(0, 8)
-      : filtered;
-
-    return (
-      // 2-col on mobile, 3-col on md, 4-col on lg
-      <div className={`fade-in d3 ${visible ? "show" : ""}
-                       grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5`}>
-        {displayedProducts.map(p => (
-          <ProductCard key={p.id} product={p} onAdd={addToCart} cartItems={cart} updateQty={updateQty} />
-        ))}
-      </div>
-    );
-  };
-
-  // JSON-LD structured data for currently visible products
   const jsonLd = useMemo(() => {
     if (!products.length) return null;
     const items = products.slice(0, 10).map((p, i) => ({
@@ -410,13 +410,87 @@ export default function HomePage() {
           "@type": "Offer",
           price: (p.price / 100).toFixed(2),
           priceCurrency: "INR",
-          availability: p.stock && p.stock - (p.reserved || 0) > 0 ? "http://schema.org/InStock" : "http://schema.org/OutOfStock"
+          availability:
+            p.stock && p.stock - (p.reserved || 0) > 0
+              ? "http://schema.org/InStock"
+              : "http://schema.org/OutOfStock",
         },
-        aggregateRating: p.reviews ? { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.reviews } : undefined,
-      }
+        aggregateRating: p.reviews
+          ? { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.reviews }
+          : undefined,
+      },
     }));
     return { "@context": "http://schema.org", "@type": "ItemList", itemListElement: items };
   }, [products]);
+
+  const renderProductGrid = () => {
+    if (loading) {
+      return (
+        <>
+          <div className="flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+            {["w-12", "w-24", "w-20", "w-24"].map((w, i) => (
+              <div
+                key={i}
+                className={`bg-stone-200 animate-pulse h-8 ${w} rounded-full flex-shrink-0`}
+                style={{ animationDelay: `${i * 60}ms` }}
+              />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} index={i} />
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    if (backendError) {
+      return (
+        <div className="text-center py-12 text-stone-400">
+          <p className="text-3xl mb-2">🔌</p>
+          <p className="text-sm mb-1">Cannot connect to the server</p>
+          <p className="text-xs">Make sure the backend is running on port 5000</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 text-xs bg-stone-900 text-white px-4 py-2 rounded-full
+                       hover:bg-stone-700 transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      );
+    }
+
+    if (!filtered.length) {
+      return (
+        <div className="text-center py-12 text-stone-400">
+          <p className="text-3xl mb-2">∅</p>
+          <p className="text-sm">No products match your search.</p>
+        </div>
+      );
+    }
+
+    const displayedProducts =
+      activeCategory === "all" && !showAll ? filtered.slice(0, 8) : filtered;
+
+    return (
+      <div
+        className={`fade-in d3 ${visible ? "show" : ""}
+                    grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5`}
+      >
+        {displayedProducts.map((p) => (
+          <ProductCard
+            key={p.id}
+            product={p}
+            onAdd={addToCart}
+            cartItems={cart}
+            updateQty={updateQty}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif]">
@@ -432,8 +506,6 @@ export default function HomePage() {
         .cart-slide.open { transform:translateX(0); }
         .overlay { opacity:0; pointer-events:none; transition:opacity .3s ease; }
         .overlay.show { opacity:1; pointer-events:auto; }
-        .search-expand { max-height:0; overflow:hidden; transition:max-height .3s ease; }
-        .search-expand.open { max-height:80px; }
       `}</style>
 
       {showBanner && <WelcomeBanner onDismiss={dismissBanner} />}
@@ -447,24 +519,30 @@ export default function HomePage() {
         onSignOut={handleSignOut}
       />
 
-      {/* Hero banner */}
+      {/* Hero */}
       <section className="bg-stone-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-10 sm:py-14">
           <div className={`fade-in d1 ${visible ? "show" : ""}`}>
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2 sm:mb-3">
               Welcome back, {firstName}
             </p>
-            <h1 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-5xl text-white
-                           leading-tight max-w-xl mb-4 sm:mb-5">
+            <h1
+              className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-5xl text-white
+                         leading-tight max-w-xl mb-4 sm:mb-5"
+            >
               Build something <em className="not-italic text-stone-400">stronger</em> today.
             </h1>
             <div className="flex flex-wrap gap-2 sm:gap-3">
-              <button className="text-sm bg-white text-stone-900 px-5 sm:px-6 py-2.5 rounded-full
-                                 hover:bg-stone-100 transition-colors">
+              <button
+                className="text-sm bg-white text-stone-900 px-5 sm:px-6 py-2.5 rounded-full
+                           hover:bg-stone-100 transition-colors"
+              >
                 Shop Now
               </button>
               <button
-                onClick={() => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={() =>
+                  document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" })
+                }
                 className="text-sm border border-stone-700 text-stone-300 px-5 sm:px-6 py-2.5
                            rounded-full hover:bg-stone-800 transition-colors"
               >
@@ -477,10 +555,12 @@ export default function HomePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-10 space-y-12 sm:space-y-16">
 
-        {/* ── Products section ── */}
+        {/* Products */}
         <section>
-          <div className={`fade-in d1 ${visible ? "show" : ""}
-                           flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6`}>
+          <div
+            className={`fade-in d1 ${visible ? "show" : ""}
+                        flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6`}
+          >
             <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl text-stone-900">
               Featured Products
             </h2>
@@ -490,53 +570,79 @@ export default function HomePage() {
                   type="text"
                   placeholder="Search products, brands…"
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-64 text-sm text-stone-800 placeholder-stone-400 bg-white border border-stone-200 rounded-full px-4 py-2 pr-10 focus:outline-none focus:border-stone-900 transition-colors"
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-64 text-sm text-stone-800 placeholder-stone-400 bg-white
+                             border border-stone-200 rounded-full px-4 py-2 pr-10
+                             focus:outline-none focus:border-stone-900 transition-colors"
                 />
-                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <svg
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  viewBox="0 0 24 24"
+                >
                   <circle cx="11" cy="11" r="7" />
                   <path d="m16.5 16.5 4 4" />
                 </svg>
               </div>
               {!backendError && !loading && (
-                <span className="text-xs text-stone-400 whitespace-nowrap">{filtered.length} items</span>
+                <span className="text-xs text-stone-400 whitespace-nowrap">
+                  {filtered.length} items
+                </span>
               )}
             </div>
           </div>
 
-          {/* Category pills — horizontal scroll on mobile */}
+          {/* Category pills */}
           {!backendError && !loading && (
-            <div className={`fade-in d2 ${visible ? "show" : ""}
-                             flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1
-                             scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap`}>
-              {CATEGORIES.map(c => (
-                <button key={c.value} onClick={() => { setSearchParams({ category: c.value }); setShowAll(false); setSearchQuery(""); }}
+            <div
+              className={`fade-in d2 ${visible ? "show" : ""}
+                          flex gap-2 mb-5 sm:mb-8 overflow-x-auto pb-1
+                          scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap`}
+            >
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => {
+                    setSearchParams({ category: c.value });
+                    setShowAll(false);
+                    setSearchQuery("");
+                  }}
                   className={`text-xs px-4 py-2 rounded-full transition-all whitespace-nowrap shrink-0
-                              ${activeCategory === c.value
-                      ? "bg-stone-900 text-white"
-                      : "bg-white border border-stone-200 text-stone-600 hover:bg-stone-50"
-                    }`}
+                              ${
+                                activeCategory === c.value
+                                  ? "bg-stone-900 text-white"
+                                  : "bg-white border border-stone-200 text-stone-600 hover:bg-stone-50"
+                              }`}
                 >
                   {c.name}
                 </button>
               ))}
             </div>
           )}
+
           {renderProductGrid()}
 
-          {/* "See More" button */}
+          {/* See More */}
           {!backendError && !loading && activeCategory === "all" && (
             <div className="mt-8 sm:mt-10 flex justify-center">
               <button
                 onClick={() => {
-                  if (hasNextPage) fetchNextPage(); else setShowAll(true);
+                  if (hasNextPage) fetchNextPage();
+                  else setShowAll(true);
                 }}
                 disabled={isFetchingNextPage}
                 className="text-sm px-8 sm:px-10 py-3 rounded-full transition-all
-                           border border-stone-300 text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900
+                           border border-stone-300 text-stone-700
+                           hover:bg-stone-900 hover:text-white hover:border-stone-900
                            font-medium disabled:opacity-60"
               >
-                {isFetchingNextPage ? 'Loading…' : (hasNextPage ? 'See More Products' : 'Show All Products')}
+                {isFetchingNextPage
+                  ? "Loading…"
+                  : hasNextPage
+                  ? "See More Products"
+                  : "Show All Products"}
               </button>
             </div>
           )}
@@ -545,32 +651,39 @@ export default function HomePage() {
         {/* Nearby fitness centers */}
         <NearbyFitnessCenters visible={visible} />
 
-        {/* ── Plans section ── */}
+        {/* Plans */}
         <section id="plans">
           <div className="mb-6 sm:mb-8">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Digital Coaching</p>
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+              Digital Coaching
+            </p>
             <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl text-stone-900">
               Fitness plans
             </h2>
           </div>
-          {/* Stack on mobile, 3-col on md+ */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
             {PLANS.map((plan, i) => (
-              <div key={i}
+              <div
+                key={i}
                 className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7 flex flex-col gap-3 sm:gap-4
-                           hover:border-stone-300 hover:shadow-lg transition-all duration-300">
+                           hover:border-stone-300 hover:shadow-lg transition-all duration-300"
+              >
                 {plan.tag && (
-                  <span className="text-[9px] tracking-[0.2em] uppercase text-stone-400">{plan.tag}</span>
+                  <span className="text-[9px] tracking-[0.2em] uppercase text-stone-400">
+                    {plan.tag}
+                  </span>
                 )}
                 <div>
                   <h3 className="font-['DM_Serif_Display'] text-xl text-stone-900">{plan.name}</h3>
                   <p className="text-xs mt-0.5 text-stone-400">{plan.duration}</p>
                 </div>
                 <p className="text-sm leading-relaxed flex-1 text-stone-500">{plan.desc}</p>
-                <button onClick={() => navigate(plan.route)}
+                <button
+                  onClick={() => navigate(plan.route)}
                   className="text-xs py-2.5 rounded-full transition-all mt-1 border border-stone-300
                              text-stone-700 hover:bg-stone-900 hover:text-white hover:border-stone-900
-                             min-h-10">
+                             min-h-10"
+                >
                   View Plan →
                 </button>
               </div>
@@ -578,18 +691,20 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Workout Tracking section ── */}
+        {/* Workout Tracking */}
         <section id="tracking" className="py-12 sm:py-16 border-y border-stone-100">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 md:gap-12">
             <div className="text-center md:text-left">
-              <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-stone-400 mb-3 font-medium">Personal Progress</p>
+              <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-stone-400 mb-3 font-medium">
+                Personal Progress
+              </p>
               <h2 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl lg:text-5xl text-stone-900 leading-tight">
                 Track your fitness routine
               </h2>
             </div>
             <button
               onClick={() => navigate("/tracker")}
-              className="bg-stone-900 text-white text-xs sm:text-sm px-8 sm:px-10 py-3.5 sm:py-4 rounded-full 
+              className="bg-stone-900 text-white text-xs sm:text-sm px-8 sm:px-10 py-3.5 sm:py-4 rounded-full
                          hover:bg-stone-700 transition-all duration-300 font-medium
                          shadow-lg shadow-stone-200/50 self-center md:self-auto w-full sm:w-auto"
             >
@@ -598,38 +713,44 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Loyalty banner ── */}
+        {/* Loyalty */}
         <section>
-          <div className="bg-stone-100 rounded-2xl p-6 sm:p-8 md:p-10
-                          flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
+          <div
+            className="bg-stone-100 rounded-2xl p-6 sm:p-8 md:p-10
+                       flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6"
+          >
             <div>
-              <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Loyalty Program</p>
+              <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+                Loyalty Program
+              </p>
               <h3 className="font-['DM_Serif_Display'] text-xl sm:text-2xl md:text-3xl text-stone-900 mb-2">
                 Earn FitRewards
               </h3>
               <p className="text-sm text-stone-500 max-w-md leading-relaxed">
-                Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
+                Points for every purchase and every fitness milestone. Redeem against equipment,
+                supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
-                               hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
-                               text-center">
+            <button
+              className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+                         hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto text-center"
+            >
               Learn More
             </button>
           </div>
         </section>
 
-        {/* ── BMI Calculator ── */}
+        {/* BMI Calculator */}
         <section>
           <BMICalculator />
         </section>
 
-        {/* ── Calorie Calculator ── */}
+        {/* Calorie Calculator */}
         <section>
           <CalorieCalculator />
         </section>
 
-        {/* ── Membership upgrade ── */}
+        {/* Membership */}
         <section className="pb-6 sm:pb-8">
           <div className="mb-6 sm:mb-8">
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Membership</p>
@@ -639,22 +760,38 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {[
-              { tier: "Pro", price: "₹499/mo", desc: "Personalized nutrition plans + 5% flat discount on everything.", cta: "Upgrade to Pro" },
-              { tier: "Elite", price: "₹1,499/mo", desc: "1-on-1 coaching, early access to limited equipment drops, biometric sync.", cta: "Upgrade to Elite" },
+              {
+                tier: "Pro",
+                price: "₹499/mo",
+                desc: "Personalized nutrition plans + 5% flat discount on everything.",
+                cta: "Upgrade to Pro",
+              },
+              {
+                tier: "Elite",
+                price: "₹1,499/mo",
+                desc: "1-on-1 coaching, early access to limited equipment drops, biometric sync.",
+                cta: "Upgrade to Elite",
+              },
             ].map((p, i) => (
-              <div key={i}
+              <div
+                key={i}
                 className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-7
-                           flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5">
+                           flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-5"
+              >
                 <div>
                   <div className="flex items-baseline gap-2 mb-1.5">
-                    <span className="font-['DM_Serif_Display'] text-2xl text-stone-900">{p.tier}</span>
+                    <span className="font-['DM_Serif_Display'] text-2xl text-stone-900">
+                      {p.tier}
+                    </span>
                     <span className="text-sm text-stone-400">{p.price}</span>
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
-                                   rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                   transition-all self-start min-h-10">
+                <button
+                  className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                             rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
+                             transition-all self-start min-h-10"
+                >
                   {p.cta}
                 </button>
               </div>
@@ -665,14 +802,20 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-stone-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-7 sm:py-8
-                        flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
+        <div
+          className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-7 sm:py-8
+                     flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4"
+        >
           <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
-          <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
+          <p className="text-xs text-stone-400 text-center">
+            © 2026 FitMart. Built at VESIT, Mumbai.
+          </p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
+            {["Privacy", "Terms", "Support"].map((l) => (
+              <button
+                key={l}
+                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+              >
                 {l}
               </button>
             ))}
@@ -681,16 +824,25 @@ export default function HomePage() {
       </footer>
 
       <CartDrawer
-        isOpen={cartOpen} onClose={() => setCartOpen(false)}
-        cart={cart} cartCount={cartCount} cartTotal={cartTotal}
-        updateQty={updateQty} removeFromCart={removeFromCart}
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        cart={cart}
+        cartCount={cartCount}
+        cartTotal={cartTotal}
+        updateQty={updateQty}
+        removeFromCart={removeFromCart}
       />
-      <ErrorBoundary fallback={
-        <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">
-          <p className="text-xs tracking-[0.15em] uppercase text-stone-400 mb-1">Assistant</p>
-          <p className="text-sm text-stone-600">Chat is currently unavailable. Please refresh the page.</p>
-        </div>
-      }>
+
+      <ErrorBoundary
+        fallback={
+          <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">
+            <p className="text-xs tracking-[0.15em] uppercase text-stone-400 mb-1">Assistant</p>
+            <p className="text-sm text-stone-600">
+              Chat is currently unavailable. Please refresh the page.
+            </p>
+          </div>
+        }
+      >
         <FitnessChatBot />
       </ErrorBoundary>
     </div>
