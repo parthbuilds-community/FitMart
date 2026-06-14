@@ -2,7 +2,8 @@
 
 const CONSTANTS = {
   // Stock Thresholds
-  LOW_STOCK_THRESHOLD: 5,
+  LOW_STOCK_THRESHOLD:
+    parseInt(process.env.LOW_STOCK_THRESHOLD, 10) || 5,
 
   // Server Config
   DEFAULT_PORT: 5000,
