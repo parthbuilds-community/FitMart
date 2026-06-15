@@ -14,12 +14,20 @@ const FEATURE_MAP = {
 };
 
 async function apiAddToCart(userId, productId, quantity) {
-  return apiFetch(`/api/cart/${userId}/add`, {
+  const result = await apiFetch(`/api/cart/${userId}/add`, {
     method: "POST",
     auth: true,
     credentials: "include",
     body: { productId, quantity },
+    throwOnError: false,
   });
+
+  if (!result.ok) {
+    const errData = result.data && typeof result.data === "object" ? result.data : {};
+    throw new Error(errData.error || "Failed to add to cart");
+  }
+
+  return result.data;
 }
 
 async function apiGetCart(userId) {
@@ -136,6 +144,7 @@ export default function ProductPage() {
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
       console.error("Add to cart failed:", err);
+      alert(err.message);
     } finally {
       setAdding(false);
     }
@@ -150,6 +159,7 @@ export default function ProductPage() {
       navigate("/checkout");
     } catch (err) {
       console.error("Buy Now failed:", err);
+      alert(err.message);
       setBuyingNow(false);
     }
   };
@@ -159,15 +169,22 @@ export default function ProductPage() {
     if (!user) return;
     try {
       const existing = cart.find(i => i.id === id);
-      const cartDoc = await apiFetch(`/api/cart/${user.uid}/remove`, {
+      const result = await apiFetch(`/api/cart/${user.uid}/remove`, {
         method: "POST",
         auth: true,
         credentials: "include",
         body: { productId: id, quantity: existing?.qty || 1 },
+        throwOnError: false,
       });
+      if (!result.ok) {
+        const errData = result.data && typeof result.data === "object" ? result.data : {};
+        throw new Error(errData.error || "Failed to remove");
+      }
+      const cartDoc = result.data;
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("removeFromCart error:", err);
+      alert(err.message);
     }
   };
 
@@ -176,15 +193,22 @@ export default function ProductPage() {
     if (!user) return;
     try {
       const url = delta > 0 ? "add" : "remove";
-      const cartDoc = await apiFetch(`/api/cart/${user.uid}/${url}`, {
+      const result = await apiFetch(`/api/cart/${user.uid}/${url}`, {
         method: "POST",
         auth: true,
         credentials: "include",
         body: { productId: id, quantity: Math.abs(delta) },
+        throwOnError: false,
       });
+      if (!result.ok) {
+        const errData = result.data && typeof result.data === "object" ? result.data : {};
+        throw new Error(errData.error || "Failed to update qty");
+      }
+      const cartDoc = result.data;
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("updateQty error:", err);
+      alert(err.message);
     }
   };
 

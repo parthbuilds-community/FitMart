@@ -9,6 +9,7 @@ import CartDrawer from "../components/CartDrawer";
 import { apiFetch } from "../lib/apiClient";
 import { fmt } from "../utils/formatters";
 import FitnessChatBot from "../components/FitnessChatBot";
+import ErrorBoundary from "../components/ErrorBoundary";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
 import BMICalculator from "../components/BMICalculator";
@@ -262,46 +263,69 @@ export default function HomePage() {
   const addToCart = async (product) => {
     if (!user) return;
     try {
-      const cartDoc = await apiFetch(`/api/cart/${user.uid}/add`, {
+      const result = await apiFetch(`/api/cart/${user.uid}/add`, {
         method: "POST",
         auth: true,
         credentials: "include",
         body: { productId: product.productId || product.id, quantity: 1 },
+        throwOnError: false,
       });
+      if (!result.ok) {
+        const errData = result.data && typeof result.data === "object" ? result.data : {};
+        throw new Error(errData.error || "Failed to add to cart");
+      }
+      const cartDoc = result.data;
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Add to cart failed:", err); }
+    } catch (err) {
+      console.error("Add to cart failed:", err);
+      alert(err.message);
+    }
   };
 
   const removeFromCart = async (id) => {
     if (!user) return;
     try {
       const existing = cart.find(i => i.id === id);
-      const cartDoc = await apiFetch(`/api/cart/${user.uid}/remove`, {
+      const result = await apiFetch(`/api/cart/${user.uid}/remove`, {
         method: "POST",
         auth: true,
         credentials: "include",
         body: { productId: id, quantity: existing?.qty || 1 },
+        throwOnError: false,
       });
+      if (!result.ok) {
+        const errData = result.data && typeof result.data === "object" ? result.data : {};
+        throw new Error(errData.error || "Failed to remove");
+      }
+      const cartDoc = result.data;
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Remove from cart failed:", err); }
+    } catch (err) {
+      console.error("Remove from cart failed:", err);
+      alert(err.message);
+    }
   };
 
   const updateQty = async (id, delta) => {
     if (!user) return;
     try {
       const url = delta > 0 ? "add" : "remove";
-      await apiFetch(`/api/cart/${user.uid}/${url}`, {
+      const result = await apiFetch(`/api/cart/${user.uid}/${url}`, {
         method: "POST",
         auth: true,
         credentials: "include",
         body: { productId: id, quantity: Math.abs(delta) },
+        throwOnError: false,
       });
-      const cartDoc = await apiFetch(`/api/cart/${user.uid}`, {
-        auth: true,
-        credentials: "include",
-      });
+      if (!result.ok) {
+        const errData = result.data && typeof result.data === "object" ? result.data : {};
+        throw new Error(errData.error || "Failed to update qty");
+      }
+      const cartDoc = result.data;
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Update qty failed:", err); }
+    } catch (err) {
+      console.error("Update qty failed:", err);
+      alert(err.message);
+    }
   };
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -665,7 +689,14 @@ export default function HomePage() {
         cart={cart} cartCount={cartCount} cartTotal={cartTotal}
         updateQty={updateQty} removeFromCart={removeFromCart}
       />
-      <FitnessChatBot />
+      <ErrorBoundary fallback={
+        <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">
+          <p className="text-xs tracking-[0.15em] uppercase text-stone-400 mb-1">Assistant</p>
+          <p className="text-sm text-stone-600">Chat is currently unavailable. Please refresh the page.</p>
+        </div>
+      }>
+        <FitnessChatBot />
+      </ErrorBoundary>
     </div>
   );
 }
