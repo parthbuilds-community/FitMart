@@ -69,10 +69,7 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FitMart Invoice – ${paymentId || "ORDER"}</title>
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap"
-    rel="stylesheet"
-  />
+  
 
   <style>
     :root {

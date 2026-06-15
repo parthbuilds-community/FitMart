@@ -151,7 +151,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-['DM_Sans',sans-serif] overflow-x-hidden">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+       
         .fade-up { opacity:0; transform:translateY(28px); transition:opacity .7s ease,transform .7s ease; }
         .fade-up.visible { opacity:1; transform:translateY(0); }
         .delay-1 { transition-delay:.1s; }
