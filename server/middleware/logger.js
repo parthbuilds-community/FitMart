@@ -1,23 +1,71 @@
-// server/middleware/logger.js
 
-// server/middleware/logger.js
+const OBJECT_ID = /^[a-f0-9]{24}$/i;
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NUMERIC = /^\d+$/;
 
-// Function to get base route only
-const getBaseRoute = (url) => {
-  // Match patterns like /api/cart, /api/products, /api/orders
-  const match = url.match(/^(\/api\/(?:cart|products|orders))/);
-  if (match) {
-    // If it's a cart route with additional path, append the action
-    if (url.includes('/cart/') && !url.match(/^\/api\/cart\/?$/)) {
-      if (url.includes('/add')) return '/api/cart/add';
-      if (url.includes('/remove')) return '/api/cart/remove';
-    }
-    return match[1];
-  }
-  return url;
+
+const getBaseRoute = (originalUrl) => {
+  const path = String(originalUrl || '').split('?')[0].split('#')[0];
+
+  return path
+    .split('/')
+    .map((segment) => {
+      if (!segment) return segment; 
+      if (OBJECT_ID.test(segment)) return ':id';
+      if (UUID.test(segment)) return ':id';
+      if (NUMERIC.test(segment)) return ':id';
+      return segment;
+    })
+    .join('/');
 };
 
-// Simple logger with colors (without timestamps)
+const SENSITIVE_PATTERNS = [
+  'password',
+  'passwd',
+  'token',
+  'secret',
+  'apikey',
+  'authorization',
+  'creditcard',
+  'cardnumber',
+  'cvv',
+  'cvc',
+  'ssn',
+  'privatekey',
+  'clientsecret',
+  'accesskey',
+  'sessionid',
+  'cookie',
+];
+
+const REDACTED = '[REDACTED]';
+
+const MAX_DEPTH = 6;
+
+const isSensitiveKey = (key) => {
+  const normalized = String(key).toLowerCase().replace(/[_-]/g, '');
+  return SENSITIVE_PATTERNS.some((pattern) => normalized.includes(pattern));
+};
+
+const redact = (value, depth = 0) => {
+  if (depth >= MAX_DEPTH) return value;
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redact(item, depth + 1));
+  }
+
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, val] of Object.entries(value)) {
+      out[key] = isSensitiveKey(key) ? REDACTED : redact(val, depth + 1);
+    }
+    return out;
+  }
+
+  return value;
+};
+
 const logger = (req, res, next) => {
   const start = Date.now();
 
@@ -50,15 +98,7 @@ const logger = (req, res, next) => {
 
     if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
       try {
-        const sensitiveKeys = ['password', 'token', 'secret', 'apiKey'];
-        const safeBody = { ...req.body };
-
-        sensitiveKeys.forEach((key) => {
-          if (safeBody[key]) {
-            safeBody[key] = '[REDACTED]';
-          }
-        });
-
+        const safeBody = redact(req.body);
         const bodyStr = JSON.stringify(safeBody);
 
         if (bodyStr.length < 1000) {
@@ -74,5 +114,8 @@ const logger = (req, res, next) => {
 
   next();
 };
+
+logger.getBaseRoute = getBaseRoute;
+logger.redact = redact;
 
 module.exports = logger;
