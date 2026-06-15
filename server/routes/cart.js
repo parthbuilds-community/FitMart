@@ -57,10 +57,15 @@ async function adjustReserved(productId, delta, session = null) {
   );
 
   if (!updated) {
-    const reason = delta > 0
-      ? 'insufficient stock or product not found'
-      : 'reserved count cannot drop below zero or product not found';
-    throw new Error(`Failed to adjust reserved stock: ${reason}`);
+    const existsQuery = Product.exists({ productId: Number(productId) });
+    if (session) existsQuery.session(session);
+    const exists = await existsQuery;
+
+    if (!exists) {
+      throw new Error(`adjustReserved failed for productId ${productId}`);
+    }
+
+    throw new Error(delta > 0 ? 'insufficient stock' : 'reserved already at 0');
   }
 
   return updated;
@@ -200,3 +205,4 @@ router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.adjustReserved = adjustReserved;

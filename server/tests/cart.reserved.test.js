@@ -23,7 +23,6 @@ beforeAll(async () => {
   // Start the in-memory MongoDB server
   // This downloads the MongoDB binary on first run (~10–30 seconds)
   // Subsequent runs use a cached binary and start in < 1 second
-  process.env.MONGOMS_SYSTEM_BINARY = 'C:\\Program Files\\MongoDB\\Server\\8.0\\bin\\mongod.exe';
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
 
