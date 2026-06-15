@@ -130,19 +130,19 @@ class Cache extends EventEmitter {
   async delPattern(prefix) {
     if (this.enabled && this.client) {
       try {
-        // use SCAN to find matching keys and delete (if supported)
+        const keys = [];
         if (typeof this.client.scanIterator === 'function') {
-          const iter = this.client.scanIterator({ MATCH: `${prefix}*` });
-          const keys = [];
-          for await (const k of iter) keys.push(k);
-          if (keys.length) await this.client.del(keys);
+          for await (const entry of this.client.scanIterator({ MATCH: `${prefix}*` })) {
+            if (Array.isArray(entry)) keys.push(...entry);
+            else keys.push(entry);
+          }
         } else if (typeof this.client.keys === 'function') {
-          const keys = await this.client.keys(`${prefix}*`);
-          if (keys && keys.length) await this.client.del(keys);
+          const found = await this.client.keys(`${prefix}*`);
+          if (Array.isArray(found)) keys.push(...found);
         } else {
-          // client doesn't support pattern deletion via SDK; fallback to flush (dangerous) or skip
           console.warn('[cache] delPattern not supported by Redis client');
         }
+        if (keys.length) await this.client.del(...keys);
       } catch (err) {
         console.warn('[cache] redis delPattern failed', this._errMsg(err));
         if (process.env.DEBUG_REDIS === 'true') console.error(err);
