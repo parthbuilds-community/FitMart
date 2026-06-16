@@ -168,12 +168,9 @@ export default function AdminBugs() {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
-  return (
+  return (    
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-      `}</style>
-
+              
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">
