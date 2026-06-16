@@ -32,7 +32,13 @@ router.get('/', async (req, res) => {
     // Build mongoose filter
     const filter = {};
     if (category && category !== 'all') filter.category = category;
-    if (search) filter.$text = { $search: search };
+    if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { brand: { $regex: escapedSearch, $options: 'i' } },
+      ];
+    }
 
     // Projection
     let projection = null;
