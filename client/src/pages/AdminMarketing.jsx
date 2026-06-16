@@ -130,7 +130,7 @@ export default function AdminMarketing() {
     >
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+        
         .fade-in { animation: fmFadeIn 0.5s ease forwards; }
         @keyframes fmFadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
       `}</style>
