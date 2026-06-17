@@ -7,12 +7,14 @@
  *
  * Run with: npm run test:cart
  */
+const cart = require('../routes/cart');
+console.log(cart);
+const { adjustReserved } = cart;
 
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
-// The function under test — exported from cart.js in Step 5
-const { adjustReserved } = require('../routes/cart');
+
 
 // Product model — used to seed and inspect documents in tests
 const Product = require('../models/Product');
@@ -23,7 +25,7 @@ beforeAll(async () => {
   // Start the in-memory MongoDB server
   // This downloads the MongoDB binary on first run (~10–30 seconds)
   // Subsequent runs use a cached binary and start in < 1 second
-  process.env.MONGOMS_SYSTEM_BINARY = 'C:\\Program Files\\MongoDB\\Server\\8.0\\bin\\mongod.exe';
+  
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
 
