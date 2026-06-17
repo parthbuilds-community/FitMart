@@ -242,29 +242,7 @@ export default function ProductPage() {
   return (
     <>
       <Shell cartCount={cartCount} onCartOpen={() => setCartOpen(true)}>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-          .pd-fade { opacity:0; transform:translateY(20px); transition:opacity .6s ease,transform .6s ease; }
-          .pd-fade.in { opacity:1; transform:translateY(0); }
-          .pd-fade-img { opacity:0; transition:opacity .5s ease; }
-          .pd-fade-img.in { opacity:1; }
-          .pd-d1{transition-delay:.05s} .pd-d2{transition-delay:.15s}
-          .pd-d3{transition-delay:.25s} .pd-d4{transition-delay:.35s}
-          .pd-d5{transition-delay:.45s} .pd-d6{transition-delay:.55s}
-          .qty-btn { transition:background .15s ease,color .15s ease; }
-          .qty-btn:not(:disabled):hover { background:#1c1917; color:white; }
-          .tab-active   { border-bottom:2px solid #1c1917; color:#1c1917; }
-          .tab-inactive { border-bottom:2px solid transparent; color:#78716c; }
-          .tab-inactive:hover { color:#44403c; }
-          .related-card:hover .related-img { transform:scale(1.06); }
-          .related-img { transition:transform .4s ease; }
-          @keyframes pdPulse { 0%,100%{opacity:1} 50%{opacity:.6} }
-          .adding-pulse { animation:pdPulse .8s ease infinite; }
-          .cart-slide { transform:translateX(100%); transition:transform .35s cubic-bezier(.16,1,.3,1); }
-          .cart-slide.open { transform:translateX(0); }
-          .overlay { opacity:0; pointer-events:none; transition:opacity .3s ease; }
-          .overlay.show { opacity:1; pointer-events:auto; }
-        `}</style>
+       
 
         {/* ── Breadcrumb ── */}
         <div className={`pd-fade ${visible ? "in" : ""} border-b border-stone-100 bg-white`}>
