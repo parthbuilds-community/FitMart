@@ -200,3 +200,4 @@ router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.adjustReserved = adjustReserved;
