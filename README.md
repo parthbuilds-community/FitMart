@@ -95,6 +95,12 @@ Whether you're a beginner learning full-stack development or an experienced deve
   </a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/umeshk23" target="_blank">
+    <img src="https://avatars.githubusercontent.com/u/215856054?s=400&u=621cd714cc39edd0d838ce07ec17bec0c6c4ff9b&v=4" alt="Umesh Kushwaha" />
+  </a>
+</p>
+
 🔗 https://fitmart-omega.vercel.app/
 
 > 💡 Try exploring products, the workout tracker, the AI chatbot, and the admin panel for the full experience.
