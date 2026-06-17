@@ -14,7 +14,7 @@
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
     "@fullcalendar/react": "^6.1.20",
-    "dompurify": "^3.4.5",
+    "dompurify": "^3.4.9",
     "marked": "^18.0.4",
     "@tailwindcss/vite": "^4.3.0",
     "firebase": "^12.14.0",
