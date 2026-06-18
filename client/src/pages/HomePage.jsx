@@ -19,6 +19,7 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+import Toast from "../components/Toast";
 
 
 
@@ -193,8 +194,42 @@ export default function HomePage() {
   const [backendError, setBackendError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const handleLearnMore = () => {
+    setToast({
+      message: "Earn points on every purchase and redeem exciting rewards!",
+      type: "success",
+    });
+  };
+
+  const handleUpgrade = (plan) => {
+    setToast({
+      message: `${plan} membership is coming soon!`,
+      type: "success",
+    });
+  };
+
+  const handleFooterClick = (page) => {
+    if (page === "Privacy") {
+      navigate("/privacy-policy");
+    } else if (page === "Terms") {
+      navigate("/terms");
+    } else {
+      setToast({
+        message: `${page} page coming soon!`,
+        type: "success",
+      });
+    }
+  };
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -611,9 +646,12 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+            <button
+              onClick={handleLearnMore}
+              className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
                                hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
-                               text-center">
+                               text-center"
+            >
               Learn More
             </button>
           </div>
@@ -652,9 +690,12 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <button
+                  onClick={() => handleUpgrade(p.tier)}
+                  className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                                   transition-all self-start min-h-10">
+                                   transition-all self-start min-h-10"
+                >
                   {p.cta}
                 </button>
               </div>
@@ -671,8 +712,11 @@ export default function HomePage() {
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
+              <button
+                key={l}
+                onClick={() => handleFooterClick(l)}
+                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1"
+              >
                 {l}
               </button>
             ))}
@@ -685,6 +729,13 @@ export default function HomePage() {
         cart={cart} cartCount={cartCount} cartTotal={cartTotal}
         updateQty={updateQty} removeFromCart={removeFromCart}
       />
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <ErrorBoundary fallback={
         <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">
           <p className="text-xs tracking-[0.15em] uppercase text-stone-400 mb-1">Assistant</p>
