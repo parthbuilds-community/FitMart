@@ -1,3 +1,23 @@
+const { z } = require('zod');
+const productQuerySchema = z.object({
+  all: z.enum(['true', 'false']).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  category: z.string().optional(),
+  search: z.string().optional(),
+  sort: z.enum([
+    'productId_asc',
+    'productId_desc',
+    'price_asc',
+    'price_desc',
+    'rating_asc',
+    'rating_desc',
+    'name_asc',
+    'name_desc',
+  ]).optional(),
+  fields: z.string().optional(),
+}).strict();
+
 const {
   cartAddSchema,
   cartRemoveSchema,
@@ -504,3 +524,8 @@ describe('requestSchemas - updateProductSchema', () => {
     });
   });
 });
+
+module.exports = {
+  ...
+  productQuerySchema,
+};
