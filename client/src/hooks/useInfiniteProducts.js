@@ -1,7 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+const API = import.meta.env.VITE_API_URL;
 async function fetchProducts({ pageParam = 1, queryKey }) {
   const [_key, params] = queryKey;
   const url = new URL(`${API}/api/products`);

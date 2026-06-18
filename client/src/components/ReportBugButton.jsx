@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/useAuth';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+const API = import.meta.env.VITE_API_URL;
 const CATEGORIES = [
   { id: 'bug',     label: 'Bug' },
   { id: 'payment', label: 'Payment' },

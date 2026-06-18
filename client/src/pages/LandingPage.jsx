@@ -6,8 +6,7 @@ import { auth } from "../auth/firebase";
 import { useAuth } from "../auth/useAuth";
 import { fmt } from "../utils/formatters";
 import { useGithubStats } from "../utils/useGithubStats";
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API = import.meta.env.VITE_API_URL;
 const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
 const CATEGORIES = [

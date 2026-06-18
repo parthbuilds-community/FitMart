@@ -1,8 +1,7 @@
 // src/utils/useGithubStats.js
 import { useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API = import.meta.env.VITE_API_URL;
 // Used while loading and as a graceful fallback if the API is unreachable or rate-limited.
 const FALLBACK_STATS = {
   stars: 145,

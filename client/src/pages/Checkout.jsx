@@ -10,7 +10,7 @@ import SkeletonItem from "../components/SkeletonItem";
 import SkeletonSummary from "../components/SkeletonSummary";
 import AddressSelector from "../components/AddressSelector";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 const PLACEHOLDER_IMG = "https://placehold.co/96x96/f5f5f4/78716c?text=No+Image";
 
 export default function Checkout() {

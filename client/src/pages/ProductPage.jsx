@@ -7,8 +7,7 @@ import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API = import.meta.env.VITE_API_URL;
 const FEATURE_MAP = {
   Equipment: ["Free shipping", "Assembly guide included", "2-year warranty", "Returns within 30 days"],
   Nutrition: ["Lab tested", "100% authentic", "FSSAI certified", "Free shipping above ₹999"],

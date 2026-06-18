@@ -5,8 +5,7 @@ import { getBugs, patchBugStatus } from '../utils/api/bugs';
 import Toast from '../components/Toast';
 import BugScreenshot from '../components/BugScreenshot';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+const API = import.meta.env.VITE_API_URL;
 const SEGMENT_STYLES = {
   open: "bg-stone-900 text-white",
   "in-progress": "border border-stone-300 text-stone-600",
@@ -485,7 +484,7 @@ export default function AdminBugs() {
                     <td className="px-6 py-5 text-center">
                       {(bug.screenshotUrl || bug.screenshot) ? (
                         (() => {
-                          const api = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                          const API = import.meta.env.VITE_API_URL;                          
                           const url = bug.screenshotUrl ? bug.screenshotUrl : `${api}${bug.screenshot}`;
                           return (
                             <a

@@ -3,8 +3,7 @@ import { createPortal } from "react-dom";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessCenterDetail from "./FitnessCenterDetail";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API = import.meta.env.VITE_API_URL;
 function Stars({ rating = 0 }) {
   const full = Math.floor(rating || 0);
   const half = (rating || 0) % 1 >= 0.5 ? 1 : 0;

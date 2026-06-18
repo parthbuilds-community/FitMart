@@ -1,7 +1,6 @@
 import { getAuthHeaders } from "./getAuthHeaders";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API = import.meta.env.VITE_API_URL;
 /**
  * Retrieves all stored workout logs from the backend.
  */

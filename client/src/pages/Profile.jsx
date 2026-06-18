@@ -13,8 +13,7 @@ import {
 } from "../utils/rewardsUtils";
 import Navbar from "../components/Navbar";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API = import.meta.env.VITE_API_URL;
 function Toast({ message, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3500);

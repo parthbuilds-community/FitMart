@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL;
 
 const WELCOME = {
   role: "bot",

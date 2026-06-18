@@ -22,8 +22,7 @@ import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
 
 
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+const API = import.meta.env.VITE_API_URL;
 const CATEGORIES = [
   { name: "All", value: "all" },
   { name: "Equipment", value: "Equipment" },
