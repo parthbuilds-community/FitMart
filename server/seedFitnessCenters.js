@@ -520,8 +520,28 @@ async function seed() {
       }
     ];
 
-    await FitnessCenter.insertMany(centers);
-    console.log("Inserted fitness centers:", centers.length);
+    const transformedCenters = centers.map(c => {
+      const transformedOpeningHours = {};
+      for (const [day, val] of Object.entries(c.openingHours || {})) {
+        if (!val || val.toLowerCase() === 'closed') {
+          transformedOpeningHours[day] = { open: null, close: null, closed: true };
+        } else {
+          const parts = val.split('-');
+          transformedOpeningHours[day] = {
+            open: parts[0] || null,
+            close: parts[1] || null,
+            closed: false
+          };
+        }
+      }
+      return {
+        ...c,
+        openingHours: transformedOpeningHours
+      };
+    });
+
+    await FitnessCenter.insertMany(transformedCenters);
+    console.log("Inserted fitness centers:", transformedCenters.length);
     process.exit(0);
   } catch (err) {
     console.error("Seeding failed:", err);
