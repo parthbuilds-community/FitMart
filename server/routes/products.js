@@ -4,30 +4,27 @@ const Product = require('../models/Product');
 const crypto = require('crypto');
 const cache = require('../lib/cache');
 
-// Your New Constant Import
 const { LOW_STOCK_THRESHOLD } = require('../config/constants');
 
-// Parth's New Security & Validation Imports
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const validateRequest = require('../middleware/validateRequest');
 const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
+
+// NEW: Zod schema for GET /api/products query parameters
+const { productQuerySchema } = require('../validation/productQuerySchema');
 
 /**
  * @route   GET /api/products
  * @desc    Returns all products sorted by productId in ascending order
  * @access  Public
  */
-router.get('/', async (req, res) => {
+router.get('/', validateRequest({ query: productQuerySchema }), async (req, res) => {
   try {
-    // Query parameters
-    const all = req.query.all === 'true';
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 24;
-    const category = req.query.category;
-    const search = req.query.search;
-    const sort = req.query.sort || 'productId_asc';
-    const fields = req.query.fields; // comma separated
+    // All query params are now validated and coerced by Zod.
+    // Numbers are real numbers (not strings), sort is whitelisted,
+    // and page/limit are within safe bounds.
+    const { all, page, limit, category, search, sort, fields } = req.query;
 
     // Build mongoose filter
     const filter = {};
@@ -41,19 +38,19 @@ router.get('/', async (req, res) => {
       fields.split(',').forEach(f => { projection[f.trim()] = 1; });
     }
 
-    // Sort mapping
+    // Sort mapping — sort is now guaranteed to be a whitelisted 'field_dir' token
     const [sortField, sortDir] = sort.split('_');
     const sortMap = { asc: 1, desc: -1 };
     const sortObj = {};
     sortObj[sortField || 'productId'] = sortMap[sortDir] || 1;
 
     // Backward compatible: return all when ?all=true
-    if (all) {
+    if (all === 'true') {
       const products = await Product.find(filter, projection).sort(sortObj).lean();
       return res.json(products);
     }
 
-    // Cache key based on query
+    // Cache key based on validated query
     const cacheKeyObj = { page, limit, category, search, sort, fields };
     const cacheKey = `products:${crypto.createHash('md5').update(JSON.stringify(cacheKeyObj)).digest('hex')}`;
 
@@ -64,7 +61,6 @@ router.get('/', async (req, res) => {
       const totalCount = (cached.payload && cached.payload.meta && cached.payload.meta.total) ? cached.payload.meta.total : 0;
       res.set('X-Total-Count', String(totalCount));
       res.set('ETag', cached.etag);
-      // Conditional request handling
       const ifNoneMatch = req.headers['if-none-match'];
       if (ifNoneMatch && ifNoneMatch === cached.etag) return res.status(304).end();
       return res.json(cached.payload);
@@ -87,20 +83,18 @@ router.get('/', async (req, res) => {
     };
 
     const etag = crypto.createHash('md5').update(JSON.stringify(payload)).digest('hex');
-    // store in cache
     await cache.set(cacheKey, { payload, etag }, Number(process.env.PRODUCTS_CACHE_TTL || 60));
 
     res.set('X-Cache', 'MISS');
     res.set('X-Total-Count', String(total));
     res.set('ETag', etag);
-    // Link header (RFC5988) for pagination
+
     const linkParts = [];
     const baseUrl = `/api/products?limit=${limit}`;
     if (page < totalPages) linkParts.push(`<${baseUrl}&page=${page + 1}>; rel="next"`);
     if (page > 1) linkParts.push(`<${baseUrl}&page=${page - 1}>; rel="prev"`);
     if (linkParts.length) res.set('Link', linkParts.join(', '));
 
-    // Conditional request: If client sent If-None-Match
     const ifNoneMatch = req.headers['if-none-match'];
     if (ifNoneMatch && ifNoneMatch === etag) return res.status(304).end();
 
@@ -116,10 +110,8 @@ router.get('/', async (req, res) => {
  * @desc    Returns all products where available stock (stock - reserved) is below threshold of 5
  * @access  Public
  */
-
 router.get('/low-stock', async (req, res) => {
   try {
-    // only check products where stock is not null
     const products = await Product.find({ stock: { $ne: null } });
     const lowStock = products.filter(p => (p.stock - p.reserved) < LOW_STOCK_THRESHOLD);
     res.json(lowStock);
@@ -133,7 +125,6 @@ router.get('/low-stock', async (req, res) => {
  * @desc    Returns a single product by its productId
  * @access  Public
  */
-// GET /api/products/:id - get product by productId
 router.get('/:id', async (req, res) => {
   const productId = Number(req.params.id);
 
@@ -155,14 +146,13 @@ router.get('/:id', async (req, res) => {
  * @desc    Creates a new product; body: full product object including unique productId
  * @access  Private (Admin)
  */
-router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProductSchema), async (req, res) => {
+router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest({ body: createProductSchema }), async (req, res) => {
   try {
     const body = req.body;
     const existing = await Product.findOne({ productId: body.productId });
     if (existing) return res.status(400).json({ error: 'productId already exists' });
     const p = new Product(body);
     await p.save();
-    // invalidate product caches
     try { await cache.delPattern('products:'); } catch (e) { }
     res.status(201).json(p);
   } catch (err) {
@@ -175,7 +165,7 @@ router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProduct
  * @desc    Updates an existing product by productId; body: fields to update
  * @access  Private (Admin)
  */
-router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProductSchema), async (req, res) => {
+router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest({ body: updateProductSchema }), async (req, res) => {
   const productId = Number(req.params.id);
 
   if (isNaN(productId)) {
@@ -197,7 +187,6 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
  * @desc    Deletes a product by its productId
  * @access  Private (Admin)
  */
-
 router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   const productId = Number(req.params.id);
 
@@ -205,7 +194,7 @@ router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
   try {
-    const deleted = await Product.findOneAndDelete({ productId });
+    await Product.findOneAndDelete({ productId });
     try { await cache.delPattern('products:'); } catch (e) { }
     res.json({ success: true });
   } catch (err) {
