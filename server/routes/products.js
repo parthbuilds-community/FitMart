@@ -1,3 +1,7 @@
+const {
+  productQuerySchema,
+} = require('../validation/requestSchemas');
+
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
@@ -18,98 +22,101 @@ const { createProductSchema, updateProductSchema } = require('../validation/requ
  * @desc    Returns all products sorted by productId in ascending order
  * @access  Public
  */
-router.get('/', async (req, res) => {
-  try {
-    // Query parameters
-    const all = req.query.all === 'true';
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 24;
-    const category = req.query.category;
-    const search = req.query.search;
-    const sort = req.query.sort || 'productId_asc';
-    const fields = req.query.fields; // comma separated
+router.get(
+  '/',
+  validateRequest({ query: productQuerySchema }),
+  async (req, res) => {
+    try {
+      // Query parameters
+      const all = req.query.all === 'true';
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 24;
+      const category = req.query.category;
+      const search = req.query.search;
+      const sort = req.query.sort;
+      const fields = req.query.fields; // comma separated
 
-    // Build mongoose filter
-    const filter = {};
-    if (category && category !== 'all') filter.category = category;
-    if (search) filter.$text = { $search: search };
+      // Build mongoose filter
+      const filter = {};
+      if (category && category !== 'all') filter.category = category;
+      if (search) filter.$text = { $search: search };
 
-    // Projection
-    let projection = null;
-    if (fields) {
-      projection = {};
-      fields.split(',').forEach(f => { projection[f.trim()] = 1; });
-    }
+      // Projection
+      let projection = null;
+      if (fields) {
+        projection = {};
+        fields.split(',').forEach(f => { projection[f.trim()] = 1; });
+      }
 
-    // Sort mapping
-    const [sortField, sortDir] = sort.split('_');
-    const sortMap = { asc: 1, desc: -1 };
-    const sortObj = {};
-    sortObj[sortField || 'productId'] = sortMap[sortDir] || 1;
+      // Sort mapping
+      const [sortField, sortDir] = (sort || 'productId_asc').split('_');
+      const sortMap = { asc: 1, desc: -1 };
+      const sortObj = {};
+      sortObj[sortField || 'productId'] = sortMap[sortDir] || 1;
 
-    // Backward compatible: return all when ?all=true
-    if (all) {
-      const products = await Product.find(filter, projection).sort(sortObj).lean();
-      return res.json(products);
-    }
+      // Backward compatible: return all when ?all=true
+      if (all) {
+        const products = await Product.find(filter, projection).sort(sortObj).lean();
+        return res.json(products);
+      }
 
-    // Cache key based on query
-    const cacheKeyObj = { page, limit, category, search, sort, fields };
-    const cacheKey = `products:${crypto.createHash('md5').update(JSON.stringify(cacheKeyObj)).digest('hex')}`;
+      // Cache key based on query
+      const cacheKeyObj = { page, limit, category, search, sort, fields };
+      const cacheKey = `products:${crypto.createHash('md5').update(JSON.stringify(cacheKeyObj)).digest('hex')}`;
 
-    // Try cache
-    const cached = await cache.get(cacheKey);
-    if (cached) {
-      res.set('X-Cache', 'HIT');
-      const totalCount = (cached.payload && cached.payload.meta && cached.payload.meta.total) ? cached.payload.meta.total : 0;
-      res.set('X-Total-Count', String(totalCount));
-      res.set('ETag', cached.etag);
-      // Conditional request handling
+      // Try cache
+      const cached = await cache.get(cacheKey);
+      if (cached) {
+        res.set('X-Cache', 'HIT');
+        const totalCount = (cached.payload && cached.payload.meta && cached.payload.meta.total) ? cached.payload.meta.total : 0;
+        res.set('X-Total-Count', String(totalCount));
+        res.set('ETag', cached.etag);
+        // Conditional request handling
+        const ifNoneMatch = req.headers['if-none-match'];
+        if (ifNoneMatch && ifNoneMatch === cached.etag) return res.status(304).end();
+        return res.json(cached.payload);
+      }
+
+      const skip = (page - 1) * limit;
+      const [products, total] = await Promise.all([
+        Product.find(filter, projection).sort(sortObj).skip(skip).limit(limit).lean(),
+        Product.countDocuments(filter),
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+      const payload = {
+        data: products,
+        meta: { page, limit, total, totalPages },
+        links: {
+          next: page < totalPages ? `/api/products?page=${page + 1}&limit=${limit}` : null,
+          prev: page > 1 ? `/api/products?page=${page - 1}&limit=${limit}` : null,
+        },
+      };
+
+      const etag = crypto.createHash('md5').update(JSON.stringify(payload)).digest('hex');
+      // store in cache
+      await cache.set(cacheKey, { payload, etag }, Number(process.env.PRODUCTS_CACHE_TTL || 60));
+
+      res.set('X-Cache', 'MISS');
+      res.set('X-Total-Count', String(total));
+      res.set('ETag', etag);
+      // Link header (RFC5988) for pagination
+      const linkParts = [];
+      const baseUrl = `/api/products?limit=${limit}`;
+      if (page < totalPages) linkParts.push(`<${baseUrl}&page=${page + 1}>; rel="next"`);
+      if (page > 1) linkParts.push(`<${baseUrl}&page=${page - 1}>; rel="prev"`);
+      if (linkParts.length) res.set('Link', linkParts.join(', '));
+
+      // Conditional request: If client sent If-None-Match
       const ifNoneMatch = req.headers['if-none-match'];
-      if (ifNoneMatch && ifNoneMatch === cached.etag) return res.status(304).end();
-      return res.json(cached.payload);
+      if (ifNoneMatch && ifNoneMatch === etag) return res.status(304).end();
+
+      return res.json(payload);
+    } catch (err) {
+      console.error('[products] GET /api/products error:', err);
+      res.status(500).json({ error: 'Server error' });
     }
-
-    const skip = (page - 1) * limit;
-    const [products, total] = await Promise.all([
-      Product.find(filter, projection).sort(sortObj).skip(skip).limit(limit).lean(),
-      Product.countDocuments(filter),
-    ]);
-
-    const totalPages = Math.ceil(total / limit);
-    const payload = {
-      data: products,
-      meta: { page, limit, total, totalPages },
-      links: {
-        next: page < totalPages ? `/api/products?page=${page + 1}&limit=${limit}` : null,
-        prev: page > 1 ? `/api/products?page=${page - 1}&limit=${limit}` : null,
-      },
-    };
-
-    const etag = crypto.createHash('md5').update(JSON.stringify(payload)).digest('hex');
-    // store in cache
-    await cache.set(cacheKey, { payload, etag }, Number(process.env.PRODUCTS_CACHE_TTL || 60));
-
-    res.set('X-Cache', 'MISS');
-    res.set('X-Total-Count', String(total));
-    res.set('ETag', etag);
-    // Link header (RFC5988) for pagination
-    const linkParts = [];
-    const baseUrl = `/api/products?limit=${limit}`;
-    if (page < totalPages) linkParts.push(`<${baseUrl}&page=${page + 1}>; rel="next"`);
-    if (page > 1) linkParts.push(`<${baseUrl}&page=${page - 1}>; rel="prev"`);
-    if (linkParts.length) res.set('Link', linkParts.join(', '));
-
-    // Conditional request: If client sent If-None-Match
-    const ifNoneMatch = req.headers['if-none-match'];
-    if (ifNoneMatch && ifNoneMatch === etag) return res.status(304).end();
-
-    return res.json(payload);
-  } catch (err) {
-    console.error('[products] GET /api/products error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+  });
 
 /**
  * @route   GET /api/products/low-stock
