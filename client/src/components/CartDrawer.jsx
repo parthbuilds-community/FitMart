@@ -1,8 +1,10 @@
-// src/components/CartDrawer.jsx
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
-
+ 
+const FOCUSABLE_SELECTOR =
+  "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), details > summary, [tabindex]:not([tabindex='-1'])";
+ 
 function CartDrawer({
   isOpen,
   onClose,
@@ -12,34 +14,89 @@ function CartDrawer({
   updateQty,
   removeFromCart,
 }) {
+  const drawerRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const triggerElementRef = useRef(null);
+ 
+  // Handle Escape key and focus trapping
   useEffect(() => {
+    if (!isOpen) return;
+ 
     const handleKeyDown = (e) => {
-      if (e.key === "Escape" && isOpen) onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+ 
+      if (e.key === "Tab") {
+        const focusableElements = drawerRef.current?.querySelectorAll(FOCUSABLE_SELECTOR);
+        if (!focusableElements || focusableElements.length === 0) return;
+ 
+        const focusableArray = Array.from(focusableElements);
+        const currentIndex = focusableArray.indexOf(document.activeElement);
+ 
+        if (e.shiftKey) {
+          if (currentIndex <= 0) {
+            e.preventDefault();
+            focusableArray[focusableArray.length - 1].focus();
+          }
+        } else {
+          if (currentIndex >= focusableArray.length - 1) {
+            e.preventDefault();
+            focusableArray[0].focus();
+          }
+        }
+      }
     };
+ 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
-
-  // Prevent body scroll when drawer is open
+ 
+  // Save trigger element, manage focus on open/close
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      triggerElementRef.current = document.activeElement;
+      setTimeout(() => {
+        if (closeButtonRef.current) {
+          closeButtonRef.current.focus();
+        } else {
+          drawerRef.current?.querySelector(FOCUSABLE_SELECTOR)?.focus();
+        }
+      }, 0);
     } else {
-      document.body.style.overflow = "";
+      // Defer past closing animation
+      setTimeout(() => {
+        if (triggerElementRef.current && typeof triggerElementRef.current.focus === "function") {
+          triggerElementRef.current.focus();
+        }
+      }, 0);
     }
+  }, [isOpen]);
+ 
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
-
+ 
   return (
     <>
       {/* Overlay */}
       <div
         className={`overlay fixed inset-0 bg-black/30 z-50 ${isOpen ? "show" : ""}`}
         onClick={onClose}
+        aria-hidden="true"
       />
-
-      {/* Drawer — full-width on mobile, max-sm on larger screens */}
+ 
+      {/* Drawer */}
       <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-drawer-title"
+        aria-hidden={!isOpen}
+        inert={!isOpen ? "" : undefined}
         className={`cart-slide fixed right-0 top-0 h-full z-50 shadow-2xl flex flex-col
                     bg-white w-full sm:max-w-sm ${isOpen ? "open" : ""}`}
       >
@@ -50,8 +107,11 @@ function CartDrawer({
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">
               Your
             </p>
-            <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
-                           leading-tight">
+            <h2
+              id="cart-drawer-title"
+              className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
+                         leading-tight"
+            >
               Cart
               {cartCount > 0 && (
                 <span className="text-stone-400"> — {cartCount}</span>
@@ -59,6 +119,7 @@ function CartDrawer({
             </h2>
           </div>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             aria-label="Close cart"
             className="text-stone-400 hover:text-stone-900 transition-colors
@@ -68,18 +129,19 @@ function CartDrawer({
             ×
           </button>
         </div>
-
+ 
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-4">
           {cart.length === 0 ? (
-
+ 
             /* ── Empty State ── */
             <div className="h-full flex flex-col items-center justify-center
                             text-center gap-5 sm:gap-6 py-12">
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-stone-100
                               flex items-center justify-center">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                  stroke="#d6d3d1" strokeWidth="1.5">
+                  stroke="#d6d3d1" strokeWidth="1.5"
+                  aria-hidden="true">
                   <circle cx="12" cy="12" r="9" />
                   <line x1="5" y1="5" x2="19" y2="19" />
                 </svg>
@@ -103,9 +165,9 @@ function CartDrawer({
                 Continue Shopping
               </button>
             </div>
-
+ 
           ) : (
-
+ 
             /* ── Cart Items ── */
             <div className="flex flex-col">
               {cart.map((item) => (
@@ -130,13 +192,14 @@ function CartDrawer({
                       />
                     ) : (
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="#d6d3d1" strokeWidth="1.5">
+                        stroke="#d6d3d1" strokeWidth="1.5"
+                        aria-hidden="true">
                         <circle cx="12" cy="12" r="9" />
                         <line x1="5" y1="5" x2="19" y2="19" />
                       </svg>
                     )}
                   </div>
-
+ 
                   {/* Product info */}
                   <div className="flex-1 min-w-0">
                     {item.brand && (
@@ -150,35 +213,43 @@ function CartDrawer({
                     </p>
                     <p className="text-sm text-stone-700 mt-1">{fmt(item.price)}</p>
                   </div>
-
+ 
                   {/* Qty + Remove */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <button
                       onClick={() => removeFromCart(item.id)}
                       className="text-xs text-stone-300 hover:text-stone-900 transition-colors
                                  min-h-7 flex items-center"
+                      aria-label={`Remove ${item.name} from cart`}
                     >
                       Remove
                     </button>
-                    <div className="flex items-center gap-1.5 sm:gap-2 border border-stone-200
-                                    rounded-full px-2.5 sm:px-3 py-1">
+                    <div
+                      role="group"
+                      aria-label={`Quantity for ${item.name}`}
+                      className="flex items-center gap-1.5 sm:gap-2 border border-stone-200
+                                  rounded-full px-2.5 sm:px-3 py-1"
+                    >
                       <button
                         onClick={() => updateQty(item.id, -1)}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
-                        aria-label="Decrease quantity"
+                        aria-label={`Decrease quantity for ${item.name}`}
                       >
                         −
                       </button>
-                      <span className="text-xs text-stone-900 min-w-4 text-center
-                                       select-none">
+                      <span
+                        className="text-xs text-stone-900 min-w-4 text-center select-none"
+                        aria-hidden="true"
+                      >
                         {item.qty}
                       </span>
+                      <span className="sr-only">Current quantity: {item.qty}</span>
                       <button
                         onClick={() => updateQty(item.id, 1)}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
-                        aria-label="Increase quantity"
+                        aria-label={`Increase quantity for ${item.name}`}
                       >
                         +
                       </button>
@@ -189,7 +260,7 @@ function CartDrawer({
             </div>
           )}
         </div>
-
+ 
         {/* ── Footer ── */}
         {cart.length > 0 && (
           <div className="border-t border-stone-200 px-5 sm:px-7 py-5 sm:py-6
@@ -226,5 +297,5 @@ function CartDrawer({
     </>
   );
 }
-
+ 
 export default CartDrawer;
