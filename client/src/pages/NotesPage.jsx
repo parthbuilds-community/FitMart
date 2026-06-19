@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import WorkoutLogSkeleton from "../components/WorkoutLogSkeleton";
 import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../utils/workoutStorage";
 
 /**
@@ -18,24 +19,30 @@ export default function NotesPage() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState(new Set());
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Get selectedDate from localStorage
     const storedDate = localStorage.getItem("selectedDate");
     if (!storedDate) {
       setError("No date selected. Please go back to the calendar and select a date.");
+      setIsLoading(false);
       return;
     }
     setDate(storedDate);
 
     // Pre-fill if data exists
-    getWorkoutByDate(storedDate).then(workout => {
-      if (workout) {
-        setTitle(workout.title || "");
-        setNotes(workout.notes || "");
-        setExercises(workout.exercises || []);
-      }
-    });
+    getWorkoutByDate(storedDate)
+      .then(workout => {
+        if (workout) {
+          setTitle(workout.title || "");
+          setNotes(workout.notes || "");
+          setExercises(workout.exercises || []);
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const handleSave = async () => {
@@ -127,7 +134,10 @@ export default function NotesPage() {
           <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Calendar
         </button>
 
-        <div className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 md:p-10 shadow-sm">
+        {isLoading ? (
+          <WorkoutLogSkeleton />
+        ) : (
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 md:p-10 shadow-sm">
           <header className="mb-8 sm:mb-10 text-center md:text-left">
             <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-stone-400 mb-2 font-medium">Training Session For</p>
             <h1 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl text-stone-900">{formattedDate}</h1>
@@ -256,6 +266,7 @@ export default function NotesPage() {
             </button>
           </div>
         </div>
+        )}
       </main>
     </div>
   );
