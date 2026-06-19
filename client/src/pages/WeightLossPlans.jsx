@@ -12,7 +12,12 @@ const PLANS = [
     difficulty: "Beginner",
     tag: "MOST POPULAR",
     desc: "A caloric-deficit nutrition plan paired with structured cardio sessions. Perfect for those starting their weight loss journey.",
-    features: ["Custom meal plans", "5-day cardio schedule", "Weekly check-ins", "Progress tracking dashboard"],
+    features: [
+      "Custom meal plans",
+      "5-day cardio schedule",
+      "Weekly check-ins",
+      "Progress tracking dashboard",
+    ],
   },
   {
     name: "Shred Protocol",
@@ -20,7 +25,12 @@ const PLANS = [
     difficulty: "Intermediate",
     tag: null,
     desc: "High-intensity interval training combined with macro-counted meals for accelerated fat loss while preserving muscle.",
-    features: ["HIIT workout library", "Macro tracking guide", "Supplement recommendations", "Body composition analysis"],
+    features: [
+      "HIIT workout library",
+      "Macro tracking guide",
+      "Supplement recommendations",
+      "Body composition analysis",
+    ],
   },
   {
     name: "Metabolic Reset",
@@ -28,7 +38,12 @@ const PLANS = [
     difficulty: "Beginner",
     tag: null,
     desc: "Repair and boost your metabolism through strategic re-feeds, mindful eating habits, and low-impact steady-state cardio.",
-    features: ["Metabolic rate assessment", "Re-feed scheduling", "Mindful eating practices", "LISS cardio routines"],
+    features: [
+      "Metabolic rate assessment",
+      "Re-feed scheduling",
+      "Mindful eating practices",
+      "LISS cardio routines",
+    ],
   },
   {
     name: "Elite Cut",
@@ -36,7 +51,12 @@ const PLANS = [
     difficulty: "Advanced",
     tag: "BEST RESULTS",
     desc: "Competition-grade cutting protocol with periodized training, precise calorie cycling, and bi-weekly coach adjustments.",
-    features: ["Periodized training blocks", "Calorie cycling strategy", "Bi-weekly coaching calls", "Posing & physique feedback"],
+    features: [
+      "Periodized training blocks",
+      "Calorie cycling strategy",
+      "Bi-weekly coaching calls",
+      "Posing & physique feedback",
+    ],
   },
 ];
 
@@ -62,7 +82,7 @@ export default function WeightLossPlans() {
   return (
     <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif]">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+        /css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
         .fade-in { opacity:0; transform:translateY(16px); transition:opacity .5s ease,transform .5s ease; }
         .fade-in.show { opacity:1; transform:translateY(0); }
         .d1{transition-delay:.05s} .d2{transition-delay:.15s}
@@ -71,8 +91,8 @@ export default function WeightLossPlans() {
 
       <Navbar
         variant="home"
-        onSearchToggle={() => { }}
-        onCartOpen={() => { }}
+        onSearchToggle={() => {}}
+        onCartOpen={() => {}}
         cartCount={0}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
@@ -89,14 +109,16 @@ export default function WeightLossPlans() {
                 <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-3">
                   Digital Coaching
                 </p>
-                <h1 className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-6xl
-                               text-white leading-tight max-w-2xl mb-4">
+                <h1
+                  className="font-['DM_Serif_Display'] text-3xl sm:text-4xl md:text-6xl
+                               text-white leading-tight max-w-2xl mb-4"
+                >
                   Weight Loss{" "}
                   <em className="not-italic text-stone-400">Plans</em>
                 </h1>
                 <p className="text-sm text-stone-300 max-w-lg leading-relaxed">
-                  Caloric-deficit nutrition, cardio-focused programming, and expert coaching
-                  designed to help you shed weight sustainably.
+                  Caloric-deficit nutrition, cardio-focused programming, and
+                  expert coaching designed to help you shed weight sustainably.
                 </p>
               </div>
 
@@ -115,7 +137,6 @@ export default function WeightLossPlans() {
 
       {/* ── Plans Grid ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-12 sm:py-16 space-y-12 sm:space-y-16">
-
         {/* Available programs */}
         <section>
           <div className={`fade-in d1 ${visible ? "show" : ""} mb-6 sm:mb-8`}>
@@ -128,7 +149,9 @@ export default function WeightLossPlans() {
           </div>
 
           {/* Single col on mobile, 2-col on md+ */}
-          <div className={`fade-in d2 ${visible ? "show" : ""} grid sm:grid-cols-2 gap-4 sm:gap-5`}>
+          <div
+            className={`fade-in d2 ${visible ? "show" : ""} grid sm:grid-cols-2 gap-4 sm:gap-5`}
+          >
             {PLANS.map((plan, i) => (
               <div
                 key={i}
@@ -138,13 +161,19 @@ export default function WeightLossPlans() {
               >
                 <div className="flex items-center justify-between">
                   {plan.tag ? (
-                    <span className="text-[9px] tracking-[0.2em] uppercase rounded-full
-                                     px-2.5 py-1 bg-stone-900 text-white">
+                    <span
+                      className="text-[9px] tracking-[0.2em] uppercase rounded-full
+                                     px-2.5 py-1 bg-stone-900 text-white"
+                    >
                       {plan.tag}
                     </span>
-                  ) : <span />}
-                  <span className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5
-                                   rounded-full border text-stone-500 border-stone-200">
+                  ) : (
+                    <span />
+                  )}
+                  <span
+                    className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5
+                                   rounded-full border text-stone-500 border-stone-200"
+                  >
                     {plan.difficulty}
                   </span>
                 </div>
@@ -162,16 +191,21 @@ export default function WeightLossPlans() {
 
                 <ul className="space-y-2">
                   {plan.features.map((f, j) => (
-                    <li key={j} className="text-xs flex items-center gap-2 text-stone-500">
+                    <li
+                      key={j}
+                      className="text-xs flex items-center gap-2 text-stone-500"
+                    >
                       <span className="text-stone-900 shrink-0">✓</span> {f}
                     </li>
                   ))}
                 </ul>
 
-                <button className="text-sm py-3 rounded-full transition-all mt-2 border
+                <button
+                  className="text-sm py-3 rounded-full transition-all mt-2 border
                                    border-stone-300 text-stone-700 hover:bg-stone-900
                                    hover:text-white hover:border-stone-900 min-h-11
-                                   active:scale-[0.98]">
+                                   active:scale-[0.98]"
+                >
                   Start Plan →
                 </button>
               </div>
@@ -182,9 +216,13 @@ export default function WeightLossPlans() {
         {/* Science section */}
         <section>
           <div className={`fade-in d3 ${visible ? "show" : ""}`}>
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Why It Works</p>
-            <h2 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl
-                           text-stone-900 mb-6 sm:mb-8">
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+              Why It Works
+            </p>
+            <h2
+              className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl
+                           text-stone-900 mb-6 sm:mb-8"
+            >
               The science behind the plan
             </h2>
             {/* Single col on mobile, 3-col on md+ */}
@@ -211,7 +249,9 @@ export default function WeightLossPlans() {
                   <h3 className="font-['DM_Serif_Display'] text-lg text-stone-900 mb-2">
                     {tip.title}
                   </h3>
-                  <p className="text-sm text-stone-500 leading-relaxed">{tip.desc}</p>
+                  <p className="text-sm text-stone-500 leading-relaxed">
+                    {tip.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -221,15 +261,23 @@ export default function WeightLossPlans() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-stone-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-6 sm:py-8
-                        flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
-          <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
-          <p className="text-xs text-stone-400">© 2026 FitMart. Built at VESIT, Mumbai.</p>
+        <div
+          className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-6 sm:py-8
+                        flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left"
+        >
+          <span className="font-['DM_Serif_Display'] text-lg text-stone-900">
+            FitMart
+          </span>
+          <p className="text-xs text-stone-400">
+            © 2026 FitMart. Built at VESIT, Mumbai.
+          </p>
           <div className="flex gap-4 sm:gap-5">
-            {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
+            {["Privacy", "Terms", "Support"].map((l) => (
+              <button
+                key={l}
                 className="text-xs text-stone-400 hover:text-stone-600 transition-colors
-                           min-h-11 flex items-center">
+                           min-h-11 flex items-center"
+              >
                 {l}
               </button>
             ))}

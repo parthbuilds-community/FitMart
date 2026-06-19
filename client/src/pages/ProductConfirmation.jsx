@@ -10,24 +10,29 @@ export default function ProductConfirmation() {
   const [visible, setVisible] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  const { items = [], total = 0, paymentId = "", address = null } = location.state || {};
+  const {
+    items = [],
+    total = 0,
+    paymentId = "",
+    address = null,
+  } = location.state || {};
 
   useEffect(() => {
     document.title = "FitMart";
   }, []);
 
-const now = new Date();
+  const now = new Date();
 
-const currentOrderDate = now.toLocaleDateString("en-IN", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
+  const currentOrderDate = now.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
-const currentOrderTime = now.toLocaleTimeString("en-IN", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
+  const currentOrderTime = now.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   useEffect(() => {
     if (!items.length) navigate("/");
@@ -50,18 +55,20 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
     const userEmail = user?.email || "";
 
     const addr = address;
-    const addrHtml = addr ? `
+    const addrHtml = addr
+      ? `
       <div class="billing-card">
         <h3>Shipping Address</h3>
-        <p>${addr.label || ''}</p>
-        <p>${addr.line1 || ''}${addr.line2 ? `, ${addr.line2}` : ''}</p>
-        <p>${[addr.city, addr.state, addr.zip].filter(Boolean).join(', ')}</p>
-        ${addr.country ? `<p>${addr.country}</p>` : ''}
-        ${addr.phone ? `<p>${addr.phone}</p>` : ''}
+        <p>${addr.label || ""}</p>
+        <p>${addr.line1 || ""}${addr.line2 ? `, ${addr.line2}` : ""}</p>
+        <p>${[addr.city, addr.state, addr.zip].filter(Boolean).join(", ")}</p>
+        ${addr.country ? `<p>${addr.country}</p>` : ""}
+        ${addr.phone ? `<p>${addr.phone}</p>` : ""}
       </div>
-    ` : '';
+    `
+      : "";
 
-   const invoiceHTML = `
+    const invoiceHTML = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -439,11 +446,7 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
         <div class="meta-title">Invoice Details</div>
         <p>${currentOrderDate} · ${currentOrderTime}</p>
 
-        ${
-          paymentId
-            ? `<div class="pid">Payment ID: ${paymentId}</div>`
-            : ""
-        }
+        ${paymentId ? `<div class="pid">Payment ID: ${paymentId}</div>` : ""}
 
         <div class="status-badge">Paid Successfully</div>
       </div>
@@ -481,7 +484,9 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
         </thead>
 
         <tbody>
-          ${items.map(({ product, quantity }) => `
+          ${items
+            .map(
+              ({ product, quantity }) => `
             <tr>
               <td>
                 <div class="product-cell">
@@ -517,7 +522,9 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
                 ${fmt(product.price * quantity)}
               </td>
             </tr>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </tbody>
       </table>
     </div>
@@ -596,9 +603,12 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
   if (!items.length) return null;
 
   return (
-    <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      className="min-h-screen bg-stone-50"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
+        /css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
         .fade-up {
           opacity: 0;
           transform: translateY(28px);
@@ -612,11 +622,14 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
       `}</style>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-5 py-10 sm:py-16">
-
         {/* ── Success header ── */}
-        <div className={`fade-up ${visible ? "visible" : ""} text-center mb-10 sm:mb-12`}>
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20
-                          bg-stone-900 rounded-full mb-5 sm:mb-6 shadow-lg">
+        <div
+          className={`fade-up ${visible ? "visible" : ""} text-center mb-10 sm:mb-12`}
+        >
+          <div
+            className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20
+                          bg-stone-900 rounded-full mb-5 sm:mb-6 shadow-lg"
+          >
             <span className="text-white text-2xl sm:text-3xl">✓</span>
           </div>
           <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
@@ -635,18 +648,24 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
             {currentOrderDate} · {currentOrderTime}
           </p>
           {paymentId && (
-            <p className="text-[11px] text-stone-400 mt-2 font-mono bg-stone-100
-                          inline-block px-3 py-1 rounded-full break-all max-w-full">
+            <p
+              className="text-[11px] text-stone-400 mt-2 font-mono bg-stone-100
+                          inline-block px-3 py-1 rounded-full break-all max-w-full"
+            >
               {paymentId}
             </p>
           )}
         </div>
 
         {/* ── Purchased items card ── */}
-        <div className={`fade-up delay-1 ${visible ? "visible" : ""}
-                         bg-white border border-stone-200 rounded-2xl overflow-hidden mb-4`}>
-          <div className="px-4 sm:px-7 py-4 sm:py-5 border-b border-stone-100
-                          flex justify-between items-center">
+        <div
+          className={`fade-up delay-1 ${visible ? "visible" : ""}
+                         bg-white border border-stone-200 rounded-2xl overflow-hidden mb-4`}
+        >
+          <div
+            className="px-4 sm:px-7 py-4 sm:py-5 border-b border-stone-100
+                          flex justify-between items-center"
+          >
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400">
               Items Purchased
             </p>
@@ -662,13 +681,17 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
                 className="flex items-center gap-3 sm:gap-5 px-4 sm:px-7 py-4 sm:py-5"
               >
                 {/* Product image */}
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-stone-100
-                                flex-shrink-0 overflow-hidden">
+                <div
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-stone-100
+                                flex-shrink-0 overflow-hidden"
+                >
                   <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover"
-                    onError={e => { e.currentTarget.style.display = "none"; }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 </div>
 
@@ -684,7 +707,9 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
                     {product.name}
                   </p>
                   <div className="flex items-center gap-2 sm:gap-3 mt-1 flex-wrap">
-                    <span className="text-xs text-stone-400">Qty {quantity}</span>
+                    <span className="text-xs text-stone-400">
+                      Qty {quantity}
+                    </span>
                     <span className="text-stone-200 hidden sm:inline">·</span>
                     <span className="text-xs text-stone-400">
                       {fmt(product.price)} each
@@ -715,7 +740,9 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
             </div>
             <div className="h-px bg-stone-200 my-1" />
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-stone-700">Total Paid</span>
+              <span className="text-sm font-medium text-stone-700">
+                Total Paid
+              </span>
               <span
                 style={{ fontFamily: "'DM Serif Display', serif" }}
                 className="text-2xl sm:text-3xl text-stone-900"
@@ -738,15 +765,24 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
           >
             {downloading ? (
               <>
-                <span className="w-4 h-4 border-2 border-current border-t-transparent
-                                 rounded-full animate-spin" />
+                <span
+                  className="w-4 h-4 border-2 border-current border-t-transparent
+                                 rounded-full animate-spin"
+                />
                 Generating invoice…
               </>
             ) : (
               <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                  strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
@@ -761,7 +797,9 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
         </div>
 
         {/* ── Action buttons ── */}
-        <div className={`fade-up delay-3 ${visible ? "visible" : ""} flex flex-col sm:flex-row gap-3`}>
+        <div
+          className={`fade-up delay-3 ${visible ? "visible" : ""} flex flex-col sm:flex-row gap-3`}
+        >
           <button
             onClick={() => navigate("/home")}
             className="flex-1 bg-stone-900 text-white text-sm px-8 py-4
@@ -773,8 +811,10 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
         </div>
 
         {/* ── Footer note ── */}
-        <p className={`fade-up delay-4 ${visible ? "visible" : ""}
-                       text-xs text-stone-400 text-center mt-6 sm:mt-8 leading-relaxed px-4`}>
+        <p
+          className={`fade-up delay-4 ${visible ? "visible" : ""}
+                       text-xs text-stone-400 text-center mt-6 sm:mt-8 leading-relaxed px-4`}
+        >
           A confirmation will be sent to your registered email address.
         </p>
       </div>

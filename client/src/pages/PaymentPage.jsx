@@ -10,9 +10,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 function useRazorpayScript() {
-  const [status, setStatus] = useState(
-    window.Razorpay ? "loaded" : "loading"
-  );
+  const [status, setStatus] = useState(window.Razorpay ? "loaded" : "loading");
 
   useEffect(() => {
     if (window.Razorpay) return;
@@ -236,18 +234,15 @@ export default function PaymentPage() {
           try {
             const headers = await getAuthHeaders();
 
-            const verifyRes = await fetch(
-              `${API}/api/payment/verify-payment`,
-              {
-                method: "POST",
-                headers,
-                credentials: "include",
-                body: JSON.stringify({
-                  ...response,
-                  userId,
-                }),
-              }
-            );
+            const verifyRes = await fetch(`${API}/api/payment/verify-payment`, {
+              method: "POST",
+              headers,
+              credentials: "include",
+              body: JSON.stringify({
+                ...response,
+                userId,
+              }),
+            });
 
             if (!verifyRes.ok) {
               throw new Error("Payment verification failed");
@@ -265,7 +260,7 @@ export default function PaymentPage() {
             setPaying(false);
 
             showError(
-              "Payment was cancelled. Use the button below to simulate success."
+              "Payment was cancelled. Use the button below to simulate success.",
             );
           },
         },
@@ -277,8 +272,7 @@ export default function PaymentPage() {
         setPaying(false);
 
         showError(
-          `Payment failed: ${resp.error?.description || "Unknown error"
-          }`
+          `Payment failed: ${resp.error?.description || "Unknown error"}`,
         );
       });
 
@@ -294,14 +288,10 @@ export default function PaymentPage() {
       className="min-h-screen bg-stone-50"
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
-      <Navbar
-        variant="home"
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-      />
+      <Navbar variant="home" menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
       <style>
-        {`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}
+        {`/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}
       </style>
 
       <div className="max-w-xl mx-auto px-4 sm:px-5 py-10 sm:py-16">
@@ -339,24 +329,19 @@ export default function PaymentPage() {
 
                 <div className="text-sm text-stone-700">
                   {address.city}
-                  {address.state ? `, ${address.state}` : ""}{" "}
-                  {address.zip}
+                  {address.state ? `, ${address.state}` : ""} {address.zip}
                 </div>
               </div>
             )}
 
             {items.map(({ product, quantity }) => (
-              <div
-                key={product.productId}
-                className="flex items-center gap-3"
-              >
+              <div key={product.productId} className="flex items-center gap-3">
                 <img
                   src={product.image}
                   alt={product.name}
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src =
-                      "/assets/placeholder-product.png";
+                    e.currentTarget.src = "/assets/placeholder-product.png";
                   }}
                   className="w-10 h-10 object-cover rounded-lg bg-stone-100 shrink-0"
                 />
@@ -366,9 +351,7 @@ export default function PaymentPage() {
                     {product.name}
                   </p>
 
-                  <p className="text-xs text-stone-400">
-                    Qty {quantity}
-                  </p>
+                  <p className="text-xs text-stone-400">Qty {quantity}</p>
                 </div>
 
                 <p className="text-sm text-stone-900 shrink-0">
@@ -396,9 +379,7 @@ export default function PaymentPage() {
             )}
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-sm text-stone-500">
-                Total payable
-              </span>
+              <span className="text-sm text-stone-500">Total payable</span>
 
               <span
                 style={{ fontFamily: "'DM Serif Display', serif" }}
@@ -419,18 +400,14 @@ export default function PaymentPage() {
             tabIndex={-1}
             className="bg-red-50 border border-red-100 rounded-2xl px-4 sm:px-5 py-4 mb-4 sm:mb-5 outline-none"
           >
-            <p className="text-red-600 text-sm leading-relaxed">
-              {error}
-            </p>
+            <p className="text-red-600 text-sm leading-relaxed">{error}</p>
           </div>
         )}
 
         {/* SDK loading */}
         {rzpStatus === "loading" && (
           <div className="bg-stone-100 border border-stone-200 rounded-2xl px-4 py-3 mb-4">
-            <p className="text-sm text-stone-600">
-              Loading payment SDK...
-            </p>
+            <p className="text-sm text-stone-600">Loading payment SDK...</p>
           </div>
         )}
 

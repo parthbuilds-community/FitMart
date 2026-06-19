@@ -11,7 +11,8 @@ import SkeletonSummary from "../components/SkeletonSummary";
 import AddressSelector from "../components/AddressSelector";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const PLACEHOLDER_IMG = "https://placehold.co/96x96/f5f5f4/78716c?text=No+Image";
+const PLACEHOLDER_IMG =
+  "https://placehold.co/96x96/f5f5f4/78716c?text=No+Image";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -28,7 +29,9 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => { document.title = "My Cart - FitMart"; }, []);
+  useEffect(() => {
+    document.title = "My Cart - FitMart";
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -36,7 +39,10 @@ export default function Checkout() {
     const { signal } = controller;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) { navigate("/auth"); return; }
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
       const userId = user.uid;
 
       // ── Fetch cart + products together ──────────────────────────────────
@@ -47,10 +53,18 @@ export default function Checkout() {
         const headers = await getAuthHeaders();
 
         const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
-          fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
+          fetch(`${API}/api/cart/${userId}`, {
+            headers,
+            credentials: "include",
+          }),
           fetch(`${API}/api/products?all=true`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
-          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
+          fetch(`${API}/api/user/discount-status/${userId}`, {
+            credentials: "include",
+          }),
+          fetch(`${API}/api/user/profile/${userId}`, {
+            headers,
+            credentials: "include",
+          }),
         ]);
 
         if (!cartRes.ok) throw new Error("Failed to fetch cart");
@@ -66,14 +80,16 @@ export default function Checkout() {
         }
 
         if (cart.items?.length) {
-          const productMap = Object.fromEntries(products.map(p => [p.productId, p]));
+          const productMap = Object.fromEntries(
+            products.map((p) => [p.productId, p]),
+          );
           const enriched = cart.items
-            .map(item => ({ ...item, product: productMap[item.productId] }))
-            .filter(item => item.product);
+            .map((item) => ({ ...item, product: productMap[item.productId] }))
+            .filter((item) => item.product);
           setItems(enriched);
         }
       } catch (err) {
-        if (err.name === 'AbortError') return;
+        if (err.name === "AbortError") return;
         setCartError(err.message);
       } finally {
         setLoadingCart(false);
@@ -86,7 +102,9 @@ export default function Checkout() {
       try {
         const headers = await getAuthHeaders();
         const profileRes = await fetch(`${API}/api/user/profile/${userId}`, {
-          headers, credentials: "include", signal,
+          headers,
+          credentials: "include",
+          signal,
         });
 
         if (!profileRes.ok) throw new Error("Failed to load profile");
@@ -94,12 +112,14 @@ export default function Checkout() {
         const p = await profileRes.json();
         setProfile(p);
         const def = p?.defaultAddressId
-          ? (p.addresses || []).find(a => a.id === p.defaultAddressId)
+          ? (p.addresses || []).find((a) => a.id === p.defaultAddressId)
           : null;
         setSelectedAddress(def || p?.addresses?.[0] || null);
       } catch (err) {
-        if (err.name === 'AbortError') return;
-        setProfileError("Couldn't load your saved addresses. You can still view your order.");
+        if (err.name === "AbortError") return;
+        setProfileError(
+          "Couldn't load your saved addresses. You can still view your order.",
+        );
       } finally {
         setLoadingProfile(false);
       }
@@ -111,14 +131,22 @@ export default function Checkout() {
     };
   }, [navigate]);
 
-  const subtotal = items.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
-  const discountAmt = discountEligible ? Math.round(subtotal * discountPercent / 100) : 0;
+  const subtotal = items.reduce(
+    (sum, { product, quantity }) => sum + product.price * quantity,
+    0,
+  );
+  const discountAmt = discountEligible
+    ? Math.round((subtotal * discountPercent) / 100)
+    : 0;
   const total = subtotal - discountAmt;
 
   const handleProceed = () => {
     navigate("/payment", {
       state: {
-        items, total, subtotal, discountAmt,
+        items,
+        total,
+        subtotal,
+        discountAmt,
         discountPercent: discountEligible ? discountPercent : 0,
         discountApplied: discountEligible,
         address: selectedAddress,
@@ -127,27 +155,28 @@ export default function Checkout() {
   };
 
   // Full-page cart error
-  if (!loadingCart && cartError) return (
-    <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <ErrorMsg msg={cartError} />
-    </PageShell>
-  );
+  if (!loadingCart && cartError)
+    return (
+      <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
+        <ErrorMsg msg={cartError} />
+      </PageShell>
+    );
 
   // Empty cart (only after loading done)
-  if (!loadingCart && !cartError && !items.length) return (
-    <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
-      <EmptyCart navigate={navigate} />
-    </PageShell>
-  );
+  if (!loadingCart && !cartError && !items.length)
+    return (
+      <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
+        <EmptyCart navigate={navigate} />
+      </PageShell>
+    );
 
   return (
     <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
+        /css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
       `}</style>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">
-
         {/* Back + heading */}
         <div className="mb-8 sm:mb-10">
           <button
@@ -157,11 +186,15 @@ export default function Checkout() {
                        rounded-full transition-all duration-300 hover:shadow-md group cursor-pointer mb-5 sm:mb-6"
             aria-label="Back to shop"
           >
-            <span className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
+            <span className="transition-transform duration-200 group-hover:-translate-x-1">
+              ←
+            </span>
             Back to Shop
           </button>
 
-          <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">Review</p>
+          <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-2">
+            Review
+          </p>
           <h1
             style={{ fontFamily: "'DM Serif Display', serif" }}
             className="text-3xl sm:text-4xl md:text-5xl text-stone-900"
@@ -171,14 +204,15 @@ export default function Checkout() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-
           {/* ── Order summary ── */}
           <div className="lg:col-span-1 order-first lg:order-last">
             {loadingProfile && !profile ? (
               <SkeletonSummary />
             ) : (
               <div className="bg-stone-900 rounded-2xl p-6 sm:p-8 lg:sticky lg:top-24">
-                <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5 sm:mb-6">Summary</p>
+                <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5 sm:mb-6">
+                  Summary
+                </p>
 
                 {/* Profile error inline */}
                 {profileError && (
@@ -200,13 +234,20 @@ export default function Checkout() {
 
                 <div className="space-y-3 mb-5 sm:mb-6">
                   <div className="flex justify-between text-sm text-stone-300">
-                    <span>Subtotal ({items.length} item{items.length > 1 ? "s" : ""})</span>
+                    <span>
+                      Subtotal ({items.length} item{items.length > 1 ? "s" : ""}
+                      )
+                    </span>
                     <span>{fmt(subtotal)}</span>
                   </div>
                   {discountEligible && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-400">Welcome {discountPercent}% off</span>
-                      <span className="text-stone-300">−{fmt(discountAmt)}</span>
+                      <span className="text-stone-400">
+                        Welcome {discountPercent}% off
+                      </span>
+                      <span className="text-stone-300">
+                        −{fmt(discountAmt)}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm text-stone-300">
@@ -215,7 +256,9 @@ export default function Checkout() {
                   </div>
                   <div className="h-px bg-stone-700 my-2" />
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white font-medium">Total</span>
+                    <span className="text-sm text-white font-medium">
+                      Total
+                    </span>
                     <span
                       style={{ fontFamily: "'DM Serif Display', serif" }}
                       className="text-2xl sm:text-3xl text-white"
@@ -236,18 +279,25 @@ export default function Checkout() {
                   onClick={handleProceed}
                   disabled={!selectedAddress}
                   aria-disabled={!selectedAddress}
-                  aria-label={selectedAddress ? "Proceed to payment" : "Select a shipping address to proceed"}
+                  aria-label={
+                    selectedAddress
+                      ? "Proceed to payment"
+                      : "Select a shipping address to proceed"
+                  }
                   className={`w-full text-sm px-8 py-3.5 rounded-full transition-colors
                              font-medium min-h-12 focus:outline-none focus:ring-2
                              focus:ring-white focus:ring-offset-2 focus:ring-offset-stone-900
-                             ${selectedAddress
-                      ? 'bg-white text-stone-900 hover:bg-stone-100 cursor-pointer'
-                      : 'bg-stone-700 text-stone-500 cursor-not-allowed'
-                    }`}
+                             ${
+                               selectedAddress
+                                 ? "bg-white text-stone-900 hover:bg-stone-100 cursor-pointer"
+                                 : "bg-stone-700 text-stone-500 cursor-not-allowed"
+                             }`}
                 >
                   Proceed to Payment →
                 </button>
-                <p className="text-xs text-stone-500 text-center mt-4">Secured by Razorpay</p>
+                <p className="text-xs text-stone-500 text-center mt-4">
+                  Secured by Razorpay
+                </p>
               </div>
             )}
           </div>
@@ -271,8 +321,14 @@ export default function Checkout() {
                   >
                     <img
                       src={product.image}
-                      alt={product.name ? `${product.name} product image` : 'Product image'}
-                      onError={e => { e.currentTarget.src = PLACEHOLDER_IMG; }}
+                      alt={
+                        product.name
+                          ? `${product.name} product image`
+                          : "Product image"
+                      }
+                      onError={(e) => {
+                        e.currentTarget.src = PLACEHOLDER_IMG;
+                      }}
                       className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl shrink-0 bg-stone-100"
                     />
                     <div className="flex-1 min-w-0">
@@ -287,8 +343,10 @@ export default function Checkout() {
                         {product.name}
                       </h3>
                       {product.badge && (
-                        <span className="text-[10px] tracking-widest uppercase bg-stone-900
-                                         text-white px-2.5 py-1 rounded-full">
+                        <span
+                          className="text-[10px] tracking-widest uppercase bg-stone-900
+                                         text-white px-2.5 py-1 rounded-full"
+                        >
                           {product.badge}
                         </span>
                       )}
@@ -306,7 +364,9 @@ export default function Checkout() {
 
                     {/* Desktop price */}
                     <div className="text-right shrink-0 hidden sm:block">
-                      <p className="text-xs text-stone-400 mb-1">Qty {quantity}</p>
+                      <p className="text-xs text-stone-400 mb-1">
+                        Qty {quantity}
+                      </p>
                       <p
                         style={{ fontFamily: "'DM Serif Display', serif" }}
                         className="text-2xl text-stone-900"
@@ -324,13 +384,23 @@ export default function Checkout() {
 
                 {/* Welcome discount callout */}
                 {discountEligible && (
-                  <div className="bg-stone-100 border border-stone-200 rounded-2xl px-4 sm:px-6 py-4
-                                  flex items-center gap-3 sm:gap-4">
-                    <span className="text-stone-900 text-lg shrink-0" aria-hidden="true">✓</span>
+                  <div
+                    className="bg-stone-100 border border-stone-200 rounded-2xl px-4 sm:px-6 py-4
+                                  flex items-center gap-3 sm:gap-4"
+                  >
+                    <span
+                      className="text-stone-900 text-lg shrink-0"
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </span>
                     <div>
-                      <p className="text-sm font-medium text-stone-900">Welcome discount applied</p>
+                      <p className="text-sm font-medium text-stone-900">
+                        Welcome discount applied
+                      </p>
                       <p className="text-xs text-stone-500 mt-0.5">
-                        {discountPercent}% off your first order — saving you {fmt(discountAmt)}
+                        {discountPercent}% off your first order — saving you{" "}
+                        {fmt(discountAmt)}
                       </p>
                     </div>
                   </div>
@@ -338,7 +408,6 @@ export default function Checkout() {
               </>
             )}
           </div>
-
         </div>
       </div>
     </PageShell>
@@ -347,7 +416,10 @@ export default function Checkout() {
 
 function PageShell({ children, menuOpen, setMenuOpen }) {
   return (
-    <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      className="min-h-screen bg-stone-50"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
       <Navbar variant="home" menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       {children}
     </div>
@@ -356,9 +428,13 @@ function PageShell({ children, menuOpen, setMenuOpen }) {
 
 function ErrorMsg({ msg }) {
   return (
-    <div className="max-w-md mx-auto mt-16 sm:mt-24 bg-red-50 border border-red-100
-                    rounded-2xl p-6 sm:p-8 text-center">
-      <p className="text-red-600 text-sm" role="alert">{msg}</p>
+    <div
+      className="max-w-md mx-auto mt-16 sm:mt-24 bg-red-50 border border-red-100
+                    rounded-2xl p-6 sm:p-8 text-center"
+    >
+      <p className="text-red-600 text-sm" role="alert">
+        {msg}
+      </p>
     </div>
   );
 }
@@ -366,7 +442,9 @@ function ErrorMsg({ msg }) {
 function EmptyCart({ navigate }) {
   return (
     <div className="flex flex-col items-center justify-center h-64 text-center gap-4 px-4">
-      <p className="text-4xl text-stone-300" aria-hidden="true">∅</p>
+      <p className="text-4xl text-stone-300" aria-hidden="true">
+        ∅
+      </p>
       <p className="text-stone-500 text-sm">Your cart is empty</p>
       <button
         onClick={() => navigate("/home")}

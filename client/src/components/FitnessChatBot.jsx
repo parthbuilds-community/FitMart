@@ -15,8 +15,8 @@ const WELCOME = {
 const MAX_HISTORY = 6;
 // Configure marked options once
 marked.setOptions({
-  breaks: true,   // convert \n to <br>
-  gfm: true,      // GitHub-flavored markdown
+  breaks: true, // convert \n to <br>
+  gfm: true, // GitHub-flavored markdown
 });
 
 const QUICK_REPLIES = [
@@ -61,7 +61,8 @@ export default function FitnessChatBot() {
 
   useEffect(() => {
     const latestMessage = msgs[msgs.length - 1];
-    if (!latestMessage || latestMessage.role !== "bot" || msgs.length === 1) return;
+    if (!latestMessage || latestMessage.role !== "bot" || msgs.length === 1)
+      return;
 
     setAnnouncement(
       `Fitness assistant: ${latestMessage.text.replace(/\*\*|__/g, "")}`,
@@ -74,12 +75,13 @@ export default function FitnessChatBot() {
 
   // Prevent body scroll on mobile when chat is open
   useEffect(() => {
-    const isMobile = () => window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+    const isMobile = () =>
+      window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
     const applyLock = () => {
       if (open && isMobile()) {
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
       } else {
-        document.body.style.overflow = '';
+        document.body.style.overflow = "";
       }
     };
 
@@ -88,10 +90,10 @@ export default function FitnessChatBot() {
       // Re-apply lock when viewport changes while open
       applyLock();
     };
-    window.addEventListener('resize', onResize);
+    window.addEventListener("resize", onResize);
     return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('resize', onResize);
+      document.body.style.overflow = "";
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
@@ -106,10 +108,7 @@ export default function FitnessChatBot() {
     // customText is passed from quick replies,
     // otherwise fallback to manual textarea input.
     // Prevent crashes if non-string values are passed into send
-    const text =
-      typeof customText === "string"
-        ? customText.trim()
-        : "";
+    const text = typeof customText === "string" ? customText.trim() : "";
 
     if (!text || typing) return;
     setMsgs((prev) => [...prev, { role: "user", text }]);
@@ -165,12 +164,28 @@ export default function FitnessChatBot() {
       const rawHtml = marked.parse(text);
       const cleanHtml = DOMPurify.sanitize(rawHtml, {
         ALLOWED_TAGS: [
-          "strong", "em", "ul", "ol", "li", "p", "br",
-          "code", "pre", "blockquote", "h1", "h2", "h3",
+          "strong",
+          "em",
+          "ul",
+          "ol",
+          "li",
+          "p",
+          "br",
+          "code",
+          "pre",
+          "blockquote",
+          "h1",
+          "h2",
+          "h3",
         ],
         ALLOWED_ATTR: ["class"],
       });
-      return <div className="fm-bot-content" dangerouslySetInnerHTML={{ __html: cleanHtml }} />;
+      return (
+        <div
+          className="fm-bot-content"
+          dangerouslySetInnerHTML={{ __html: cleanHtml }}
+        />
+      );
     } catch {
       // Fallback to plain text if markdown parsing fails
       return <span>{text}</span>;
@@ -192,7 +207,7 @@ export default function FitnessChatBot() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
+        /css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
         .fm-chat-window {
           transform-origin: bottom right;
           transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -302,8 +317,10 @@ export default function FitnessChatBot() {
         }}
       >
         {/* ── Header ── */}
-        <div className="bg-stone-900 px-4 sm:px-5 py-3.5 sm:py-4 flex items-center
-                      justify-between shrink-0">
+        <div
+          className="bg-stone-900 px-4 sm:px-5 py-3.5 sm:py-4 flex items-center
+                      justify-between shrink-0"
+        >
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">
               FitMart
@@ -330,8 +347,16 @@ export default function FitnessChatBot() {
                 aria-label="Clear chat history"
                 title="Clear conversation"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M3 6h18" />
                   <path d="M8 6V4h8v2" />
                   <path d="M19 6l-1 14H6L5 6" />
@@ -372,21 +397,24 @@ export default function FitnessChatBot() {
               className={`fm-msg flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "bot" && (
-                <div className="w-7 h-7 rounded-full bg-stone-900 flex items-center
+                <div
+                  className="w-7 h-7 rounded-full bg-stone-900 flex items-center
                               justify-center text-white text-xs shrink-0 mr-2 mt-0.5"
-                  aria-hidden="true">
+                  aria-hidden="true"
+                >
                   ◎
                 </div>
               )}
               <div
                 className={`max-w-[80%] sm:max-w-[78%] px-3.5 sm:px-4 py-2.5 sm:py-3
                           rounded-2xl text-sm leading-relaxed
-                          ${msg.role === "user"
-                    ? "bg-stone-900 text-white rounded-br-sm"
-                    : msg.error
-                      ? "bg-red-50 border border-red-100 text-red-600 rounded-bl-sm"
-                      : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
-                  }`}
+                          ${
+                            msg.role === "user"
+                              ? "bg-stone-900 text-white rounded-br-sm"
+                              : msg.error
+                                ? "bg-red-50 border border-red-100 text-red-600 rounded-bl-sm"
+                                : "bg-white border border-stone-200 text-stone-700 rounded-bl-sm shadow-sm"
+                          }`}
               >
                 {formatMessageText(msg.text, msg.role === "bot")}
               </div>
@@ -401,17 +429,30 @@ export default function FitnessChatBot() {
               aria-live="polite"
               aria-label="Fitness assistant is typing"
             >
-              <div className="w-7 h-7 rounded-full bg-stone-900 flex items-center
+              <div
+                className="w-7 h-7 rounded-full bg-stone-900 flex items-center
                             justify-center text-white text-xs shrink-0 mr-2 mt-0.5"
-                aria-hidden="true">
+                aria-hidden="true"
+              >
                 ◎
               </div>
-              <div className="bg-white border border-stone-200 rounded-2xl rounded-bl-sm
-                            px-4 py-3 flex items-center gap-1.5 shadow-sm">
+              <div
+                className="bg-white border border-stone-200 rounded-2xl rounded-bl-sm
+                            px-4 py-3 flex items-center gap-1.5 shadow-sm"
+              >
                 <span className="sr-only">Fitness assistant is typing</span>
-                <span className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block" aria-hidden="true" />
-                <span className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block" aria-hidden="true" />
-                <span className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block" aria-hidden="true" />
+                <span
+                  className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block"
+                  aria-hidden="true"
+                />
+                <span
+                  className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block"
+                  aria-hidden="true"
+                />
+                <span
+                  className="fm-dot w-1.5 h-1.5 rounded-full bg-stone-400 inline-block"
+                  aria-hidden="true"
+                />
               </div>
             </div>
           )}
@@ -444,7 +485,8 @@ export default function FitnessChatBot() {
         {/* ── Input Area ── */}
         <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white flex items-end gap-2 shrink-0">
           <p id="fitness-chatbot-input-help" className="sr-only">
-            Type your message. Press Enter to send, or Shift and Enter for a new line.
+            Type your message. Press Enter to send, or Shift and Enter for a new
+            line.
           </p>
           <textarea
             ref={inputRef}
@@ -463,7 +505,8 @@ export default function FitnessChatBot() {
             style={{ maxHeight: "96px", overflowY: "auto" }}
             onInput={(e) => {
               e.target.style.height = "auto";
-              e.target.style.height = Math.min(e.target.scrollHeight, 96) + "px";
+              e.target.style.height =
+                Math.min(e.target.scrollHeight, 96) + "px";
             }}
           />
           <button
@@ -476,9 +519,18 @@ export default function FitnessChatBot() {
                       active:scale-95 min-w-10"
             aria-label="Send message"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-              strokeLinejoin="round" aria-hidden="true" focusable="false">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
@@ -499,16 +551,33 @@ export default function FitnessChatBot() {
         aria-controls="fitness-chatbot-dialog"
       >
         {open ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-            aria-hidden="true" focusable="false">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-            strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         )}

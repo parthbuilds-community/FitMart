@@ -17,22 +17,42 @@ import { auth } from "../auth/firebase";
 import { useGithubStats } from "../utils/useGithubStats";
 
 const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
-const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
+const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || "";
 
-const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
+const formatStat = (n, loading) =>
+  loading ? "—" : Number(n).toLocaleString("en-IN");
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
-    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    <path
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      fill="#4285F4"
+    />
+    <path
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      fill="#34A853"
+    />
+    <path
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      fill="#EA4335"
+    />
   </svg>
 );
 
 const GithubIcon = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path fillRule="evenodd" clipRule="evenodd"
+  <svg
+    className={className}
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
       d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483
          0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608
          1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338
@@ -48,7 +68,12 @@ const GithubIcon = ({ className = "w-4 h-4" }) => (
 export default function Authentication() {
   const navigate = useNavigate();
   const [mode, setMode] = useState("signin");
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirm: "",
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -57,8 +82,12 @@ export default function Authentication() {
   const [resendTimer, setResendTimer] = useState(0);
   const { stats: ghStats, loading: ghLoading } = useGithubStats();
 
-  useEffect(() => { document.title = "Login - FitMart"; }, []);
-  useEffect(() => { setTimeout(() => setVisible(true), 80); }, []);
+  useEffect(() => {
+    document.title = "Login - FitMart";
+  }, []);
+  useEffect(() => {
+    setTimeout(() => setVisible(true), 80);
+  }, []);
   useEffect(() => {
     let interval = null;
     if (resendTimer > 0) {
@@ -76,9 +105,17 @@ export default function Authentication() {
       pollInterval = setInterval(async () => {
         try {
           await auth.currentUser.reload();
-          if (auth.currentUser.emailVerified || auth.currentUser.uid === SUPER_ADMIN_UID) {
+          if (
+            auth.currentUser.emailVerified ||
+            auth.currentUser.uid === SUPER_ADMIN_UID
+          ) {
             clearInterval(pollInterval);
-            navigate(auth.currentUser.uid === ADMIN_UID || auth.currentUser.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+            navigate(
+              auth.currentUser.uid === ADMIN_UID ||
+                auth.currentUser.uid === SUPER_ADMIN_UID
+                ? "/admin/dashboard"
+                : "/home",
+            );
           }
         } catch (err) {
           console.error("Failed to reload user:", err);
@@ -111,16 +148,24 @@ export default function Authentication() {
     e.preventDefault();
     setLoading(true);
     try {
-      const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
+      const cred = await signInWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password,
+      );
       if (!cred.user.emailVerified && cred.user.uid !== SUPER_ADMIN_UID) {
         // Keep user signed in so resend can use auth.currentUser
         setError("");
         setMode("pending-verification");
         return;
       }
-      navigate(cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+      navigate(
+        cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID
+          ? "/admin/dashboard"
+          : "/home",
+      );
     } catch (err) {
-      console.error('handleSignIn error', err);
+      console.error("handleSignIn error", err);
       setError(parseError(err.code));
     } finally {
       setLoading(false);
@@ -129,19 +174,30 @@ export default function Authentication() {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    if (form.password !== form.confirm) { setError("Passwords do not match."); return; }
-    if (form.password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (form.password !== form.confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
     setLoading(true);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, form.email, form.password);
-      if (form.name.trim()) await updateProfile(cred.user, { displayName: form.name.trim() });
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password,
+      );
+      if (form.name.trim())
+        await updateProfile(cred.user, { displayName: form.name.trim() });
       await sendEmailVerification(cred.user);
       // Keep user signed in so resend can use auth.currentUser
       setResendDisabled(true);
       setResendTimer(60);
       setMode("pending-verification");
     } catch (err) {
-      console.error('handleSignUp error', err);
+      console.error("handleSignUp error", err);
       setError(parseError(err.code));
     } finally {
       setLoading(false);
@@ -156,7 +212,10 @@ export default function Authentication() {
       try {
         cred = await signInWithPopup(auth, provider);
       } catch (popupErr) {
-        console.error('signInWithPopup failed, attempting redirect fallback', popupErr);
+        console.error(
+          "signInWithPopup failed, attempting redirect fallback",
+          popupErr,
+        );
         // Common cases: popup blocked, environment doesn't support popups (embedded webviews)
         // Fallback to redirect flow which works in blocked-popup environments.
         try {
@@ -164,15 +223,19 @@ export default function Authentication() {
           // redirect will navigate away; result handled in getRedirectResult on mount
           return;
         } catch (redirErr) {
-          console.error('signInWithRedirect also failed', redirErr);
+          console.error("signInWithRedirect also failed", redirErr);
           throw redirErr;
         }
       }
       if (cred && cred.user) {
-        navigate(cred.user.uid === ADMIN_UID || cred.user.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+        navigate(
+          cred.user.uid === ADMIN_UID || cred.user.uid === SUPER_ADMIN_UID
+            ? "/admin/dashboard"
+            : "/home",
+        );
       }
     } catch (err) {
-      console.error('handleGoogle error', err);
+      console.error("handleGoogle error", err);
       setError(parseError(err.code));
     } finally {
       setLoading(false);
@@ -187,13 +250,19 @@ export default function Authentication() {
         const result = await getRedirectResult(auth);
         if (!mounted || !result || !result.user) return;
         const u = result.user;
-        navigate(u.uid === ADMIN_UID || u.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+        navigate(
+          u.uid === ADMIN_UID || u.uid === SUPER_ADMIN_UID
+            ? "/admin/dashboard"
+            : "/home",
+        );
       } catch (err) {
         // Not an error in many cases (no redirect result), but log for debugging
-        if (err && err.code) console.error('getRedirectResult error', err);
+        if (err && err.code) console.error("getRedirectResult error", err);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [navigate]);
 
   const handleResendVerification = async () => {
@@ -204,7 +273,11 @@ export default function Authentication() {
       const user = auth.currentUser;
       if (!user) {
         // Fallback: sign in if session was lost (e.g. page refresh)
-        const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
+        const cred = await signInWithEmailAndPassword(
+          auth,
+          form.email,
+          form.password,
+        );
         await sendEmailVerification(cred.user);
       } else {
         await sendEmailVerification(user);
@@ -212,9 +285,11 @@ export default function Authentication() {
       setResendDisabled(true);
       setResendTimer(60);
     } catch (err) {
-      console.error('handleResendVerification error', err);
+      console.error("handleResendVerification error", err);
       if (err.code === "auth/too-many-requests") {
-        setError("Firebase is rate-limiting requests. Please wait a few minutes before trying again.");
+        setError(
+          "Firebase is rate-limiting requests. Please wait a few minutes before trying again.",
+        );
         setResendDisabled(true);
         setResendTimer(120);
       } else {
@@ -227,13 +302,16 @@ export default function Authentication() {
 
   const handleReset = async (e) => {
     e.preventDefault();
-    if (!form.email) { setError("Please enter your email address."); return; }
+    if (!form.email) {
+      setError("Please enter your email address.");
+      return;
+    }
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, form.email);
       setResetSent(true);
     } catch (err) {
-      console.error('handleReset error', err);
+      console.error("handleReset error", err);
       setError(parseError(err.code));
     } finally {
       setLoading(false);
@@ -256,7 +334,7 @@ export default function Authentication() {
   return (
     <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif] flex flex-col lg:flex-row">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+        /css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
         .auth-panel { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .auth-panel.visible { opacity: 1; transform: translateY(0); }
         .input-field { transition: border-color 0.2s ease; }
@@ -279,7 +357,8 @@ export default function Authentication() {
             <em className="not-italic text-stone-400">all in one place.</em>
           </h2>
           <p className="text-sm text-stone-500 leading-relaxed max-w-xs">
-            Equipment, nutrition, and digital coaching — curated for Mumbai's fitness community.
+            Equipment, nutrition, and digital coaching — curated for Mumbai's
+            fitness community.
           </p>
         </div>
 
@@ -287,11 +366,16 @@ export default function Authentication() {
           {[
             { v: formatStat(ghStats.stars, ghLoading), l: "Github Stars" },
             { v: formatStat(ghStats.forks, ghLoading), l: "Forks" },
-            { v: formatStat(ghStats.contributors, ghLoading), l: "Contributors" },
+            {
+              v: formatStat(ghStats.contributors, ghLoading),
+              l: "Contributors",
+            },
             { v: formatStat(ghStats.commits, ghLoading), l: "Commits" },
           ].map((s, i) => (
             <div key={i} className="bg-stone-800 rounded-xl p-4">
-              <div className="font-['DM_Serif_Display'] text-2xl text-white">{s.v}</div>
+              <div className="font-['DM_Serif_Display'] text-2xl text-white">
+                {s.v}
+              </div>
               <div className="text-xs text-stone-500 mt-0.5">{s.l}</div>
             </div>
           ))}
@@ -318,10 +402,13 @@ export default function Authentication() {
       </div>
 
       {/* ── Right auth panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-center
-                      px-5 sm:px-8 py-10 sm:py-12 min-h-0">
-        <div className={`auth-panel ${visible ? "visible" : ""} w-full max-w-sm`}>
-
+      <div
+        className="flex-1 flex flex-col items-center justify-center
+                      px-5 sm:px-8 py-10 sm:py-12 min-h-0"
+      >
+        <div
+          className={`auth-panel ${visible ? "visible" : ""} w-full max-w-sm`}
+        >
           {/* Mode Tabs */}
           {mode !== "reset" && mode !== "pending-verification" && (
             <div className="flex border-b border-stone-200 mb-6 sm:mb-8">
@@ -331,10 +418,11 @@ export default function Authentication() {
                   onClick={() => switchMode(m)}
                   className={`mode-tab flex-1 py-3 text-sm font-medium border-b-2 -mb-px
                               transition-all min-h-11
-                              ${mode === m
-                      ? "border-stone-900 text-stone-900"
-                      : "border-transparent text-stone-400 hover:text-stone-600"
-                    }`}
+                              ${
+                                mode === m
+                                  ? "border-stone-900 text-stone-900"
+                                  : "border-transparent text-stone-400 hover:text-stone-600"
+                              }`}
                 >
                   {m === "signin" ? "Sign In" : "Create Account"}
                 </button>
@@ -350,8 +438,12 @@ export default function Authentication() {
                   Email
                 </label>
                 <input
-                  type="email" name="email" value={form.email}
-                  onChange={handleChange} required placeholder="you@example.com"
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  placeholder="you@example.com"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
                 />
@@ -359,17 +451,24 @@ export default function Authentication() {
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-xs text-stone-500 tracking-wide uppercase">Password</label>
+                  <label className="text-xs text-stone-500 tracking-wide uppercase">
+                    Password
+                  </label>
                   <button
-                    type="button" onClick={() => switchMode("reset")}
+                    type="button"
+                    onClick={() => switchMode("reset")}
                     className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-8 px-1"
                   >
                     Forgot password?
                   </button>
                 </div>
                 <input
-                  type="password" name="password" value={form.password}
-                  onChange={handleChange} required placeholder="••••••••"
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="••••••••"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
                 />
@@ -381,9 +480,12 @@ export default function Authentication() {
                 </p>
               )}
 
-              <button type="submit" disabled={loading}
+              <button
+                type="submit"
+                disabled={loading}
                 className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
-                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-12">
+                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-12"
+              >
                 {loading ? "Signing in…" : "Sign In"}
               </button>
 
@@ -393,10 +495,14 @@ export default function Authentication() {
                 <div className="flex-1 h-px bg-stone-200" />
               </div>
 
-              <button type="button" onClick={handleGoogle} disabled={loading}
+              <button
+                type="button"
+                onClick={handleGoogle}
+                disabled={loading}
                 className="w-full flex items-center justify-center gap-2.5 border border-stone-200
                            bg-white text-stone-700 text-sm py-3 rounded-lg hover:bg-stone-50
-                           transition-colors disabled:opacity-50 min-h-12">
+                           transition-colors disabled:opacity-50 min-h-12"
+              >
                 <GoogleIcon />
                 Continue with Google
               </button>
@@ -411,28 +517,43 @@ export default function Authentication() {
                   Full Name
                 </label>
                 <input
-                  type="text" name="name" value={form.name}
-                  onChange={handleChange} placeholder="Arjun Mehta"
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Arjun Mehta"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">Email</label>
+                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
+                  Email
+                </label>
                 <input
-                  type="email" name="email" value={form.email}
-                  onChange={handleChange} required placeholder="you@example.com"
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  placeholder="you@example.com"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">Password</label>
+                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
+                  Password
+                </label>
                 <input
-                  type="password" name="password" value={form.password}
-                  onChange={handleChange} required placeholder="Minimum 6 characters"
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="Minimum 6 characters"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
                 />
@@ -443,8 +564,12 @@ export default function Authentication() {
                   Confirm Password
                 </label>
                 <input
-                  type="password" name="confirm" value={form.confirm}
-                  onChange={handleChange} required placeholder="••••••••"
+                  type="password"
+                  name="confirm"
+                  value={form.confirm}
+                  onChange={handleChange}
+                  required
+                  placeholder="••••••••"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
                 />
@@ -456,9 +581,12 @@ export default function Authentication() {
                 </p>
               )}
 
-              <button type="submit" disabled={loading}
+              <button
+                type="submit"
+                disabled={loading}
                 className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
-                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-12">
+                           hover:bg-stone-700 transition-colors disabled:opacity-50 mt-1 min-h-12"
+              >
                 {loading ? "Creating account…" : "Create Account"}
               </button>
 
@@ -468,10 +596,14 @@ export default function Authentication() {
                 <div className="flex-1 h-px bg-stone-200" />
               </div>
 
-              <button type="button" onClick={handleGoogle} disabled={loading}
+              <button
+                type="button"
+                onClick={handleGoogle}
+                disabled={loading}
                 className="w-full flex items-center justify-center gap-2.5 border border-stone-200
                            bg-white text-stone-700 text-sm py-3 rounded-lg hover:bg-stone-50
-                           transition-colors disabled:opacity-50 min-h-12">
+                           transition-colors disabled:opacity-50 min-h-12"
+              >
                 <GoogleIcon />
                 Continue with Google
               </button>
@@ -484,8 +616,8 @@ export default function Authentication() {
                   className="underline cursor-pointer"
                 >
                   Terms
-                </button>
-                {" "}and{" "}
+                </button>{" "}
+                and{" "}
                 <button
                   type="button"
                   onClick={() => navigate("/privacy-policy")}
@@ -518,9 +650,12 @@ export default function Authentication() {
 
               {resetSent ? (
                 <div className="bg-stone-100 border border-stone-200 rounded-xl px-5 py-5 text-center">
-                  <p className="text-sm text-stone-700 font-medium mb-1">Check your inbox</p>
+                  <p className="text-sm text-stone-700 font-medium mb-1">
+                    Check your inbox
+                  </p>
                   <p className="text-xs text-stone-500">
-                    Reset link sent to <span className="font-medium">{form.email}</span>
+                    Reset link sent to{" "}
+                    <span className="font-medium">{form.email}</span>
                   </p>
                   <button
                     onClick={() => switchMode("signin")}
@@ -536,8 +671,12 @@ export default function Authentication() {
                       Email
                     </label>
                     <input
-                      type="email" name="email" value={form.email}
-                      onChange={handleChange} required placeholder="you@example.com"
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="you@example.com"
                       className="input-field w-full border border-stone-200 bg-white rounded-lg
                                  px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
                     />
@@ -549,9 +688,12 @@ export default function Authentication() {
                     </p>
                   )}
 
-                  <button type="submit" disabled={loading}
+                  <button
+                    type="submit"
+                    disabled={loading}
                     className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
-                               hover:bg-stone-700 transition-colors disabled:opacity-50 min-h-12">
+                               hover:bg-stone-700 transition-colors disabled:opacity-50 min-h-12"
+                  >
                     {loading ? "Sending…" : "Send Reset Link"}
                   </button>
                 </form>
@@ -574,12 +716,15 @@ export default function Authentication() {
                 Verify your email
               </h3>
               <p className="text-sm text-stone-500 mb-6 sm:mb-7 leading-relaxed">
-                We've sent a verification link to <span className="font-medium">{form.email}</span>.
-                Please verify your email address to continue.
+                We've sent a verification link to{" "}
+                <span className="font-medium">{form.email}</span>. Please verify
+                your email address to continue.
               </p>
 
               <div className="bg-stone-100 border border-stone-200 rounded-xl px-5 py-5 text-center">
-                <p className="text-sm text-stone-700 font-medium mb-3">Didn't receive the email?</p>
+                <p className="text-sm text-stone-700 font-medium mb-3">
+                  Didn't receive the email?
+                </p>
                 {error && (
                   <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3 text-left">
                     {error}
@@ -591,7 +736,11 @@ export default function Authentication() {
                   className="w-full bg-stone-900 text-white text-sm py-3 rounded-lg
                              hover:bg-stone-700 transition-colors disabled:opacity-50 min-h-12"
                 >
-                  {loading ? "Sending..." : resendDisabled ? `Resend in ${resendTimer}s` : "Resend Verification Email"}
+                  {loading
+                    ? "Sending..."
+                    : resendDisabled
+                      ? `Resend in ${resendTimer}s`
+                      : "Resend Verification Email"}
                 </button>
               </div>
             </div>

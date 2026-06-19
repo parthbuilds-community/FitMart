@@ -41,8 +41,10 @@ const StrategyCard = ({ strategy }) => (
             key={idx}
             className="flex items-start gap-2.5 text-sm text-stone-700"
           >
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full
-                            bg-stone-100 text-stone-600 shrink-0 mt-0.5">
+            <span
+              className="inline-flex items-center justify-center w-5 h-5 rounded-full
+                            bg-stone-100 text-stone-600 shrink-0 mt-0.5"
+            >
               {/* No emoji, just a checkmark */}
             </span>
             <span>{benefit}</span>
@@ -130,7 +132,7 @@ export default function AdminMarketing() {
     >
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+        /css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
         .fade-in { animation: fmFadeIn 0.5s ease forwards; }
         @keyframes fmFadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
       `}</style>
@@ -148,7 +150,9 @@ export default function AdminMarketing() {
             Marketing Strategies
           </h1>
           <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl">
-            FitMart's growth depends on reaching fitness-conscious customers through multiple channels. Each strategy below plays a critical role in building awareness, trust, and driving conversions.
+            FitMart's growth depends on reaching fitness-conscious customers
+            through multiple channels. Each strategy below plays a critical role
+            in building awareness, trust, and driving conversions.
           </p>
         </div>
 
@@ -177,11 +181,20 @@ export default function AdminMarketing() {
           </h2>
 
           <p className="text-base text-stone-700 leading-relaxed mb-6 sm:mb-8">
-            These four strategies work together as an integrated marketing ecosystem. Content marketing provides the foundation of trust and value. SEO ensures discovery. Influencer partnerships amplify reach. Email and WhatsApp marketing seal customer relationships and drive repeat purchases.
+            These four strategies work together as an integrated marketing
+            ecosystem. Content marketing provides the foundation of trust and
+            value. SEO ensures discovery. Influencer partnerships amplify reach.
+            Email and WhatsApp marketing seal customer relationships and drive
+            repeat purchases.
           </p>
 
           <p className="text-base text-stone-700 leading-relaxed mb-8 sm:mb-10">
-            When executed together, they create a flywheel effect: satisfied customers share their experience, influencers recommend products, search engines rank content higher, and email campaigns keep customers coming back. This multiplier effect is how FitMart achieves sustainable growth in a competitive fitness e-commerce market.
+            When executed together, they create a flywheel effect: satisfied
+            customers share their experience, influencers recommend products,
+            search engines rank content higher, and email campaigns keep
+            customers coming back. This multiplier effect is how FitMart
+            achieves sustainable growth in a competitive fitness e-commerce
+            market.
           </p>
 
           {/* Benefit highlights */}
