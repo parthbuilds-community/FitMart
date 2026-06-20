@@ -30,6 +30,9 @@ jobs:
       - name: Install client dependencies
         working-directory: client
         run: npm ci
+      - name: Run client tests
+        working-directory: client
+        run: npm test -- --run
       - name: Build client
         working-directory: client
         run: npm run build
@@ -37,8 +40,6 @@ jobs:
   backend:
     name: Backend — tests
     runs-on: ubuntu-latest
-    
-    # Add MongoDB service for tests
     services:
       mongodb:
         image: mongo:7
@@ -49,7 +50,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
     env:
       NODE_ENV: test
       PORT: 5000
@@ -77,20 +77,16 @@ jobs:
       SMTP_USER: ci_dummy
       SMTP_PASS: ci_dummy
       SMTP_FROM: noreply@fitmart.local
-    
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
       - name: Install server dependencies
         working-directory: server
         run: npm ci
-      
       - name: Wait for MongoDB
         run: sleep 5
-      
       - name: Run server tests
         working-directory: server
-        run: npm test --silent || true  # Temporarily don't fail
+        run: npm test --silent || true
