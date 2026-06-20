@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import ReportBugButton from "./ReportBugButton";
 
-const ADMIN_UID = import.meta.env.VITE_ADMIN_UID || "n5LtrXIGVSVjNktRn1PgDXZbHgq1";
+const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
 const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
 
 export default function NonAdminRoute({ children }) {
