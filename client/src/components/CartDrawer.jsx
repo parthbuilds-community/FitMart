@@ -1,5 +1,6 @@
 // src/components/CartDrawer.jsx
 import { useEffect } from "react";
+import PropTypes from "prop-types";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
 
@@ -27,7 +28,9 @@ function CartDrawer({
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   return (
@@ -44,14 +47,18 @@ function CartDrawer({
                     bg-white w-full sm:max-w-sm ${isOpen ? "open" : ""}`}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 sm:px-7 py-5 sm:py-6
-                        border-b border-stone-200 shrink-0">
+        <div
+          className="flex items-center justify-between px-5 sm:px-7 py-5 sm:py-6
+                        border-b border-stone-200 shrink-0"
+        >
           <div>
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">
               Your
             </p>
-            <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
-                           leading-tight">
+            <h2
+              className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
+                           leading-tight"
+            >
               Cart
               {cartCount > 0 && (
                 <span className="text-stone-400"> — {cartCount}</span>
@@ -72,14 +79,23 @@ function CartDrawer({
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-4">
           {cart.length === 0 ? (
-
             /* ── Empty State ── */
-            <div className="h-full flex flex-col items-center justify-center
-                            text-center gap-5 sm:gap-6 py-12">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-stone-100
-                              flex items-center justify-center">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                  stroke="#d6d3d1" strokeWidth="1.5">
+            <div
+              className="h-full flex flex-col items-center justify-center
+                            text-center gap-5 sm:gap-6 py-12"
+            >
+              <div
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-stone-100
+                              flex items-center justify-center"
+              >
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#d6d3d1"
+                  strokeWidth="1.5"
+                >
                   <circle cx="12" cy="12" r="9" />
                   <line x1="5" y1="5" x2="19" y2="19" />
                 </svg>
@@ -92,7 +108,9 @@ function CartDrawer({
                   Your cart is empty
                 </p>
                 <p className="text-sm text-stone-500 leading-relaxed">
-                  Add something from the store<br />and it'll appear here.
+                  Add something from the store
+                  <br />
+                  and it'll appear here.
                 </p>
               </div>
               <button
@@ -103,9 +121,7 @@ function CartDrawer({
                 Continue Shopping
               </button>
             </div>
-
           ) : (
-
             /* ── Cart Items ── */
             <div className="flex flex-col">
               {cart.map((item) => (
@@ -115,9 +131,11 @@ function CartDrawer({
                              border-b border-stone-200 last:border-0"
                 >
                   {/* Product image */}
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-stone-100 rounded-2xl
+                  <div
+                    className="w-14 h-14 sm:w-16 sm:h-16 bg-stone-100 rounded-2xl
                                   flex items-center justify-center shrink-0 overflow-hidden
-                                  border border-stone-200">
+                                  border border-stone-200"
+                  >
                     {item.image ? (
                       <img
                         src={item.image}
@@ -129,8 +147,14 @@ function CartDrawer({
                         }}
                       />
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="#d6d3d1" strokeWidth="1.5">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#d6d3d1"
+                        strokeWidth="1.5"
+                      >
                         <circle cx="12" cy="12" r="9" />
                         <line x1="5" y1="5" x2="19" y2="19" />
                       </svg>
@@ -144,11 +168,15 @@ function CartDrawer({
                         {item.brand}
                       </p>
                     )}
-                    <p className="font-['DM_Serif_Display'] text-sm sm:text-base text-stone-900
-                                  leading-snug truncate">
+                    <p
+                      className="font-['DM_Serif_Display'] text-sm sm:text-base text-stone-900
+                                  leading-snug truncate"
+                    >
                       {item.name}
                     </p>
-                    <p className="text-sm text-stone-700 mt-1">{fmt(item.price)}</p>
+                    <p className="text-sm text-stone-700 mt-1">
+                      {fmt(item.price)}
+                    </p>
                   </div>
 
                   {/* Qty + Remove */}
@@ -160,8 +188,10 @@ function CartDrawer({
                     >
                       Remove
                     </button>
-                    <div className="flex items-center gap-1.5 sm:gap-2 border border-stone-200
-                                    rounded-full px-2.5 sm:px-3 py-1">
+                    <div
+                      className="flex items-center gap-1.5 sm:gap-2 border border-stone-200
+                                    rounded-full px-2.5 sm:px-3 py-1"
+                    >
                       <button
                         onClick={() => updateQty(item.id, -1)}
                         className="text-stone-500 hover:text-stone-900 transition-colors
@@ -170,8 +200,10 @@ function CartDrawer({
                       >
                         −
                       </button>
-                      <span className="text-xs text-stone-900 min-w-4 text-center
-                                       select-none">
+                      <span
+                        className="text-xs text-stone-900 min-w-4 text-center
+                                       select-none"
+                      >
                         {item.qty}
                       </span>
                       <button
@@ -192,8 +224,10 @@ function CartDrawer({
 
         {/* ── Footer ── */}
         {cart.length > 0 && (
-          <div className="border-t border-stone-200 px-5 sm:px-7 py-5 sm:py-6
-                          space-y-3 sm:space-y-4 shrink-0">
+          <div
+            className="border-t border-stone-200 px-5 sm:px-7 py-5 sm:py-6
+                          space-y-3 sm:space-y-4 shrink-0"
+          >
             <div className="flex items-center justify-between">
               <p className="text-xs tracking-[0.2em] uppercase text-stone-400">
                 Subtotal
@@ -206,9 +240,11 @@ function CartDrawer({
               Taxes and shipping calculated at checkout
             </p>
             <Link to="/checkout" onClick={onClose}>
-              <button className="w-full bg-stone-900 text-white text-sm py-4 rounded-full
+              <button
+                className="w-full bg-stone-900 text-white text-sm py-4 rounded-full
                                  hover:bg-stone-700 transition-colors min-h-13
-                                 active:scale-[0.98]">
+                                 active:scale-[0.98]"
+              >
                 Checkout →
               </button>
             </Link>
@@ -226,5 +262,25 @@ function CartDrawer({
     </>
   );
 }
-
+CartDrawer.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  cart: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+      ]).isRequired,
+      name: PropTypes.string,
+      brand: PropTypes.string,
+      image: PropTypes.string,
+      price: PropTypes.number,
+      qty: PropTypes.number,
+    })
+  ).isRequired,
+  cartCount: PropTypes.number.isRequired,
+  cartTotal: PropTypes.number.isRequired,
+  updateQty: PropTypes.func.isRequired,
+  removeFromCart: PropTypes.func.isRequired,
+};
 export default CartDrawer;

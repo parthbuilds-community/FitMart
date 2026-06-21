@@ -20,6 +20,7 @@
     "firebase": "^12.14.0",
     "framer-motion": "^12.40.0",
     "marked": "^18.0.4",
+    "prop-types": "^15.8.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-is": "^19.2.7",
@@ -36,6 +37,6 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "vite": "^5.4.21"
+    "vite": "^8.0.16"
   }
 }
