@@ -256,7 +256,7 @@ export default function Authentication() {
   return (
     <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif] flex flex-col lg:flex-row">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+
         .auth-panel { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .auth-panel.visible { opacity: 1; transform: translateY(0); }
         .input-field { transition: border-color 0.2s ease; }

@@ -7,7 +7,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import CartDrawer from "../components/CartDrawer";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiClient } from "../lib/apiClient";
 import FitnessChatBot from "../components/FitnessChatBot";
 import ErrorBoundary from "../components/ErrorBoundary";
 import WelcomeBanner from "../components/WelcomeBanner";
@@ -22,7 +22,7 @@ import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
 
 
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 
 const CATEGORIES = [
   { name: "All", value: "all" },
@@ -242,10 +242,7 @@ export default function HomePage() {
     if (!user || !products.length) return;
     (async () => {
       try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) return;
-        const cartDoc = await res.json();
+        const cartDoc = await apiClient.get(`/api/cart/${user.uid}`);
         setCart(mapCart(cartDoc, products));
       } catch (err) {
         console.error("Error loading cart:", err);
@@ -264,64 +261,37 @@ export default function HomePage() {
 
   const addToCart = async (product) => {
     if (!user) return;
-    try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/add`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to add to cart");
+      try {
+        const cartDoc = await apiClient.post(`/api/cart/${user.uid}/add`, { productId: product.productId || product.id, quantity: 1 });
+        setCart(mapCart(cartDoc, products));
+      } catch (err) {
+        console.error("Add to cart failed:", err);
+        alert(err.message);
       }
-      const cartDoc = await res.json();
-      setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Add to cart failed:", err); 
-      alert(err.message);
-    }
   };
 
   const removeFromCart = async (id) => {
     if (!user) return;
-    try {
-      const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to remove");
+      try {
+        const existing = cart.find(i => i.id === id);
+        const cartDoc = await apiClient.post(`/api/cart/${user.uid}/remove`, { productId: id, quantity: existing?.qty || 1 });
+        setCart(mapCart(cartDoc, products));
+      } catch (err) {
+        console.error("Remove from cart failed:", err);
+        alert(err.message);
       }
-      const cartDoc = await res.json();
-      setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Remove from cart failed:", err); 
-      alert(err.message);
-    }
   };
 
   const updateQty = async (id, delta) => {
     if (!user) return;
-    try {
-      const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to update qty");
+      try {
+        const url = delta > 0 ? "add" : "remove";
+        const cartDoc = await apiClient.post(`/api/cart/${user.uid}/${url}`, { productId: id, quantity: Math.abs(delta) });
+        setCart(mapCart(cartDoc, products));
+      } catch (err) {
+        console.error("Update qty failed:", err);
+        alert(err.message);
       }
-      const cartDoc = await res.json();
-      setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Update qty failed:", err); 
-      alert(err.message);
-    }
   };
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -424,7 +394,7 @@ export default function HomePage() {
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       )}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+
         .fade-in { opacity:0; transform:translateY(16px); transition:opacity .5s ease,transform .5s ease; }
         .fade-in.show { opacity:1; transform:translateY(0); }
         .d1{transition-delay:.05s} .d2{transition-delay:.15s} .d3{transition-delay:.25s}
@@ -611,7 +581,9 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
+            <button
+              onClick={() => navigate('/profile')}
+              className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
                                hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
                                text-center">
               Learn More
@@ -652,7 +624,9 @@ export default function HomePage() {
                   </div>
                   <p className="text-sm text-stone-500 leading-relaxed">{p.desc}</p>
                 </div>
-                <button className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
+                <button
+                  onClick={() => alert(`${p.tier} is coming soon — stay tuned!`)}
+                  className="shrink-0 text-xs border border-stone-300 text-stone-700 px-5 py-2.5
                                    rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
                                    transition-all self-start min-h-10">
                   {p.cta}
@@ -672,6 +646,12 @@ export default function HomePage() {
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
               <button key={l}
+                onClick={() => {
+                  if (l === "Privacy") return navigate('/privacy-policy');
+                  if (l === "Terms") return navigate('/terms');
+                  // Support
+                  window.location.href = 'mailto:support@fitmart.in';
+                }}
                 className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
                 {l}
               </button>

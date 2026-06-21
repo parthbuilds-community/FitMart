@@ -2,8 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiClient } from "../lib/apiClient";
 
 const WELCOME = {
   role: "bot",
@@ -120,13 +119,7 @@ export default function FitnessChatBot() {
     const historySnapshot = historyRef.current.slice(-MAX_HISTORY);
 
     try {
-      const res = await fetch(`${API}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: historySnapshot }),
-      });
-      if (!res.ok) throw new Error("Request failed");
-      const data = await res.json();
+      const data = await apiClient.post(`/api/chat`, { message: text, history: historySnapshot }, { auth: false });
       const botText = data.reply;
 
       setMsgs((prev) => [...prev, { role: "bot", text: botText }]);
@@ -192,7 +185,7 @@ export default function FitnessChatBot() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
+
         .fm-chat-window {
           transform-origin: bottom right;
           transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);

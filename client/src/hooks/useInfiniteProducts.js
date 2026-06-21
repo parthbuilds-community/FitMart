@@ -1,18 +1,16 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { apiClient } from '../lib/apiClient';
 
 async function fetchProducts({ pageParam = 1, queryKey }) {
   const [_key, params] = queryKey;
-  const url = new URL(`${API}/api/products`);
+  const url = new URL('/api/products', 'http://example');
   url.searchParams.set('page', pageParam);
   url.searchParams.set('limit', params.limit || 24);
   if (params.category) url.searchParams.set('category', params.category);
   if (params.search) url.searchParams.set('search', params.search);
   if (params.sort) url.searchParams.set('sort', params.sort);
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const path = `${url.pathname}${url.search}`;
+  return apiClient.get(path, { auth: false });
 }
 
 export default function useInfiniteProducts(params = { limit: 24 }) {

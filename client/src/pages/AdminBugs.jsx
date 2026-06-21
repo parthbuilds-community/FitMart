@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
 import { getBugs, patchBugStatus } from '../utils/api/bugs';
+import { API_BASE } from '../lib/apiClient';
 import Toast from '../components/Toast';
 import BugScreenshot from '../components/BugScreenshot';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 const SEGMENT_STYLES = {
   open: "bg-stone-900 text-white",
@@ -171,7 +172,7 @@ export default function AdminBugs() {
   return (
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+
       `}</style>
 
       <AdminNavbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
@@ -483,10 +484,9 @@ export default function AdminBugs() {
                       )}
                     </td>
                     <td className="px-6 py-5 text-center">
-                      {(bug.screenshotUrl || bug.screenshot) ? (
+                        {(bug.screenshotUrl || bug.screenshot) ? (
                         (() => {
-                          const api = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                          const url = bug.screenshotUrl ? bug.screenshotUrl : `${api}${bug.screenshot}`;
+                          const url = bug.screenshotUrl ? bug.screenshotUrl : `${API_BASE}${bug.screenshot}`;
                           return (
                             <a
                               href={url}

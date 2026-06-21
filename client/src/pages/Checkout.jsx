@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiClient } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 import SkeletonItem from "../components/SkeletonItem";
 import SkeletonSummary from "../components/SkeletonSummary";
 import AddressSelector from "../components/AddressSelector";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const PLACEHOLDER_IMG = "https://placehold.co/96x96/f5f5f4/78716c?text=No+Image";
 const PLACEHOLDER_IMG = "https://placehold.co/96x96/f5f5f4/78716c?text=No+Image";
 
 export default function Checkout() {
@@ -44,25 +44,16 @@ export default function Checkout() {
       setCartError(null);
 
       try {
-        const headers = await getAuthHeaders();
-
-        const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
-          fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
-          fetch(`${API}/api/products?all=true`),
-          fetch(`${API}/api/user/discount-status/${userId}`, { credentials: "include" }),
-          fetch(`${API}/api/user/profile/${userId}`, { headers, credentials: "include" }),
+        const [cart, products, discount, profileData] = await Promise.all([
+          apiClient.get(`/api/cart/${userId}`),
+          apiClient.get(`/api/products?all=true`, { auth: false }),
+          apiClient.get(`/api/user/discount-status/${userId}`, { auth: false }),
+          apiClient.get(`/api/user/profile/${userId}`),
         ]);
 
-        if (!cartRes.ok) throw new Error("Failed to fetch cart");
-        if (!prodRes.ok) throw new Error("Failed to fetch products");
-
-        const cart = await cartRes.json();
-        const products = await prodRes.json();
-
-        if (discountRes.ok) {
-          const d = await discountRes.json();
-          setDiscountEligible(d.eligible);
-          setDiscountPercent(d.discountPercent ?? 10);
+        if (discount) {
+          setDiscountEligible(discount.eligible);
+          setDiscountPercent(discount.discountPercent ?? 10);
         }
 
         if (cart.items?.length) {
@@ -84,14 +75,7 @@ export default function Checkout() {
       setProfileError(null);
 
       try {
-        const headers = await getAuthHeaders();
-        const profileRes = await fetch(`${API}/api/user/profile/${userId}`, {
-          headers, credentials: "include", signal,
-        });
-
-        if (!profileRes.ok) throw new Error("Failed to load profile");
-
-        const p = await profileRes.json();
+        const p = await apiClient.get(`/api/user/profile/${userId}`);
         setProfile(p);
         const def = p?.defaultAddressId
           ? (p.addresses || []).find(a => a.id === p.defaultAddressId)
@@ -143,7 +127,7 @@ export default function Checkout() {
   return (
     <PageShell menuOpen={menuOpen} setMenuOpen={setMenuOpen}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
+
       `}</style>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-12">

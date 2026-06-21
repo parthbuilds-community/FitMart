@@ -159,7 +159,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-stone-50" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <AdminNavbar range={range} setRange={setRange} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+
         .fitmart-chart .recharts-cartesian-grid-horizontal line,
         .fitmart-chart .recharts-cartesian-grid-vertical line { stroke: #e7e5e3; }
         .fitmart-chart .recharts-tooltip-cursor { fill: #f5f5f4; }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { apiClient } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -100,28 +100,14 @@ export default function PaymentPage() {
 
   const finishOrder = async (userId, paymentId) => {
     try {
-      const headers = await getAuthHeaders();
-
-      await fetch(`${API}/api/payment/clear-cart`, {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({ userId }),
-      });
-    } catch (err) {
-      console.error("clear-cart failed:", err);
-    }
+        await apiClient.post(`/api/payment/clear-cart`, { userId });
+      } catch (err) {
+        console.error("clear-cart failed:", err);
+      }
 
     if (discountApplied) {
       try {
-        const headers = await getAuthHeaders();
-
-        await fetch(`${API}/api/user/use-discount`, {
-          method: "POST",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({ userId }),
-        });
+        await apiClient.post(`/api/user/use-discount`, { userId });
       } catch (err) {
         console.error("use-discount error:", err);
       }
@@ -153,17 +139,7 @@ export default function PaymentPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${API}/api/payment/demo-success`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ userId: user.uid }),
-      });
-
-      if (!res.ok) throw new Error("Demo order failed");
-
-      const data = await res.json();
-
+      const data = await apiClient.post(`/api/payment/demo-success`, { userId: user.uid });
       await finishOrder(user.uid, data.paymentId);
     } catch (err) {
       showError(err.message);
@@ -195,25 +171,7 @@ export default function PaymentPage() {
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
-
-      const orderRes = await fetch(`${API}/api/payment/create-order`, {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({
-          amount: total,
-          currency: "INR",
-          userId,
-        }),
-      });
-
-      if (!orderRes.ok) {
-        const e = await orderRes.json().catch(() => ({}));
-        throw new Error(e.error || "Could not create order");
-      }
-
-      const order = await orderRes.json();
+      const order = await apiClient.post(`/api/payment/create-order`, { amount: total, currency: "INR", userId });
 
       const options = {
         key: RAZORPAY_KEY,
@@ -233,26 +191,8 @@ export default function PaymentPage() {
         },
 
         handler: async (response) => {
-          try {
-            const headers = await getAuthHeaders();
-
-            const verifyRes = await fetch(
-              `${API}/api/payment/verify-payment`,
-              {
-                method: "POST",
-                headers,
-                credentials: "include",
-                body: JSON.stringify({
-                  ...response,
-                  userId,
-                }),
-              }
-            );
-
-            if (!verifyRes.ok) {
-              throw new Error("Payment verification failed");
-            }
-
+            try {
+            await apiClient.post(`/api/payment/verify-payment`, { ...response, userId });
             await finishOrder(userId, response.razorpay_payment_id);
           } catch (err) {
             showError(err.message);
@@ -301,7 +241,7 @@ export default function PaymentPage() {
       />
 
       <style>
-        {`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');`}
+
       </style>
 
       <div className="max-w-xl mx-auto px-4 sm:px-5 py-10 sm:py-16">
