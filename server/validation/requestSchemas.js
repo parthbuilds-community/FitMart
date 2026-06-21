@@ -67,6 +67,22 @@ const workoutLogBodySchema = z.object({
   exercises: z.array(workoutExerciseSchema).optional()
 }).strict();
 
+// ── Product query schema (GET /api/products) ──────────────────────────────────
+const productQuerySchema = z.object({
+  all:      z.enum(['true', 'false']).optional(),
+  page:     z.coerce.number().int().min(1, 'page must be at least 1').default(1),
+  limit:    z.coerce.number().int().min(1, 'limit must be at least 1').max(100, 'limit cannot exceed 100').default(24),
+  category: z.string().optional(),
+  search:   z.string().optional(),
+  sort:     z.enum([
+    'productId_asc', 'productId_desc',
+    'price_asc',     'price_desc',
+    'rating_asc',    'rating_desc',
+    'name_asc',      'name_desc',
+  ]).default('productId_asc'),
+  fields:   z.string().optional(),
+});
+
 module.exports = {
   cartAddSchema: {
     params: userIdParamsSchema,
@@ -92,4 +108,5 @@ module.exports = {
   updateWorkoutLogSchema: {
     body: workoutLogBodySchema,
   },
+  productQuerySchema,
 };
