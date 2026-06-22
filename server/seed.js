@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Product = require('./models/Product');
@@ -308,28 +309,34 @@ const PRODUCTS = [
 
 async function seed() {
   try {
-    console.log('Connecting to MongoDB...');
     await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true, ...(process.env.MONGO_DB ? { dbName: process.env.MONGO_DB } : {}) });
+  
     console.log('Connected —', 'database:', mongoose.connection.name, 'host:', mongoose.connection.host, ' — seeding products');
 
     await Product.deleteMany({});
-    const res = await Product.insertMany(PRODUCTS);
-    console.log(`Inserted ${res.length} products`);
+    
+    
+    await Product.insertMany(PRODUCTS);
+    
+  
+    console.log('Successfully inserted all products!');
 
     await mongoose.disconnect();
-    console.log('Disconnected. Seed complete.');
+  
     // Clear product cache if available
     try {
       const cache = require('./lib/cache');
       if (cache && cache.clearAll) await cache.clearAll();
+      
+  
       console.log('Cleared product cache');
-    } catch (err) {
+    } catch {
       // ignore
     }
     process.exit(0);
   } catch (err) {
     console.error('Seeding error:', err);
-    try { await mongoose.disconnect(); } catch (e) { }
+    try { await mongoose.disconnect(); } catch { }
     process.exit(1);
   }
 }

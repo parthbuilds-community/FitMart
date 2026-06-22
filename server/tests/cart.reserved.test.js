@@ -73,7 +73,7 @@ describe('adjustReserved', () => {
   // ─────────────────────────────────────────────
   test('increments reserved by delta on a product with available stock', async () => {
     // Arrange: product with stock=5, reserved=0
-    const product = await createProduct({ productId: 1, stock: 5, reserved: 0 });
+  
 
     // Act: add 1 to reserved
     const result = await adjustReserved(1, +1);

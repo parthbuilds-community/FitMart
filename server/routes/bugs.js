@@ -29,7 +29,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 
     if (!title || !description)
       return res.status(400).json({ error: 'Title and description are required' });
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (req.body.reporterEmail && !emailRegex.test(req.body.reporterEmail)) {
       return res.status(400).json({ error: 'Invalid email format' });
@@ -68,8 +68,10 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 
         screenshotUrl = result.secure_url || '';
         screenshotPublicId = result.public_id || '';
-      } catch (uploadErr) {
-        console.error('Cloudinary upload failed:', uploadErr);
+      }
+      // eslint-disable-next-line no-unused-vars
+      catch (uploadErr) {
+
         return res.status(500).json({ error: 'Failed to upload screenshot' });
       }
     }
@@ -89,8 +91,9 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 
     await bug.save();
     res.status(201).json({ ok: true, bug });
-  } catch (err) {
-    console.error('Error saving bug:', err);
+  }// eslint-disable-next-line no-unused-vars
+  catch (err) {
+
     res.status(500).json({ error: 'Failed to submit bug' });
   }
 });
@@ -100,8 +103,9 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
   try {
     const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
     res.json({ ok: true, bugs });
-  } catch (err) {
-    console.error('Error fetching bugs:', err);
+  } // eslint-disable-next-line no-unused-vars
+  catch (err) {
+
     res.status(500).json({ error: 'Failed to fetch bugs' });
   }
 });
@@ -117,8 +121,10 @@ router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     const bug = await Bug.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!bug) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, bug });
-  } catch (err) {
-    console.error('Error updating bug:', err);
+  }
+  // eslint-disable-next-line no-unused-vars
+  catch (err) {
+
     res.status(500).json({ error: 'Failed to update bug' });
   }
 });

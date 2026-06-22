@@ -20,11 +20,10 @@ const chatLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-console.log("API Key exists:", !!process.env.GEMINI_API_KEY);
-console.log("API Key prefix:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 15) + "..." : "MISSING");
-
 if (!process.env.GEMINI_API_KEY) {
+  // eslint-disable-next-line no-console
   console.error("❌ GEMINI_API_KEY is not set in environment variables!");
+       // eslint-disable-next-line no-console
   console.error("Please check your .env file and ensure it's loaded correctly.");
 }
 
@@ -68,6 +67,7 @@ function buildHistoryBlock(history) {
 
   const capped = history.slice(-MAX_HISTORY_TURNS);
   if (capped.length < history.length) {
+    // eslint-disable-next-line no-console
     console.warn(`⚠️ Chat history truncated from ${history.length} to ${MAX_HISTORY_TURNS} turns`);
   }
 
@@ -123,6 +123,7 @@ router.post("/", chatLimiter, async (req, res) => {
     const { history: rawHistory } = req.body;
     const history = sanitiseHistory(rawHistory);
 
+    // eslint-disable-next-line no-console
     console.log("Processing chat message:", {
       length: message.length,
       historyTurns: history.length,
@@ -173,19 +174,25 @@ router.post("/", chatLimiter, async (req, res) => {
     let usedFallback = false;
 
     try {
-      console.log("Calling Gemini API...");
+    
       const result = await model.generateContent(prompt);
       reply = result.response.text().trim();
-      console.log("Gemini API response received");
-    } catch (apiError) {
-      console.error("Gemini API Error:", apiError.message);
+    
+    } 
+ 
+    catch (apiError) {
+       // eslint-disable-next-line no-console
+      console.error("Gemini API error:", apiError);
+           // eslint-disable-next-line no-console
       console.error("Error Status:", apiError.status);
 
       if (apiError.status === 429) {
+             // eslint-disable-next-line no-console
         console.warn("⚠️ API quota exceeded, using fallback response");
         reply = getFallbackResponse(message);
         usedFallback = true;
       } else if (apiError.message?.includes("API key")) {
+        // eslint-disable-next-line no-console
         console.error("❌ API key error - please verify your Gemini API key is valid");
         reply = "I'm having trouble connecting to my knowledge base. Please check if the **API key** is properly configured. In the meantime, I can still help with **general fitness advice**!";
         usedFallback = true;
@@ -209,7 +216,10 @@ router.post("/", chatLimiter, async (req, res) => {
         if (product) {
           reply += PRODUCT_TEMPLATE(product);
         }
-      } catch (productError) {
+      } 
+       
+      catch (productError) {
+             // eslint-disable-next-line no-console
         console.error("Product lookup error:", productError);
       }
     }
@@ -219,8 +229,8 @@ router.post("/", chatLimiter, async (req, res) => {
     }
 
     res.json({ reply });
-  } catch (err) {
-    console.error("Chat route error:", err);
+  } 
+   catch (err) {
     res.status(500).json({
       error: "Failed to generate response",
       details: process.env.NODE_ENV === "development" ? err.message : undefined,

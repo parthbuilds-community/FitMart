@@ -33,7 +33,10 @@ async function checkInactivity(userId) {
       lastOrderDate: lastPaidOrder.createdAt,
       daysSinceLastOrder: daysSince,
     };
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error(`Error checking inactivity for user ${userId}:`, err.message);
     return {
       isInactive: false,
@@ -63,11 +66,15 @@ async function resolveCustomerEmail(userId, existingProfile = null) {
       };
     }
 
+    // eslint-disable-next-line no-console
     console.warn(`⚠️  Could not resolve email for user ${userId}`);
     return { email: null, displayName: null };
-  } catch (err) {
+  } 
+   /* eslint-disable no-console */
+  catch (err) {
+  
     console.error(`Error resolving email for user ${userId}:`, err.message);
-    return { email: null, displayName: null };
+return { email: null, displayName: null };
   }
 }
 
@@ -87,7 +94,7 @@ async function sendInactivityReminderEmail(userId) {
     let profile = await UserProfile.findOne({ userId });
 
     // Check inactivity
-    const { isInactive, daysSinceLastOrder } = await checkInactivity(userId);
+    const { isInactive } = await checkInactivity(userId);
 
     if (!isInactive) {
       return {
@@ -120,7 +127,7 @@ async function sendInactivityReminderEmail(userId) {
     });
 
     if (!result.success) {
-      console.error(`❌ Failed to send reminder email to ${email}:`, result.error);
+      
       return {
         success: false,
         error: result.error,
@@ -134,13 +141,15 @@ async function sendInactivityReminderEmail(userId) {
       { upsert: true, new: true }
     );
 
-    console.log(`✅ Inactivity reminder email sent to ${email} for user ${userId} (${daysSinceLastOrder} days inactive)`);
+    
     return {
       success: true,
       message: "Reminder email sent successfully",
       messageId: result.messageId,
     };
-  } catch (err) {
+  } 
+  /* eslint-disable no-console */
+  catch (err) {
     console.error(`❌ Error in sendInactivityReminderEmail for ${userId}:`, err.message);
     return {
       success: false,

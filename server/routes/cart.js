@@ -90,7 +90,8 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
       cart = await Cart.create({ userId, items: [] });
     }
     res.json(cart);
-  } catch (err) {
+  } // eslint-disable-next-line no-unused-vars
+  catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -131,8 +132,10 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
     await cart.save();
     const fresh = await Cart.findOne({ userId });
     res.json(fresh);
-  } catch (err) {
-    console.error(err);
+  } 
+  // eslint-disable-next-line no-unused-vars
+  catch (err) {
+    
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -167,8 +170,9 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
     await cart.save();
     const fresh = await Cart.findOne({ userId });
     res.json(fresh);
-  } catch (err) {
-    console.error(err);
+  } 
+  // eslint-disable-next-line no-unused-vars
+  catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -193,8 +197,9 @@ router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
     cart.items = [];
     await cart.save();
     res.json({ success: true });
-  } catch (err) {
-    console.error(err);
+  } 
+  // eslint-disable-next-line no-unused-vars
+  catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });

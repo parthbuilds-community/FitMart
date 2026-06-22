@@ -113,7 +113,10 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       revenueByDate,
       productPerformance,
     });
-  } catch (err) {
+  } 
+
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error('Reports error:', err);
     res.status(500).json({ error: 'Server error' });
   }

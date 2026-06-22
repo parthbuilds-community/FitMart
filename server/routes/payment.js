@@ -60,7 +60,10 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
     });
 
     res.json(order);
-  } catch (err) {
+  } 
+   
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error("Razorpay create-order error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -153,20 +156,27 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
         rewards.pointsBalance += points;
         await rewards.save();
       }
-    } catch (rewardError) {
+    } 
+     
+    catch (rewardError) {
+           // eslint-disable-next-line no-console
       console.error("Reward earning failed:", rewardError.message);
     }
 
     // STEP 4: Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
+
     sendFirstPurchaseEmail(userId, order).catch((err) => {
+      // eslint-disable-next-line no-console
       console.error("First-purchase email service error:", err.message);
       // Don't throw — email failure should not break payment success
     });
 
     res.json({ success: true, order });
 
-  } catch (err) {
+  } 
+   catch (err) {
+         // eslint-disable-next-line no-console
     console.error("verify-payment error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -185,7 +195,9 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
 
     await releaseAndClearCart(userId);
     res.json({ success: true });
-  } catch (err) {
+  } 
+   catch (err) {
+    // eslint-disable-next-line no-console
     console.error("clear-cart error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -237,12 +249,15 @@ router.post("/demo-success", async (req, res) => {
     // Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
     sendFirstPurchaseEmail(userId, order).catch((err) => {
+      // eslint-disable-next-line no-console
       console.error("First-purchase email service error:", err.message);
       // Don't throw — email failure should not break payment success
     });
 
     res.json({ success: true, paymentId: fakePaymentId, order });
-  } catch (err) {
+  } 
+   catch (err) {
+         // eslint-disable-next-line no-console
     console.error("demo-success error:", err);
     res.status(500).json({ error: err.message });
   }

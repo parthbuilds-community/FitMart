@@ -29,7 +29,9 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
   try {
     const order = await createOrder(userId, items);
     res.status(201).json(order);
-  } catch (err) {
+  }  
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Order creation error:', err.message);
     if (
       err.message === 'Cart is empty' ||
@@ -52,7 +54,8 @@ router.get('/:userId', verifyFirebaseToken, ensureOrderOwnership, async (req, re
     const { userId } = req.params;
     const orders = await Order.find({ userId }).sort({ createdAt: -1 });
     res.json(orders);
-  } catch (err) {
+  } 
+  catch  {
     res.status(500).json({ error: 'Server error' });
   }
 });

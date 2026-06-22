@@ -8,7 +8,8 @@ module.exports = async (uid) => {
       photoURL: user.photoURL || null,
       email: user.email || "—",
     };
-  } catch (err) {
+  } // eslint-disable-next-line no-unused-vars
+  catch (err) {
     return { displayName: "—", photoURL: null, email: "—" };
   }
 };

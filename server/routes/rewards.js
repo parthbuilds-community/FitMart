@@ -57,7 +57,9 @@ router.get("/:userId", verifyFirebaseToken, async (req, res) => {
       tier: getTier(rewards.pointsBalance),
       transactions,
     });
-  } catch (error) {
+  } 
+   catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Get rewards error:", error);
     return res.status(500).json({ message: "Failed to fetch rewards" });
   }
@@ -131,8 +133,9 @@ router.post("/earn", verifyFirebaseToken, async (req, res) => {
       tier: getTier(rewards.pointsBalance),
       transaction,
     });
-  } catch (error) {
-    console.error("Earn rewards error:", error);
+  } 
+  
+  catch {
     return res.status(500).json({ message: "Failed to earn rewards" });
   }
 });

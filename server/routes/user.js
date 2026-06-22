@@ -40,7 +40,10 @@ router.post("/login", async (req, res) => {
       const firebaseUser = await admin.auth().getUser(userId);
       firebaseEmail = firebaseUser.email || null;
       displayName = firebaseUser.displayName || null;
-    } catch (err) {
+    } 
+     
+    catch (err) {
+           // eslint-disable-next-line no-console
       console.warn(`Could not fetch Firebase user for ${userId}:`, err.message);
     }
 
@@ -85,7 +88,10 @@ router.post("/login", async (req, res) => {
       discountUsed: profile.discountUsed,
       discountPercent: profile.discountPercent,
     });
-  } catch (err) {
+  } 
+   
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error("user/login error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -109,7 +115,10 @@ router.post("/dismiss-banner", async (req, res) => {
       { upsert: true }
     );
     res.json({ success: true });
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error("user/dismiss-banner error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -138,7 +147,10 @@ router.post("/use-discount", async (req, res) => {
     }
 
     res.json({ success: true });
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error("user/use-discount error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -164,7 +176,10 @@ router.get("/discount-status/:userId", async (req, res) => {
       discountUsed: profile.discountUsed,
       discountPercent: profile.discountPercent,
     });
-  } catch (err) {
+  } 
+   
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error("user/discount-status error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -183,7 +198,10 @@ router.get("/profile/:userId", async (req, res) => {
     const profile = await UserProfile.findOne({ userId });
     if (!profile) return res.json({});
     res.json(profile);
-  } catch (err) {
+  } 
+   
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error("user/profile GET error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -218,7 +236,10 @@ router.put("/profile/:userId", async (req, res) => {
     );
 
     res.json(profile);
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error("user/profile PUT error:", err);
     res.status(500).json({ error: err.message });
   }
@@ -266,10 +287,14 @@ router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo")
 
       res.json({ success: true, photoURL, profile });
     } catch (uploadErr) {
+      // eslint-disable-next-line no-console
       console.error("Cloudinary upload failed:", uploadErr);
       return res.status(500).json({ error: "Failed to upload photo" });
     }
-  } catch (err) {
+  } 
+   
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error("user/upload-photo error:", err);
     res.status(500).json({ error: err.message });
   }

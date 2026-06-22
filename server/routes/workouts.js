@@ -25,7 +25,10 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
     }
     
     res.json(formattedLogs);
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching workout logs:', err);
     res.status(500).json({ error: 'Server error fetching workout logs' });
   }
@@ -53,7 +56,10 @@ router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), a
     );
 
     res.json(updatedLog);
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Error saving workout log:', err);
     res.status(500).json({ error: 'Server error saving workout log' });
   }
@@ -69,7 +75,9 @@ router.delete('/:date', verifyFirebaseToken, async (req, res) => {
     const { date } = req.params;
     await WorkoutLog.findOneAndDelete({ userId: req.user.uid, date });
     res.json({ success: true });
-  } catch (err) {
+  } 
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error('Error deleting workout log:', err);
     res.status(500).json({ error: 'Server error deleting workout log' });
   }

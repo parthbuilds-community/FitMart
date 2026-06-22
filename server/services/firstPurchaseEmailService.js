@@ -28,9 +28,12 @@ async function resolveUserEmail(userId, existingProfile = null) {
       };
     }
 
-    console.warn(`⚠️  Could not resolve email for user ${userId}`);
+    
     return { email: null, displayName: null };
-  } catch (err) {
+  }
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error(`Error resolving email for user ${userId}:`, err.message);
     return { email: null, displayName: null };
   }
@@ -47,7 +50,10 @@ async function isFirstPaidOrder(userId) {
       status: "paid",
     });
     return paidOrderCount === 1;
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error(`Error checking first paid order for ${userId}:`, err.message);
     return false;
   }
@@ -61,16 +67,16 @@ async function isFirstPaidOrder(userId) {
  * - Updates firstPurchaseEmailSentAt after successful send
  *
  * @param {String} userId - Firebase UID
- * @param {Object} orderData - Order information (optional, for logging)
  * @returns {Promise<Object>} - { sent: boolean, message: string, error?: string }
  */
-async function sendFirstPurchaseEmail(userId, orderData = {}) {
+async function sendFirstPurchaseEmail(userId = {}) {
   try {
     // Fetch user profile
     let profile = await UserProfile.findOne({ userId });
 
     // Check if email was already sent
     if (profile?.firstPurchaseEmailSentAt) {
+      // eslint-disable-next-line no-console
       console.log(`ℹ️  First-purchase email already sent for user ${userId}`);
       return {
         sent: false,
@@ -81,6 +87,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     // Check if this is really the first paid order
     const isFirst = await isFirstPaidOrder(userId);
     if (!isFirst) {
+      // eslint-disable-next-line no-console
       console.log(`ℹ️  Not the first paid order for user ${userId}; skipping email`);
       return {
         sent: false,
@@ -91,6 +98,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     // Resolve user email
     const { email, displayName } = await resolveUserEmail(userId, profile);
     if (!email) {
+       // eslint-disable-next-line no-console
       console.warn(`⚠️  No email address found for user ${userId}; cannot send welcome email`);
       return {
         sent: false,
@@ -115,6 +123,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     });
 
     if (!result.success) {
+      // eslint-disable-next-line no-console
       console.error(`❌ Failed to send first-purchase email to ${email}:`, result.error);
       return {
         sent: false,
@@ -130,13 +139,15 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
       { upsert: true, new: true }
     );
 
-    console.log(`✅ First-purchase email sent successfully to ${email} for user ${userId}`);
+    
     return {
       sent: true,
       message: "Email sent successfully",
       messageId: result.messageId,
     };
-  } catch (err) {
+  } 
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error(`❌ Error in sendFirstPurchaseEmail for ${userId}:`, err.message);
     return {
       sent: false,

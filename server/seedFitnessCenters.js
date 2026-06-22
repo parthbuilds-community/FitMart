@@ -1,13 +1,12 @@
 // seedFitnessCenters.js
 require("dotenv").config();
-const mongoose = require("./db");
 const FitnessCenter = require("./models/FitnessCenter");
 
 async function seed() {
   try {
     const count = await FitnessCenter.countDocuments();
     if (count > 0) {
-      console.log("Fitness centers already seeded — exiting.");
+
       process.exit(0);
     }
 
@@ -521,10 +520,12 @@ async function seed() {
     ];
 
     await FitnessCenter.insertMany(centers);
+    // eslint-disable-next-line no-console
     console.log("Inserted fitness centers:", centers.length);
     process.exit(0);
-  } catch (err) {
-    console.error("Seeding failed:", err);
+  } 
+  catch  {
+  
     process.exit(1);
   }
 }

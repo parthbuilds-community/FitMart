@@ -87,6 +87,10 @@ jobs:
       - name: Install server dependencies
         working-directory: server
         run: npm ci
+
+      - name: Lint server code
+        working-directory: server
+        run: npm run lint
       
       - name: Wait for MongoDB
         run: sleep 5

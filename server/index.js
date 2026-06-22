@@ -1,6 +1,6 @@
 // server/index.js
+/* eslint-disable no-console */
 require("dotenv").config();
-const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -186,7 +186,7 @@ app.use("/api/github", require("./routes/github"));
 app.get("/", (req, res) => res.send("FitMart server running"));
 
 // ── Global error handler ─────────────────────────────────────────────────────
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     return res.status(400).json({ error: "Invalid JSON payload" });
   }

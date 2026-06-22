@@ -43,7 +43,10 @@ async function fetchPaginatedCount(url) {
     if (match) return parseInt(match[1], 10);
     const data = await res.json();
     return Array.isArray(data) ? data.length : 0;
-  } catch (e) {
+  } 
+   
+  catch (e) {
+    // eslint-disable-next-line no-console
     console.error("fetchPaginatedCount error:", e.message);
     return null;
   }
@@ -62,6 +65,7 @@ router.get("/stats", githubLimiter, async (req, res) => {
     if (!repoFetch.ok) {
       const body = await repoFetch.text().catch(() => "");
       const status = repoFetch.status;
+      // eslint-disable-next-line no-console
       console.error(`/api/github/stats error: GitHub API ${status} ${body}`);
 
       // On 403/429, return cached or fallback to avoid failing the client
@@ -93,7 +97,9 @@ router.get("/stats", githubLimiter, async (req, res) => {
     cache = { stats, ts: Date.now() };
 
     res.json({ stats });
-  } catch (err) {
+  } 
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error("/api/github/stats error:", err.message);
     // Return cached or fallback instead of 502 where possible
     if (cache.stats) return res.json({ stats: cache.stats, cached: true });

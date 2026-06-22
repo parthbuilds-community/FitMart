@@ -5,7 +5,6 @@ const express = require('express');
 jest.mock('../lib/cache', () => ({ get: jest.fn(), set: jest.fn(), delPattern: jest.fn(), clearAll: jest.fn(), client: null }));
 jest.mock('../middleware/verifyFirebaseToken', () => (req, res, next) => next());
 jest.mock('../middleware/verifyAdmin', () => (req, res, next) => next());
-jest.mock('../middleware/validateRequest', () => (schema) => (req, res, next) => next());
 
 jest.mock('../models/Product', () => ({ find: jest.fn(), countDocuments: jest.fn() }));
 const Product = require('../models/Product');
@@ -28,7 +27,8 @@ describe('GET /api/products pagination', () => {
       if (cache && cache.client && typeof cache.client.disconnect === 'function') {
         await cache.client.disconnect();
       }
-    } catch (e) {
+    }
+     catch {
       // ignore
     }
   });

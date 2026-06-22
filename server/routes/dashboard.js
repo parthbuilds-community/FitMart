@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
-const admin = require('../firebaseAdmin');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
@@ -141,7 +140,10 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       recentOrders,   // each order now has customerName + customerEmail
     });
 
-  } catch (err) {
+  } 
+   
+  catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Dashboard route error:', err);
     res.status(500).json({ success: false, message: 'Failed to load dashboard data' });
   }

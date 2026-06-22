@@ -16,14 +16,15 @@ if (!admin.apps.length) {
         privateKey,
       }),
     });
-    console.log('Firebase Admin initialized from environment variables');
+    
   } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     // fall back to Application Default Credentials (file referenced by env var)
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
     });
-    console.log('Firebase Admin initialized using application default credentials');
+    
   } else {
+    // eslint-disable-next-line no-console
     console.warn(
       'Firebase Admin not initialized: missing credentials. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY in environment.'
     );

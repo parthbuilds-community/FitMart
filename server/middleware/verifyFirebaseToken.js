@@ -35,7 +35,8 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     req.user = decoded;
     next();
-  } catch (err) {
+  } // eslint-disable-next-line no-unused-vars
+  catch (err) {
     return res.status(401).json({ error: 'Unauthorized — invalid or expired token' });
   }
 };

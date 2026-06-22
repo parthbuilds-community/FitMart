@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const express = require("express");
 const router = express.Router();
 
@@ -58,7 +59,7 @@ function normalizeExercise(ex, isFirstExercise = false) {
   // Log the raw API response structure on first exercise of each request
   // This helps diagnose if media fields are present in the API response
   if (isFirstExercise) {
-    console.log("\n[ExerciseDB] Raw API Response - Available Fields:");
+    console.log("\n[ExerciseDB] Raw API Response Structure (first exercise):");
     console.log("  Keys:", Object.keys(ex).sort());
     if (process.env.NODE_ENV === 'development') {
       // Only log full object in development for debugging
@@ -132,7 +133,9 @@ router.get("/:category", async (req, res) => {
       try {
         const exercises = await fetchExercisesFromAPI(bodyPart);
         allExercises.push(...exercises);
-      } catch (error) {
+      } 
+       
+      catch (error) {
         console.warn(
           `⚠️ Failed to fetch exercises for bodyPart "${bodyPart}": ${error.message}`
         );
@@ -177,7 +180,9 @@ router.get("/:category", async (req, res) => {
       `✅ Fetched ${deduplicatedExercises.length} unique exercises for category "${category}"`
     );
     res.json(deduplicatedExercises);
-  } catch (error) {
+  } 
+   
+  catch (error) {
     console.error(`❌ Error fetching exercises for category "${category}":`, error);
     res.status(500).json({
       error: "Failed to fetch exercises. Please try again later.",

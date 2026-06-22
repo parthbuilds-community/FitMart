@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const UserProfile = require('../models/UserProfile');
-const admin = require('../firebaseAdmin');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const { sendInactivityReminderEmail } = require('../services/inactiveCustomerEmailService');
@@ -42,7 +41,7 @@ function calculateInactivityInfo(lastOrderDate) {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-    console.log('[API] GET /customers request received');
+    
 
     const customers = await Order.aggregate([
       { $match: { status: 'paid' } },
@@ -68,16 +67,16 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     ]);
 
-    console.log(`[API] Found ${customers.length || 0} customers from orders`);
+    
 
     if (!customers || customers.length === 0) {
-      console.log('[API] No customers found, returning empty list');
+  
       return res.json({ success: true, data: [] });
     }
 
     // Deduplicate UIDs and resolve Firebase user info + UserProfile in parallel
     const uniqueUids = [...new Set(customers.map(c => c.userId).filter(Boolean))];
-    console.log(`[API] Resolving ${uniqueUids.length} unique Firebase users...`);
+    
 
     const userMap = {};
     const profileMap = {};
@@ -87,7 +86,9 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
         try {
           userMap[uid] = await resolveFirebaseUser(uid);
           profileMap[uid] = await UserProfile.findOne({ userId: uid });
-        } catch (err) {
+        } 
+         catch (err) {
+          // eslint-disable-next-line no-console
           console.error(`Error resolving user ${uid}:`, err.message);
           userMap[uid] = { displayName: '—', email: '—', photoURL: null };
           profileMap[uid] = null;
@@ -95,7 +96,6 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       })
     );
 
-    console.log('[API] Firebase resolution complete');
 
     const result = customers.map(c => {
       const inactivityInfo = calculateInactivityInfo(c.lastOrder);
@@ -111,9 +111,11 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       };
     });
 
-    console.log(`[API] Returning ${result.length} enriched customers`);
+    
     res.json({ success: true, data: result });
-  } catch (err) {
+  } 
+   catch (err) {
+    // eslint-disable-next-line no-console
     console.error('[API] GET /customers error:', err);
     res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -148,7 +150,9 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     let profile = null;
     try {
       profile = await UserProfile.findOne({ userId });
-    } catch (err) {
+    }  
+    catch (err) {
+      // eslint-disable-next-line no-console
       console.error(`Error fetching profile for user ${userId}:`, err.message);
     }
 
@@ -173,7 +177,9 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
         orders,
       },
     });
-  } catch (err) {
+  } 
+   catch (err) {
+         // eslint-disable-next-line no-console
     console.error('Customer detail error:', err);
     res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -196,7 +202,10 @@ router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, async (r
     }
 
     res.json({ success: true, message: result.message });
-  } catch (err) {
+  } 
+   
+  catch (err) {
+         // eslint-disable-next-line no-console
     console.error('send-reminder error:', err);
     res.status(500).json({ success: false, error: err.message });
   }

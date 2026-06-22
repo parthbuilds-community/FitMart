@@ -19,6 +19,7 @@ function getEmailTransporter() {
   const smtpPass = process.env.SMTP_PASS;
 
   if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
+    // eslint-disable-next-line no-console
     console.warn(
       "⚠️  SMTP configuration is incomplete. Email sending is disabled. " +
       "Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in environment."
@@ -36,10 +37,9 @@ function getEmailTransporter() {
         pass: smtpPass,
       },
     });
-
-    console.log("✅ Email transporter initialized successfully");
     return transporter;
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("❌ Failed to initialize email transporter:", err.message);
     return null;
   }
@@ -68,9 +68,9 @@ async function sendEmail(mailOptions) {
 
   try {
     const info = await trans.sendMail(finalOptions);
-    console.log(`✅ Email sent successfully to ${mailOptions.to}:`, info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(`❌ Failed to send email to ${mailOptions.to}:`, err.message);
     return { success: false, error: err.message };
   }

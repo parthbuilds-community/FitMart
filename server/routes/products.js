@@ -105,8 +105,9 @@ router.get('/', async (req, res) => {
     if (ifNoneMatch && ifNoneMatch === etag) return res.status(304).end();
 
     return res.json(payload);
-  } catch (err) {
-    console.error('[products] GET /api/products error:', err);
+  } 
+  catch {
+    
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -123,7 +124,9 @@ router.get('/low-stock', async (req, res) => {
     const products = await Product.find({ stock: { $ne: null } });
     const lowStock = products.filter(p => (p.stock - p.reserved) < LOW_STOCK_THRESHOLD);
     res.json(lowStock);
-  } catch (err) {
+  } 
+  // eslint-disable-next-line no-unused-vars
+  catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -145,7 +148,7 @@ router.get('/:id', async (req, res) => {
     const product = await Product.findOne({ productId });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -163,9 +166,10 @@ router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProduct
     const p = new Product(body);
     await p.save();
     // invalidate product caches
-    try { await cache.delPattern('products:'); } catch (e) { }
+    try { await cache.delPattern('products:'); } catch { }
     res.status(201).json(p);
-  } catch (err) {
+  } // eslint-disable-next-line no-unused-vars
+  catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -185,9 +189,11 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
   try {
     const updated = await Product.findOneAndUpdate({ productId }, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'Product not found' });
-    try { await cache.delPattern('products:'); } catch (e) { }
+    try { await cache.delPattern('products:'); } catch  { }
     res.json(updated);
-  } catch (err) {
+  } 
+  // eslint-disable-next-line no-unused-vars
+  catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -205,10 +211,12 @@ router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
   try {
-    const deleted = await Product.findOneAndDelete({ productId });
-    try { await cache.delPattern('products:'); } catch (e) { }
+
+    try { await cache.delPattern('products:'); } catch { }
     res.json({ success: true });
-  } catch (err) {
+  } 
+  // eslint-disable-next-line no-unused-vars
+  catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });

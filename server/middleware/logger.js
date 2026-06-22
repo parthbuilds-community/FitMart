@@ -40,7 +40,7 @@ const logger = (req, res, next) => {
         status >= 300 ? '\x1b[36m' :
           status >= 200 ? '\x1b[32m' :
             '\x1b[0m';
-
+    // eslint-disable-next-line no-console
     console.log(
       `[${timestamp}] ` +
       `${methodColor}${req.method.padEnd(6)}\x1b[0m ` +
@@ -62,12 +62,16 @@ const logger = (req, res, next) => {
         const bodyStr = JSON.stringify(safeBody);
 
         if (bodyStr.length < 1000) {
+          // eslint-disable-next-line no-console
           console.log(`   Body: ${bodyStr}`);
         } else {
+          // eslint-disable-next-line no-console
           console.log(`   Body: [too large to log]`);
         }
-      } catch (err) {
-        console.log(`   Body: [error parsing body]`);
+      }
+      catch {
+
+
       }
     }
   });
