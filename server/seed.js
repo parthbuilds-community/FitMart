@@ -329,7 +329,7 @@ async function seed() {
     process.exit(0);
   } catch (err) {
     console.error('Seeding error:', err);
-    try { await mongoose.disconnect(); } catch (e) { }
+    try { await mongoose.disconnect(); } catch (e) { /* intentionally ignored */ }
     process.exit(1);
   }
 }

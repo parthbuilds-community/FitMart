@@ -200,7 +200,7 @@ router.put("/profile/:userId", async (req, res) => {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
-    const phoneRegex = /^\+?[\d\s\-]{7,15}$/;
+    const phoneRegex = /^\+?[\d\s-]{7,15}$/;
     if (req.body.phone && !phoneRegex.test(req.body.phone)) {
       return res.status(400).json({ error: "Invalid phone number format" });
     }
