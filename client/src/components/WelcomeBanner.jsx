@@ -20,7 +20,8 @@ export default function WelcomeBanner({ onDismiss }) {
       style={{
         transform: visible && !leaving ? "translateY(0)" : "translateY(-100%)",
         opacity: visible && !leaving ? 1 : 0,
-        transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease",
+        transition:
+          "transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease",
       }}
       className="w-full bg-stone-900 px-4 sm:px-5 lg:px-10 py-3 sm:py-3.5
                  flex items-center justify-between gap-3 sm:gap-4"
@@ -44,7 +45,8 @@ export default function WelcomeBanner({ onDismiss }) {
             your first order
             {/* Hide secondary text on very small screens to save space */}
             <span className="hidden xs:inline">
-              {" "}— applied automatically at checkout
+              {" "}
+              — applied automatically at checkout
             </span>
             .
           </span>
