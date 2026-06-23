@@ -163,7 +163,7 @@ router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProduct
     const p = new Product(body);
     await p.save();
     // invalidate product caches
-    try { await cache.delPattern('products:'); } catch (e) { }
+    try { await cache.delPattern("products:"); } catch (e) { /* ignore cache errors */ }
     res.status(201).json(p);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -185,7 +185,7 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
   try {
     const updated = await Product.findOneAndUpdate({ productId }, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'Product not found' });
-    try { await cache.delPattern('products:'); } catch (e) { }
+    try { await cache.delPattern("products:"); } catch (e) { /* ignore cache errors */ }
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -206,7 +206,7 @@ router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   }
   try {
     const deleted = await Product.findOneAndDelete({ productId });
-    try { await cache.delPattern('products:'); } catch (e) { }
+    try { await cache.delPattern("products:"); } catch (e) { /* ignore cache errors */ }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

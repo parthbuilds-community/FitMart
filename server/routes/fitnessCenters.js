@@ -25,7 +25,7 @@ function computeDistanceScore(userAddr, center) {
   }
 
   // Locality keywords
-  const localityWords = uaLine2.split(/[ ,\/\-]+/).filter(Boolean);
+  const localityWords = uaLine2.split(/[ ,/-]+/).filter(Boolean);
   let localityMatches = 0;
   localityWords.forEach(w => { if (w && cAddr.includes(w)) localityMatches++; });
   score -= localityMatches * 8;

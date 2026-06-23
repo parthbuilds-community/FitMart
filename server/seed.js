@@ -326,12 +326,16 @@ async function seed() {
     } catch (err) {
       // ignore
     }
-    process.exit(0);
-  } catch (err) {
-    console.error('Seeding error:', err);
-    try { await mongoose.disconnect(); } catch (e) { }
-    process.exit(1);
+   process.exit(0);
+} catch (err) {
+  console.error('Seeding error:', err);
+  try {
+    await mongoose.disconnect();
+  } catch (e) {
+    console.error('Disconnect failed:', e);
   }
+  process.exit(1);
+}
 }
 
 seed();
