@@ -134,7 +134,7 @@ router.post("/", chatLimiter, async (req, res) => {
       let s = input;
 
       // Remove disallowed control characters (keep tab, newline, carriage return)
-      s = s.replace(/[^\x09\x0A\x0D\x20-\x7E\u0080-\uFFFF]/g, '');
+      s = s.replace(/[^\t\n\r\x20-\x7E\u0080-\uFFFF]/g, '');
 
       // Collapse 3+ consecutive newlines to 2
       s = s.replace(/\n{3,}/g, '\n\n');
