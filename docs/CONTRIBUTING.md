@@ -386,7 +386,34 @@ FitMart/
 3. Document the required env variables in `README.md` and `docs/FIRST_PURCHASE_EMAIL_SETUP.md` (or a new doc) if the setup is non-trivial
 
 ---
+## 🛠️ Code Formatting & Linting
 
+This project uses **Prettier** for formatting and **ESLint** for linting.
+
+### Format all files
+```bash
+npm run format
+```
+
+### Check formatting without writing
+```bash
+npm run format:check
+```
+
+### Lint server
+```bash
+cd server && npm run lint
+```
+
+### Pre-commit Hooks
+
+Husky runs **lint-staged** automatically on every commit:
+- ESLint `--fix` on JS/TS files
+- Prettier on all staged files
+
+No manual formatting needed — just commit and it runs! 🚀
+
+---
 ## 🎨 Style Guide
 
 ### JavaScript / React
