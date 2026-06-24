@@ -124,7 +124,7 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | 🏋️ Fitness Plans | Weight Loss, Muscle Building, and Mobility & Recovery plans |
 | 🐛 Bug Reporter | In-app bug reporting widget available to all signed-in users |
 | 📧 Welcome Email | Automated first-purchase congratulations email |
-| 📱 PWA Ready | Progressive Web App support for mobile installation |
+| 🧙   Planned PWA Support |
 
 ### Admin-Facing
 
