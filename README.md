@@ -123,8 +123,7 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | 👤 User Profile | Manage personal info, shipping addresses, and default address |
 | 🏋️ Fitness Plans | Weight Loss, Muscle Building, and Mobility & Recovery plans |
 | 🐛 Bug Reporter | In-app bug reporting widget available to all signed-in users |
-| 📧 Welcome Email | Automated first-purchase congratulations email |
-| 📱 PWA Ready | Progressive Web App support for mobile installation |
+| 📧 Welcome Email | Automated first-purchase congratula
 
 ### Admin-Facing
 
