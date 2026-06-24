@@ -124,7 +124,7 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | 🏋️ Fitness Plans | Weight Loss, Muscle Building, and Mobility & Recovery plans |
 | 🐛 Bug Reporter | In-app bug reporting widget available to all signed-in users |
 | 📧 Welcome Email | Automated first-purchase congratulations email |
-| 📱 PWA Ready | Progressive Web App support for mobile installation |
+
 
 ### Admin-Facing
 
@@ -1024,3 +1024,7 @@ Made with ❤️ by [Parth Narkar](https://github.com/parthnarkar) and the [Part
 ⭐ **Star this repo** if you find it useful — it helps a lot!
 
 </div>
+
+## Contribution
+
+Thank you to the open-source community for supporting FitMart.
