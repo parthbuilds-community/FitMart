@@ -611,10 +611,8 @@ export default function HomePage() {
                 Points for every purchase and every fitness milestone. Redeem against equipment, supplements, or coaching.
               </p>
             </div>
-            <button className="shrink-0 bg-stone-900 text-white text-sm px-6 sm:px-7 py-3 rounded-full
-                               hover:bg-stone-700 transition-colors self-start md:self-auto w-full sm:w-auto
-                               text-center">
-              Learn More
+            <button onClick={() => navigate('/loyalty')} className="shrink-0 bg-stone-900 ...">
+                  Learn More
             </button>
           </div>
         </section>
@@ -671,10 +669,11 @@ export default function HomePage() {
           <p className="text-xs text-stone-400 text-center">© 2026 FitMart. Built at VESIT, Mumbai.</p>
           <div className="flex gap-4 sm:gap-5">
             {["Privacy", "Terms", "Support"].map(l => (
-              <button key={l}
-                className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
-                {l}
-              </button>
+            <button key={l}
+              onClick={() => navigate(`/${l.toLowerCase()}`)}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-9 px-1">
+             {l}
+            </button>
             ))}
           </div>
         </div>
