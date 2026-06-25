@@ -1,5 +1,5 @@
-// src/components/FitnessChatBot.jsx
-import { useState, useEffect, useRef } from "react";
+
+import React, { useState, useRef, useEffect } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 
