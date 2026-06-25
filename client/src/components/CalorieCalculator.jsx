@@ -16,6 +16,12 @@ const CalorieCalculator = () => {
     activityLevel: "1.2",
   });
 
+  const preventInvalidNumberInput = (e) => {
+  if (["e", "E", "+", "-"].includes(e.key)) {
+    e.preventDefault();
+  }
+};
+
   const [result, setResult] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -142,6 +148,7 @@ const CalorieCalculator = () => {
                 </label>
                 <input
                   type="number"
+                  min="1"
                   step="0.1"
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
@@ -152,6 +159,7 @@ const CalorieCalculator = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, weight: e.target.value })
                   }
+                  onKeyDown={preventInvalidNumberInput}
                 />
               </div>
 
@@ -161,6 +169,7 @@ const CalorieCalculator = () => {
                 </label>
                 <input
                   type="number"
+                  min="1"
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
@@ -170,6 +179,7 @@ const CalorieCalculator = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, height: e.target.value })
                   }
+                  onKeyDown={preventInvalidNumberInput}
                 />
               </div>
 
@@ -188,6 +198,7 @@ const CalorieCalculator = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, age: e.target.value })
                   }
+                  onKeyDown={preventInvalidNumberInput}
                 />
               </div>
 

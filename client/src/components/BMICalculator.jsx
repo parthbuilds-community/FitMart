@@ -17,6 +17,12 @@ const BMICalculator = () => {
     activityLevel: 1.2,
   });
 
+  const preventInvalidNumberInput = (e) => {
+  if (["e", "E", "+", "-"].includes(e.key)) {
+    e.preventDefault();
+  }
+};
+
   const [result, setResult] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -104,6 +110,7 @@ const BMICalculator = () => {
                 </label>
                 <input
                   type="number"
+                  min="1"
                   step="0.1"
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
@@ -111,7 +118,7 @@ const BMICalculator = () => {
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 70.5"
                   value={formData.weight}
-                  onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, weight: e.target.value })} onKeyDown={preventInvalidNumberInput}
                 />
               </div>
 
@@ -121,13 +128,15 @@ const BMICalculator = () => {
                 </label>
                 <input
                   type="number"
+                  min="1"
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
                              focus:border-stone-900 transition-colors min-h-11"
                   placeholder="e.g., 175"
                   value={formData.height}
-                  onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, height: e.target.value })} 
+                  onKeyDown={preventInvalidNumberInput}
                 />
               </div>
 
@@ -137,6 +146,7 @@ const BMICalculator = () => {
                 </label>
                 <input
                   type="number"
+                  step="1"
                   required
                   className="w-full border border-stone-200 bg-white rounded-lg px-4 py-3
                              text-sm text-stone-900 placeholder-stone-300 focus:outline-none
@@ -144,6 +154,7 @@ const BMICalculator = () => {
                   placeholder="e.g., 28"
                   value={formData.age}
                   onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                  onKeyDown={preventInvalidNumberInput}
                 />
               </div>
 
