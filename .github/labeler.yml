@@ -1,0 +1,93 @@
+# PR Labeler Configuration - Based on file changes
+
+# Frontend changes
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: 'client/**/*'
+      - any-glob-to-any-file: 'client/src/**/*.jsx'
+      - any-glob-to-any-file: 'client/src/**/*.js'
+      - any-glob-to-any-file: 'client/src/components/**/*'
+      - any-glob-to-any-file: 'client/src/pages/**/*'
+      - any-glob-to-any-file: 'client/src/auth/**/*'
+      - any-glob-to-any-file: 'client/src/hooks/**/*'
+      - any-glob-to-any-file: 'client/src/utils/**/*'
+
+# Backend changes
+backend:
+  - changed-files:
+      - any-glob-to-any-file: 'server/**/*'
+      - any-glob-to-any-file: 'server/routes/**/*'
+      - any-glob-to-any-file: 'server/models/**/*'
+      - any-glob-to-any-file: 'server/middleware/**/*'
+      - any-glob-to-any-file: 'server/services/**/*'
+      - any-glob-to-any-file: 'server/lib/**/*'
+      - any-glob-to-any-file: 'server/config/**/*'
+      - any-glob-to-any-file: 'server/tests/**/*'
+
+# DevOps/Docker changes
+devops:
+  - changed-files:
+      - any-glob-to-any-file: 'Dockerfile'
+      - any-glob-to-any-file: 'docker-compose.yml'
+      - any-glob-to-any-file: 'client/Dockerfile'
+      - any-glob-to-any-file: 'server/Dockerfile'
+      - any-glob-to-any-file: '.dockerignore'
+      - any-glob-to-any-file: 'client/.dockerignore'
+      - any-glob-to-any-file: 'server/.dockerignore'
+      - any-glob-to-any-file: '.github/workflows/**/*'
+
+# Documentation changes
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**/*'
+      - any-glob-to-any-file: '*.md'
+      - any-glob-to-any-file: 'README.md'
+      - any-glob-to-any-file: 'CODE_OF_CONDUCT.md'
+      - any-glob-to-any-file: 'CONTRIBUTING.md'
+      - any-glob-to-any-file: 'LICENSE'
+      - any-glob-to-any-file: 'docs/*.md'
+
+# Security related changes
+security:
+  - changed-files:
+      - any-glob-to-any-file: 'server/middleware/verifyFirebaseToken.js'
+      - any-glob-to-any-file: 'server/middleware/verifyAdmin.js'
+      - any-glob-to-any-file: 'server/firebaseAdmin.js'
+      - any-glob-to-any-file: '**/*auth*'
+      - any-glob-to-any-file: '**/helmet*'
+      - any-glob-to-any-file: '**/rate-limit*'
+      - any-glob-to-any-file: 'docs/SECURITY.md'
+      - any-glob-to-any-file: '**/.env.example'
+
+# UI changes
+UI:
+  - changed-files:
+      - any-glob-to-any-file: 'client/src/**/*.css'
+      - any-glob-to-any-file: 'client/src/index.css'
+      - any-glob-to-any-file: 'client/src/components/**/*.jsx'
+      - any-glob-to-any-file: 'client/src/pages/**/*.jsx'
+      - any-glob-to-any-file: 'client/DesignSystem.md'
+
+# Bug fixes
+bug:
+  - changed-files:
+      - any-glob-to-any-file: 'server/tests/**/*'
+      - any-glob-to-any-file: '**/*.test.js'
+      - any-glob-to-any-file: 'client/src/utils/**/*'
+
+# Enhancement (new features)
+enhancement:
+  - changed-files:
+      - any-glob-to-any-file: 'client/src/pages/**/*.jsx'
+      - any-glob-to-any-file: 'server/routes/**/*.js'
+      - any-glob-to-any-file: 'server/models/**/*.js'
+      - any-glob-to-any-file: 'client/src/components/**/*.jsx'
+
+# Refactor changes
+refactor:
+  - changed-files:
+      - any-glob-to-any-file: 'server/**/*.js'
+      - any-glob-to-any-file: 'client/src/**/*.js'
+      - any-glob-to-any-file: 'client/src/**/*.jsx'
+      - any-glob-to-any-file: 'server/lib/**/*.js'
+      - any-glob-to-any-file: 'server/services/**/*.js'

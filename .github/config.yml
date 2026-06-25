@@ -1,0 +1,64 @@
+# =========================================
+
+# FITMART COMMUNITY WELCOME CONFIG
+
+# =========================================
+
+# -----------------------------------------
+
+# FIRST ISSUE MESSAGE
+
+# -----------------------------------------
+
+newIssueWelcomeComment: >
+👋 Thanks for opening your first issue in FitMart!
+
+We appreciate you taking the time to help improve the project ❤️
+
+Please make sure to:
+
+* Clearly explain the issue
+* Add steps to reproduce it
+* Include screenshots if applicable
+
+A maintainer will review it soon 🚀
+
+# -----------------------------------------
+
+# FIRST PULL REQUEST MESSAGE
+
+# -----------------------------------------
+
+newPRWelcomeComment: >
+🎉 Welcome to FitMart!
+
+Thank you for making your first contribution to the project 💪
+
+Before requesting review, please ensure:
+
+* Your code builds successfully
+* Your changes are tested properly
+* Screenshots are added for UI changes
+* You followed the contribution guidelines
+
+We truly appreciate your effort and contribution to the community ❤️
+
+Good luck with your PR review 🚀
+
+# -----------------------------------------
+
+# FIRST MERGED PR MESSAGE
+
+# -----------------------------------------
+
+firstPRMergeComment: >
+🚀 Congratulations on getting your first PR merged into FitMart!
+
+Your contribution is now officially part of the project and community ❤️
+
+Thank you for helping improve FitMart for everyone.
+
+We hope to see more amazing contributions from you in the future 💪
+
+Stay connected with the journey:
+https://www.instagram.com/parth.builds/

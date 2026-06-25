@@ -1,0 +1,53 @@
+# Issue Labeler Configuration - Based on title and body keywords
+
+# Bug reports
+bug:
+  - '(bug|fix|error|issue|problem|crash|broken|fails|not working|unexpected|exception|stack trace|debug)'
+
+# Enhancement/Feature requests
+enhancement:
+  - '(feature|enhancement|improve|add|new|support|implement|create|build|make|upgrade|suggest|proposal|request)'
+
+# Documentation improvements
+documentation:
+  - '(docs|documentation|readme|guide|tutorial|explanation|clarify|update readme|doc|wiki|comment|explain|typo)'
+
+# Security vulnerabilities
+security:
+  - '(security|vulnerability|exploit|auth|hack|breach|injection|xss|cors|csrf|encryption|private|leak|expose|api key|secret|token|firebase rule)'
+
+# UI/UX improvements
+UI:
+  - '(ui|ux|interface|design|responsive|layout|styling|animation|visual|appearance|mobile|tablet|accessibility|a11y|modal|dropdown|navigation|sidebar|header|footer|spacing|padding|margin|color|theme|dark mode|font|typography|icon)'
+
+# Questions
+question:
+  - '(question|how to|help|what is|why does|^how\??|^what\??|^can someone|^is it possible|^does this|clarify|doubt|confused|uncertain)'
+
+# Refactoring
+refactor:
+  - '(refactor|clean|restructure|organize|optimize|improve performance|code quality|technical debt|rewrite|reorganize|rename|move|extract|split|merge|simplify|DRY|SOLID|cleanup)'
+
+# Good first issue (for beginners)
+good first issue:
+  - '(good first issue|beginner|new contributor|easy|simple|starter|first time|novice|onboarding|low hanging fruit)'
+
+# Help wanted (requires extra attention)
+help wanted:
+  - '(help wanted|contribution needed|looking for contributor|need assistance|someone please|can anyone|collaboration wanted|seeking help|volunteer|complex|difficult|unclear)'
+
+# Invalid issues
+invalid:
+  - '(invalid|not relevant|off topic|spam|doesn''t belong|inappropriate|not a bug|working as intended)'
+
+# Duplicate issues
+duplicate:
+  - '(duplicate|already reported|same as|existing issue|dupe|redundant|already exists|#\d+)'
+
+# Won't fix
+wontfix:
+  - '(wontfix|won''t fix|not planned|rejected|out of scope|not a priority|wont do|not fixing|intended behavior)'
+
+# Blocked issues
+blocked:
+  - '(blocked|waiting on|depends on|blocked by|stuck because|awaiting|cannot proceed because|prerequisite|dependency|blocking issue|waiting for)'

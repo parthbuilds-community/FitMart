@@ -308,6 +308,7 @@ Before / After screenshots if you changed any UI.
 - [ ] I've read the CONTRIBUTING guide
 - [ ] My code follows the project's style guidelines
 - [ ] I've tested my changes locally
+- [ ] I've included unit tests if adding/changing core backend logic
 - [ ] I've linked the related issue
 - [ ] I haven't introduced any new secrets or API keys
 - [ ] I've updated README.md if I added a new route, page, component, or env variable

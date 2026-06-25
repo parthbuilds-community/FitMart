@@ -9,6 +9,7 @@ import CartDrawer from "../components/CartDrawer";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessChatBot from "../components/FitnessChatBot";
+import ErrorBoundary from "../components/ErrorBoundary";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
 import BMICalculator from "../components/BMICalculator";
@@ -269,10 +270,16 @@ export default function HomePage() {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
       });
-      if (!res.ok) throw new Error("Failed to add to cart");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to add to cart");
+      }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Add to cart failed:", err); }
+    } catch (err) { 
+      console.error("Add to cart failed:", err); 
+      alert(err.message);
+    }
   };
 
   const removeFromCart = async (id) => {
@@ -284,10 +291,16 @@ export default function HomePage() {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
-      if (!res.ok) throw new Error("Failed to remove");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to remove");
+      }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Remove from cart failed:", err); }
+    } catch (err) { 
+      console.error("Remove from cart failed:", err); 
+      alert(err.message);
+    }
   };
 
   const updateQty = async (id, delta) => {
@@ -295,14 +308,20 @@ export default function HomePage() {
     try {
       const url = delta > 0 ? "add" : "remove";
       const headers = await getAuthHeaders();
-      await fetch(`${API}/api/cart/${user.uid}/${url}`, {
+      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });
-      const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to update qty");
+      }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Update qty failed:", err); }
+    } catch (err) { 
+      console.error("Update qty failed:", err); 
+      alert(err.message);
+    }
   };
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -666,7 +685,14 @@ export default function HomePage() {
         cart={cart} cartCount={cartCount} cartTotal={cartTotal}
         updateQty={updateQty} removeFromCart={removeFromCart}
       />
-      <FitnessChatBot />
+      <ErrorBoundary fallback={
+        <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">
+          <p className="text-xs tracking-[0.15em] uppercase text-stone-400 mb-1">Assistant</p>
+          <p className="text-sm text-stone-600">Chat is currently unavailable. Please refresh the page.</p>
+        </div>
+      }>
+        <FitnessChatBot />
+      </ErrorBoundary>
     </div>
   );
 }
