@@ -270,10 +270,16 @@ export default function HomePage() {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
       });
-      if (!res.ok) throw new Error("Failed to add to cart");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to add to cart");
+      }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Add to cart failed:", err); }
+    } catch (err) { 
+      console.error("Add to cart failed:", err); 
+      alert(err.message);
+    }
   };
 
   const removeFromCart = async (id) => {
@@ -285,10 +291,16 @@ export default function HomePage() {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
-      if (!res.ok) throw new Error("Failed to remove");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to remove");
+      }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Remove from cart failed:", err); }
+    } catch (err) { 
+      console.error("Remove from cart failed:", err); 
+      alert(err.message);
+    }
   };
 
   const updateQty = async (id, delta) => {
@@ -296,14 +308,20 @@ export default function HomePage() {
     try {
       const url = delta > 0 ? "add" : "remove";
       const headers = await getAuthHeaders();
-      await fetch(`${API}/api/cart/${user.uid}/${url}`, {
+      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });
-      const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to update qty");
+      }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Update qty failed:", err); }
+    } catch (err) { 
+      console.error("Update qty failed:", err); 
+      alert(err.message);
+    }
   };
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);

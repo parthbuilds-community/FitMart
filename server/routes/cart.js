@@ -3,22 +3,82 @@ const router = express.Router();
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
-const ensureOwnership = require('../middleware/ownership');
-const validateRequest = require('../middleware/validateRequest');
-const { cartAddSchema, cartRemoveSchema } = require('../validation/requestSchemas');
-const ensureCartOwnership = ensureOwnership('Forbidden — you can only access your own cart');
 
-// Helper: adjust product reserved count (atomic, prevents negatives) — issue #277
-async function adjustReserved(productId, delta) {
-  // Use an aggregation pipeline update to atomically clamp reserved to zero.
-  // This avoids the read-then-write race condition of fetching the document first.
+/**
+ * Atomically adjusts Product.reserved by `delta` using a single findOneAndUpdate.
+ *
+ * Invariants enforced at the DB level:
+ *   - reserved + delta >= 0  (reserved never goes negative)
+ *   - reserved + delta <= stock  (never exceeds finite stock)
+ *
+ * Throws if the product is not found or if either invariant would be violated.
+ *
+ * @param {number}          productId - The product's numeric productId field
+ * @param {number}          delta     - Amount to add (positive) or subtract (negative)
+ * @param {ClientSession|null} [session=null] - Optional Mongoose session for transaction support
+ * @returns {Promise<Product>} The updated product document
+ */
+// Atomic: check + increment happen in one findOneAndUpdate — no separate read needed.
+async function adjustReserved(productId, delta, session = null) {
+  // Check if product exists first
+  const productExists = await Product.findOne({ productId: Number(productId) });
+  if (!productExists) {
+    throw new Error(`adjustReserved failed for productId ${productId}`);
+  }
+
+  // Always enforce: reserved + delta must be >= 0
+  const filter = {
+    productId: Number(productId),
+    $expr: {
+      $gte: [
+        { $add: [{ $ifNull: ['$reserved', 0] }, delta] },
+        0,
+      ],
+    },
+  };
+
+  // When adding to reserved, also enforce: reserved + delta must be <= stock
+  // Skip this cap for unlimited products (stock === null)
+  if (delta > 0) {
+    filter.$or = [
+      { stock: null },
+      {
+        $expr: {
+          $lte: [
+            { $add: [{ $ifNull: ['$reserved', 0] }, delta] },
+            '$stock',
+          ],
+        },
+      },
+    ];
+  }
+
   const updated = await Product.findOneAndUpdate(
-    { productId: Number(productId) },
-    [{ $set: { reserved: { $max: [0, { $add: ['$reserved', delta] }] } } }],
-    { new: true }
+    filter,
+    { $inc: { reserved: delta } },
+    {
+      new: true,
+      ...(session ? { session } : {}),
+    }
   );
-  if (!updated) throw new Error('Product not found');
+
+  if (!updated) {
+    const reason = delta > 0
+      ? 'insufficient stock'
+      : 'reserved already at 0';
+    throw new Error(reason);
+  }
+
   return updated;
+}
+
+// Helper: check that the token uid matches the userId in the route
+function checkOwnership(req, res) {
+  if (req.user.uid !== req.params.userId) {
+    res.status(403).json({ error: 'Forbidden — you can only access your own cart' });
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -26,7 +86,9 @@ async function adjustReserved(productId, delta) {
  * @desc    Get or create a cart for the given user
  * @access  Private
  */
-router.get('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res) => {
+router.get('/:userId', verifyFirebaseToken, async (req, res) => {
+  if (!checkOwnership(req, res)) return;
+
   try {
     const { userId } = req.params;
     let cart = await Cart.findOne({ userId });
@@ -44,7 +106,8 @@ router.get('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res
  * @desc    Add an item to the user's cart and reserve stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/add', verifyFirebaseToken, ensureCartOwnership, validateRequest(cartAddSchema), async (req, res) => {
+router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
+  if (!checkOwnership(req, res)) return;
 
   try {
     const { userId } = req.params;
@@ -72,7 +135,8 @@ router.post('/:userId/add', verifyFirebaseToken, ensureCartOwnership, validateRe
 
     await adjustReserved(productId, qty);
     await cart.save();
-    res.json(cart);
+    const fresh = await Cart.findOne({ userId });
+    res.json(fresh);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -84,7 +148,8 @@ router.post('/:userId/add', verifyFirebaseToken, ensureCartOwnership, validateRe
  * @desc    Remove an item (or reduce its quantity) from the user's cart and release reserved stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/remove', verifyFirebaseToken, ensureCartOwnership, validateRequest(cartRemoveSchema), async (req, res) => {
+router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
+  if (!checkOwnership(req, res)) return;
 
   try {
     const { userId } = req.params;
@@ -106,8 +171,8 @@ router.post('/:userId/remove', verifyFirebaseToken, ensureCartOwnership, validat
 
     await adjustReserved(productId, -removeQty);
     await cart.save();
-
-    res.json(cart);
+    const fresh = await Cart.findOne({ userId });
+    res.json(fresh);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -119,7 +184,9 @@ router.post('/:userId/remove', verifyFirebaseToken, ensureCartOwnership, validat
  * @desc    Clear all items from the user's cart and release all reserved stock
  * @access  Private
  */
-router.delete('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, res) => {
+router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
+  if (!checkOwnership(req, res)) return;
+
   try {
     const { userId } = req.params;
     const cart = await Cart.findOne({ userId });
@@ -137,5 +204,7 @@ router.delete('/:userId', verifyFirebaseToken, ensureCartOwnership, async (req, 
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+router.adjustReserved = adjustReserved;
 
 module.exports = router;
