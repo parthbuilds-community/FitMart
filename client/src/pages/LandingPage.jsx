@@ -150,26 +150,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white font-['DM_Sans',sans-serif] overflow-x-hidden">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-        .fade-up { opacity:0; transform:translateY(28px); transition:opacity .7s ease,transform .7s ease; }
-        .fade-up.visible { opacity:1; transform:translateY(0); }
-        .delay-1 { transition-delay:.1s; }
-        .delay-2 { transition-delay:.25s; }
-        .delay-3 { transition-delay:.4s; }
-        .delay-4 { transition-delay:.55s; }
-        .delay-5 { transition-delay:.7s; }
-        .hero-line { overflow:hidden; }
-        .slide-up { display:inline-block; transform:translateY(100%); transition:transform .8s cubic-bezier(.16,1,.3,1); }
-        .slide-up.visible { transform:translateY(0); }
-        .cat-card { transition:transform .35s ease,box-shadow .35s ease; }
-        @media(hover:hover){ .cat-card:hover { transform:translateY(-4px); box-shadow:0 20px 40px rgba(0,0,0,.1); } }
-        .testimonial-enter { animation:tFadeIn .6s ease forwards; }
-        @keyframes tFadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-        .stat-card { transition: transform .25s ease; }
-        .stat-card:hover { transform: translateY(-2px); }
-        .gh-star-btn { transition: background .2s ease, color .2s ease, border-color .2s ease; }
-      `}</style>
+      
 
       {/* ── NAVBAR ── */}
       <NavbarWithGithub
