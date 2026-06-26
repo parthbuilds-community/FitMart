@@ -637,6 +637,8 @@ export default function ProductPage() {
                       <div className="relative bg-stone-100 aspect-square overflow-hidden">
                         {rel.image ? (
                           <img src={rel.image} alt={rel.name}
+                            loading="lazy"
+                            decoding="async"
                             className="related-img w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center

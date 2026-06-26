@@ -54,6 +54,8 @@ const InventoryMobileCard = ({ p, onEdit }) => {
         <div className="w-12 h-12 rounded-xl bg-stone-100 overflow-hidden shrink-0">
           <img src={p.image} alt={p.name}
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
             onError={e => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
@@ -372,6 +374,8 @@ export default function AdminInventory() {
                           {p.image && (
                             <div className="w-9 h-9 rounded-xl bg-stone-100 overflow-hidden shrink-0">
                               <img src={p.image} alt={p.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover"
                                 onError={e => { e.currentTarget.style.display = "none"; }} />
                             </div>

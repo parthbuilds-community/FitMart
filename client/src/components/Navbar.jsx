@@ -158,6 +158,8 @@ export default function Navbar({
                           alt={user.displayName || "User profile picture"}
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <span className={`text-[11px] font-medium ${isLanding && !navOpaque ? "text-stone-700" : "text-stone-600"}`} aria-hidden>
