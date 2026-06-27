@@ -4,7 +4,7 @@ const rewardTransactionSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["earned", "redeemed"],
+      enum: ["earned", "redeemed", "expired"],
       default: "earned",
     },
     points: {

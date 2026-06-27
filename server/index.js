@@ -123,6 +123,10 @@ app.use("/api/payment/verify-payment", paymentLimiter);
 // ── Database ────────────────────────────────────────────────────────────────
 require("./db");
 
+// ── Scheduled jobs ──────────────────────────────────────────────────────────
+const { startExpiryCron } = require("./jobs/rewardsExpiry");
+startExpiryCron();
+
 // ── Development: seed a local admin profile if configured ──────────────────
 if (process.env.NODE_ENV !== 'production') {
   try {
