@@ -353,6 +353,7 @@ export default function PaymentPage() {
                 <img
                   src={product.image}
                   alt={product.name}
+                  loading="lazy"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src =

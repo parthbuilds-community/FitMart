@@ -99,11 +99,12 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
                                 bg-stone-200 flex items-center justify-center">
                   {user?.photoURL ? (
                     <img
-                      src={user.photoURL}
-                      alt={user.displayName || "Admin profile picture"}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
+                    src={user.photoURL}
+                    alt={user.displayName || "Admin profile picture"}
+                    className="w-full h-full object-cover"
+                     referrerPolicy="no-referrer"
+                      loading="lazy"
+                      />
                   ) : (
                     <span className="text-[11px] font-medium text-stone-600">
                       {(user?.displayName?.[0] || user?.email?.[0] || "U").toUpperCase()}
