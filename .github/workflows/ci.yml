@@ -93,4 +93,4 @@ jobs:
       
       - name: Run server tests
         working-directory: server
-        run: npm test --silent || true  # Temporarily don't fail
+        run: npm test --silent
