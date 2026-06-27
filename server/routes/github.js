@@ -1,6 +1,9 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 const router = express.Router();
+const { fetchWithTimeout } = require("../lib/fetchWithTimeout");
+
+const GITHUB_TIMEOUT_MS = 10000;
 
 const githubLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -31,7 +34,7 @@ const TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function fetchPaginatedCount(url) {
   try {
-    const res = await fetch(url, { headers: makeHeaders() });
+    const res = await fetchWithTimeout(url, { headers: makeHeaders() }, GITHUB_TIMEOUT_MS);
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
       const err = new Error(`GitHub API ${res.status}: ${txt}`);
@@ -57,7 +60,7 @@ router.get("/stats", githubLimiter, async (req, res) => {
   }
 
   try {
-    const repoFetch = await fetch(API, { headers: makeHeaders() });
+    const repoFetch = await fetchWithTimeout(API, { headers: makeHeaders() }, GITHUB_TIMEOUT_MS);
 
     if (!repoFetch.ok) {
       const body = await repoFetch.text().catch(() => "");

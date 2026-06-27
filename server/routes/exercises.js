@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const { fetchWithTimeout } = require("../lib/fetchWithTimeout");
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || "exercisedb.p.rapidapi.com";
+const RAPIDAPI_TIMEOUT_MS = 10000;
 
 /**
  * Maps UI category names to RapidAPI ExerciseDB body parts.
@@ -20,9 +22,10 @@ const CATEGORY_MAPPING = {
 
 /**
  * Fetches exercises from RapidAPI for a specific body part.
+ * Uses fetchWithTimeout to prevent hanging when the upstream provider is slow.
  */
 async function fetchExercisesFromAPI(bodyPart) {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `https://${RAPIDAPI_HOST}/exercises/bodyPart/${encodeURIComponent(bodyPart)}`,
     {
       method: "GET",
@@ -30,7 +33,8 @@ async function fetchExercisesFromAPI(bodyPart) {
         "x-rapidapi-key": RAPIDAPI_KEY,
         "x-rapidapi-host": RAPIDAPI_HOST,
       },
-    }
+    },
+    RAPIDAPI_TIMEOUT_MS,
   );
 
   if (!response.ok) {
