@@ -10,6 +10,8 @@ const { PRODUCT_KEYWORDS, SYSTEM_PROMPT, getFallbackResponse, PRODUCT_TEMPLATE }
 
 const router = express.Router();
 
+const GEMINI_TIMEOUT_MS = 15000;
+
 const chatLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -174,7 +176,19 @@ router.post("/", chatLimiter, async (req, res) => {
 
     try {
       console.log("Calling Gemini API...");
-      const result = await model.generateContent(prompt);
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
+      let result;
+      try {
+        result = await model.generateContent(prompt, {
+          requestOptions: { signal: controller.signal },
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+
       reply = result.response.text().trim();
       console.log("Gemini API response received");
     } catch (apiError) {
