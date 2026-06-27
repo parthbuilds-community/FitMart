@@ -137,4 +137,26 @@ router.post("/earn", verifyFirebaseToken, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /expire
+ * @desc    Manually trigger the points expiry job (admin only)
+ * @access  Private (admin)
+ */
+const verifyAdmin = require("../middleware/verifyAdmin");
+
+router.post("/expire", verifyFirebaseToken, verifyAdmin, async (req, res) => {
+  try {
+    const { processExpiry } = require("../jobs/rewardsExpiry");
+    const result = await processExpiry();
+    return res.status(200).json({
+      success: true,
+      message: "Expiry job completed",
+      ...result,
+    });
+  } catch (error) {
+    console.error("Manual expiry error:", error);
+    return res.status(500).json({ message: "Failed to run expiry job" });
+  }
+});
+
 module.exports = router;
