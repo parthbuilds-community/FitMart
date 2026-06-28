@@ -23,4 +23,9 @@ async function connect() {
 
 connect();
 
-module.exports = mongoose;
+async function closeDb() {
+  await mongoose.disconnect();
+  console.log("MongoDB disconnected");
+}
+
+module.exports = { mongoose, closeDb };
