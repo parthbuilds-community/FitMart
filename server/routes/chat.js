@@ -158,16 +158,14 @@ router.post("/", chatLimiter, async (req, res) => {
     // Build the full prompt (combining both approaches)
     const historyBlock = buildHistoryBlock(history);
 
-    let prompt;
-    if (typeof SAFETY_INSTRUCTION !== 'undefined' && SAFETY_INSTRUCTION) {
-      // Use the safer prompt construction from origin/main
-      prompt = `${SYSTEM_PROMPT}\n\n${SAFETY_INSTRUCTION}\n\n[USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
-    } else if (historyBlock) {
-      // Use the history-aware prompt from HEAD
-      prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${historyBlock}\n\nUser: ${message}`;
-    } else {
-      prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}`;
-    }
+    const prompt = [
+    SYSTEM_PROMPT,
+    SAFETY_INSTRUCTION,
+    historyBlock ? `Conversation so far:\n${historyBlock}` : "",
+    `[USER INPUT START]\n${sanitized}\n[USER INPUT END]`,
+   ]
+   .filter(Boolean)
+   .join("\n\n");
 
     let reply;
     let usedFallback = false;
