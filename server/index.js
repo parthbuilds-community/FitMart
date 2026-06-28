@@ -121,7 +121,7 @@ app.use("/api/payment/create-order", paymentLimiter);
 app.use("/api/payment/verify-payment", paymentLimiter);
 
 // ── Database ────────────────────────────────────────────────────────────────
-require("./db");
+const { closeDb } = require("./db");
 
 // ── Development: seed a local admin profile if configured ──────────────────
 if (process.env.NODE_ENV !== 'production') {
@@ -199,7 +199,47 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong" });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(", ")}`);
 });
+
+// ── Graceful shutdown ─────────────────────────────────────────────────────────
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+
+function gracefulShutdown(signal) {
+  console.log(`\n⏳ Received ${signal}. Starting graceful shutdown...`);
+
+  // Force exit if connections don't drain within the timeout
+  const forceExit = setTimeout(() => {
+    console.error(
+      `Forced exit after ${SHUTDOWN_TIMEOUT_MS}ms — connections did not drain.`,
+    );
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+
+  // Don't let the timer keep the process alive
+  forceExit.unref();
+
+  server.close(async (err) => {
+    if (err) {
+      console.error("Error closing HTTP server:", err.message);
+      process.exit(1);
+    }
+
+    console.log("HTTP server closed — no longer accepting new requests.");
+
+    try {
+      await closeDb();
+    } catch (dbErr) {
+      console.error("Error disconnecting MongoDB:", dbErr.message);
+    }
+
+    clearTimeout(forceExit);
+    console.log(`✅ Graceful shutdown complete.`);
+    process.exit(0);
+  });
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
