@@ -34,6 +34,10 @@ jobs:
         working-directory: client
         run: npm run build
 
+      - name: Run client tests
+        working-directory: client
+        run: npm test -- --run
+
   backend:
     name: Backend — tests
     runs-on: ubuntu-latest
