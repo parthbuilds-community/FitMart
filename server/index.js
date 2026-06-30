@@ -3,6 +3,7 @@ require("dotenv").config();
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const { RATE_LIMIT_WINDOW_MS, API_LIMIT_MAX, PAYMENT_LIMIT_MAX, DEFAULT_PORT } = require("./config/constants");
@@ -106,6 +107,7 @@ app.use(
 );
 
 app.use(helmet());
+app.use(compression());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses
