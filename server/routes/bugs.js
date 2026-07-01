@@ -10,6 +10,7 @@ const admin = require('../firebaseAdmin');
 
 
 
+const logger = require('../lib/logger');
 // Use memory storage so serverless environments (Vercel) work correctly
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -69,7 +70,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
         screenshotUrl = result.secure_url || '';
         screenshotPublicId = result.public_id || '';
       } catch (uploadErr) {
-        console.error('Cloudinary upload failed:', uploadErr);
+        logger.error('Cloudinary upload failed:', uploadErr);
         return res.status(500).json({ error: 'Failed to upload screenshot' });
       }
     }
@@ -90,7 +91,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
     await bug.save();
     res.status(201).json({ ok: true, bug });
   } catch (err) {
-    console.error('Error saving bug:', err);
+    logger.error('Error saving bug:', err);
     res.status(500).json({ error: 'Failed to submit bug' });
   }
 });
@@ -101,7 +102,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (_req, res) => {
     const bugs = await Bug.find().sort({ createdAt: -1 }).limit(500);
     res.json({ ok: true, bugs });
   } catch (err) {
-    console.error('Error fetching bugs:', err);
+    logger.error('Error fetching bugs:', err);
     res.status(500).json({ error: 'Failed to fetch bugs' });
   }
 });
@@ -118,7 +119,7 @@ router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     if (!bug) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, bug });
   } catch (err) {
-    console.error('Error updating bug:', err);
+    logger.error('Error updating bug:', err);
     res.status(500).json({ error: 'Failed to update bug' });
   }
 });

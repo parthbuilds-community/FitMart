@@ -5,6 +5,7 @@ const admin = require("../firebaseAdmin");
 const { sendEmail } = require("./emailService");
 const { generateInactivityReminderEmail } = require("./emailTemplates");
 
+const logger = require('../lib/logger');
 /**
  * Check if customer is inactive (no paid order in the last 30 days).
  * Returns { isInactive: boolean, lastOrderDate: Date|null, daysSinceLastOrder: number }
@@ -34,7 +35,7 @@ async function checkInactivity(userId) {
       daysSinceLastOrder: daysSince,
     };
   } catch (err) {
-    console.error(`Error checking inactivity for user ${userId}:`, err.message);
+    logger.error(`Error checking inactivity for user ${userId}:`, err.message);
     return {
       isInactive: false,
       lastOrderDate: null,
@@ -63,10 +64,10 @@ async function resolveCustomerEmail(userId, existingProfile = null) {
       };
     }
 
-    console.warn(`⚠️  Could not resolve email for user ${userId}`);
+    logger.warn(`⚠️  Could not resolve email for user ${userId}`);
     return { email: null, displayName: null };
   } catch (err) {
-    console.error(`Error resolving email for user ${userId}:`, err.message);
+    logger.error(`Error resolving email for user ${userId}:`, err.message);
     return { email: null, displayName: null };
   }
 }
@@ -99,7 +100,7 @@ async function sendInactivityReminderEmail(userId) {
     // Resolve customer email
     const { email, displayName } = await resolveCustomerEmail(userId, profile);
     if (!email) {
-      console.warn(`⚠️  No email address found for user ${userId}`);
+      logger.warn(`⚠️  No email address found for user ${userId}`);
       return {
         success: false,
         error: "No email address available for this customer",
@@ -120,7 +121,7 @@ async function sendInactivityReminderEmail(userId) {
     });
 
     if (!result.success) {
-      console.error(`❌ Failed to send reminder email to ${email}:`, result.error);
+      logger.error(`❌ Failed to send reminder email to ${email}:`, result.error);
       return {
         success: false,
         error: result.error,
@@ -134,14 +135,14 @@ async function sendInactivityReminderEmail(userId) {
       { upsert: true, new: true }
     );
 
-    console.log(`✅ Inactivity reminder email sent to ${email} for user ${userId} (${daysSinceLastOrder} days inactive)`);
+    logger.info(`✅ Inactivity reminder email sent to ${email} for user ${userId} (${daysSinceLastOrder} days inactive)`);
     return {
       success: true,
       message: "Reminder email sent successfully",
       messageId: result.messageId,
     };
   } catch (err) {
-    console.error(`❌ Error in sendInactivityReminderEmail for ${userId}:`, err.message);
+    logger.error(`❌ Error in sendInactivityReminderEmail for ${userId}:`, err.message);
     return {
       success: false,
       error: err.message,

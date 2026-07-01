@@ -1,5 +1,6 @@
 // server/firebaseAdmin.js
 const admin = require('firebase-admin');
+const logger = require('./lib/logger');
 
 if (!admin.apps.length) {
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -16,15 +17,15 @@ if (!admin.apps.length) {
         privateKey,
       }),
     });
-    console.log('Firebase Admin initialized from environment variables');
+    logger.info('Firebase Admin initialized from environment variables');
   } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     // fall back to Application Default Credentials (file referenced by env var)
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
     });
-    console.log('Firebase Admin initialized using application default credentials');
+    logger.info('Firebase Admin initialized using application default credentials');
   } else {
-    console.warn(
+    logger.warn(
       'Firebase Admin not initialized: missing credentials. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY in environment.'
     );
   }

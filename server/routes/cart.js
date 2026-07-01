@@ -4,6 +4,7 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 
+const logger = require('../lib/logger');
 /**
  * Atomically adjusts Product.reserved by `delta` using a single findOneAndUpdate.
  *
@@ -132,7 +133,7 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
     const fresh = await Cart.findOne({ userId });
     res.json(fresh);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -168,7 +169,7 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
     const fresh = await Cart.findOne({ userId });
     res.json(fresh);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -194,7 +195,7 @@ router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
     await cart.save();
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });

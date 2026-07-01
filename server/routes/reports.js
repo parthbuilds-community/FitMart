@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 
+const logger = require('../lib/logger');
 /**
  * @route   GET /api/reports/sales
  * @desc    Returns sales report for a given time range (query: range=daily|weekly|monthly);
@@ -114,7 +115,7 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       productPerformance,
     });
   } catch (err) {
-    console.error('Reports error:', err);
+    logger.error('Reports error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

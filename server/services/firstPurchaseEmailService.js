@@ -5,6 +5,7 @@ const admin = require("../firebaseAdmin");
 const { sendEmail } = require("./emailService");
 const { generateFirstPurchaseEmail } = require("./emailTemplates");
 
+const logger = require('../lib/logger');
 /**
  * Resolve the user's email from UserProfile or Firebase.
  * Returns { email, displayName } or { email: null, displayName: null } on failure.
@@ -28,10 +29,10 @@ async function resolveUserEmail(userId, existingProfile = null) {
       };
     }
 
-    console.warn(`⚠️  Could not resolve email for user ${userId}`);
+    logger.warn(`⚠️  Could not resolve email for user ${userId}`);
     return { email: null, displayName: null };
   } catch (err) {
-    console.error(`Error resolving email for user ${userId}:`, err.message);
+    logger.error(`Error resolving email for user ${userId}:`, err.message);
     return { email: null, displayName: null };
   }
 }
@@ -48,7 +49,7 @@ async function isFirstPaidOrder(userId) {
     });
     return paidOrderCount === 1;
   } catch (err) {
-    console.error(`Error checking first paid order for ${userId}:`, err.message);
+    logger.error(`Error checking first paid order for ${userId}:`, err.message);
     return false;
   }
 }
@@ -71,7 +72,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
 
     // Check if email was already sent
     if (profile?.firstPurchaseEmailSentAt) {
-      console.log(`ℹ️  First-purchase email already sent for user ${userId}`);
+      logger.info(`ℹ️  First-purchase email already sent for user ${userId}`);
       return {
         sent: false,
         message: "Email already sent for this user",
@@ -81,7 +82,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     // Check if this is really the first paid order
     const isFirst = await isFirstPaidOrder(userId);
     if (!isFirst) {
-      console.log(`ℹ️  Not the first paid order for user ${userId}; skipping email`);
+      logger.info(`ℹ️  Not the first paid order for user ${userId}; skipping email`);
       return {
         sent: false,
         message: "Not the first paid order",
@@ -91,7 +92,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     // Resolve user email
     const { email, displayName } = await resolveUserEmail(userId, profile);
     if (!email) {
-      console.warn(`⚠️  No email address found for user ${userId}; cannot send welcome email`);
+      logger.warn(`⚠️  No email address found for user ${userId}; cannot send welcome email`);
       return {
         sent: false,
         message: "No email address available",
@@ -115,7 +116,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     });
 
     if (!result.success) {
-      console.error(`❌ Failed to send first-purchase email to ${email}:`, result.error);
+      logger.error(`❌ Failed to send first-purchase email to ${email}:`, result.error);
       return {
         sent: false,
         message: "Email send failed",
@@ -130,14 +131,14 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
       { upsert: true, new: true }
     );
 
-    console.log(`✅ First-purchase email sent successfully to ${email} for user ${userId}`);
+    logger.info(`✅ First-purchase email sent successfully to ${email} for user ${userId}`);
     return {
       sent: true,
       message: "Email sent successfully",
       messageId: result.messageId,
     };
   } catch (err) {
-    console.error(`❌ Error in sendFirstPurchaseEmail for ${userId}:`, err.message);
+    logger.error(`❌ Error in sendFirstPurchaseEmail for ${userId}:`, err.message);
     return {
       sent: false,
       message: "Error occurred while sending email",

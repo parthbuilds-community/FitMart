@@ -5,6 +5,7 @@ const Rewards = require("../models/Rewards");
 const rewardsConfig = require("../config/rewardsConfig");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 
+const logger = require('../lib/logger');
 function getTier(points) {
   let currentTier = rewardsConfig.TIERS[0];
 
@@ -58,7 +59,7 @@ router.get("/:userId", verifyFirebaseToken, async (req, res) => {
       transactions,
     });
   } catch (error) {
-    console.error("Get rewards error:", error);
+    logger.error("Get rewards error:", error);
     return res.status(500).json({ message: "Failed to fetch rewards" });
   }
 });
@@ -132,7 +133,7 @@ router.post("/earn", verifyFirebaseToken, async (req, res) => {
       transaction,
     });
   } catch (error) {
-    console.error("Earn rewards error:", error);
+    logger.error("Earn rewards error:", error);
     return res.status(500).json({ message: "Failed to earn rewards" });
   }
 });

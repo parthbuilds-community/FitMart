@@ -8,6 +8,7 @@ const { z } = require("zod");
 
 const { PRODUCT_KEYWORDS, SYSTEM_PROMPT, getFallbackResponse, PRODUCT_TEMPLATE } = require("../config/chatConfig");
 
+const logger = require('../lib/logger');
 const router = express.Router();
 
 const chatLimiter = rateLimit({
@@ -20,12 +21,12 @@ const chatLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-console.log("API Key exists:", !!process.env.GEMINI_API_KEY);
-console.log("API Key prefix:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 15) + "..." : "MISSING");
+logger.info("API Key exists:", !!process.env.GEMINI_API_KEY);
+logger.info("API Key prefix:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 15) + "..." : "MISSING");
 
 if (!process.env.GEMINI_API_KEY) {
-  console.error("❌ GEMINI_API_KEY is not set in environment variables!");
-  console.error("Please check your .env file and ensure it's loaded correctly.");
+  logger.error("❌ GEMINI_API_KEY is not set in environment variables!");
+  logger.error("Please check your .env file and ensure it's loaded correctly.");
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -68,7 +69,7 @@ function buildHistoryBlock(history) {
 
   const capped = history.slice(-MAX_HISTORY_TURNS);
   if (capped.length < history.length) {
-    console.warn(`⚠️ Chat history truncated from ${history.length} to ${MAX_HISTORY_TURNS} turns`);
+    logger.warn(`⚠️ Chat history truncated from ${history.length} to ${MAX_HISTORY_TURNS} turns`);
   }
 
   const lines = capped.map((entry) => {
@@ -123,7 +124,7 @@ router.post("/", chatLimiter, async (req, res) => {
     const { history: rawHistory } = req.body;
     const history = sanitiseHistory(rawHistory);
 
-    console.log("Processing chat message:", {
+    logger.info("Processing chat message:", {
       length: message.length,
       historyTurns: history.length,
       timestamp: Date.now(),
@@ -173,20 +174,20 @@ router.post("/", chatLimiter, async (req, res) => {
     let usedFallback = false;
 
     try {
-      console.log("Calling Gemini API...");
+      logger.info("Calling Gemini API...");
       const result = await model.generateContent(prompt);
       reply = result.response.text().trim();
-      console.log("Gemini API response received");
+      logger.info("Gemini API response received");
     } catch (apiError) {
-      console.error("Gemini API Error:", apiError.message);
-      console.error("Error Status:", apiError.status);
+      logger.error("Gemini API Error:", apiError.message);
+      logger.error("Error Status:", apiError.status);
 
       if (apiError.status === 429) {
-        console.warn("⚠️ API quota exceeded, using fallback response");
+        logger.warn("⚠️ API quota exceeded, using fallback response");
         reply = getFallbackResponse(message);
         usedFallback = true;
       } else if (apiError.message?.includes("API key")) {
-        console.error("❌ API key error - please verify your Gemini API key is valid");
+        logger.error("❌ API key error - please verify your Gemini API key is valid");
         reply = "I'm having trouble connecting to my knowledge base. Please check if the **API key** is properly configured. In the meantime, I can still help with **general fitness advice**!";
         usedFallback = true;
       } else {
@@ -210,7 +211,7 @@ router.post("/", chatLimiter, async (req, res) => {
           reply += PRODUCT_TEMPLATE(product);
         }
       } catch (productError) {
-        console.error("Product lookup error:", productError);
+        logger.error("Product lookup error:", productError);
       }
     }
 
@@ -220,7 +221,7 @@ router.post("/", chatLimiter, async (req, res) => {
 
     res.json({ reply });
   } catch (err) {
-    console.error("Chat route error:", err);
+    logger.error("Chat route error:", err);
     res.status(500).json({
       error: "Failed to generate response",
       details: process.env.NODE_ENV === "development" ? err.message : undefined,

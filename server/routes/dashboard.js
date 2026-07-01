@@ -8,6 +8,7 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
 
+const logger = require('../lib/logger');
 // ── Helper: get the start date based on the time range filter
 // 'today'  -> start of today
 // 'week'   -> last 7 days (including today)
@@ -142,7 +143,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Dashboard route error:', err);
+    logger.error('Dashboard route error:', err);
     res.status(500).json({ success: false, message: 'Failed to load dashboard data' });
   }
 });

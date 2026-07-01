@@ -14,6 +14,8 @@ const allowedOrigins = allowedOrigin
   .map((s) => s.trim())
   .filter(Boolean);
 
+const logger = require('./lib/logger');
+
 const isDev = process.env.NODE_ENV !== "production";
 const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === "true" || isDev;
 
@@ -45,20 +47,20 @@ const missingCritical = CRITICAL_ENV_VARS.filter((v) => !process.env[v]);
 const missingOptional = OPTIONAL_ENV_VARS.filter((v) => !process.env[v]);
 
 if (missingCritical.length > 0) {
-  console.error(
+  logger.error(
     `❌ Missing critical environment variables: ${missingCritical.join(", ")}`,
   );
-  console.error(
+  logger.error(
     "Server cannot start without these. Please set them in your environment.",
   );
   process.exit(1);
 }
 
 if (missingOptional.length > 0) {
-  console.warn(
+  logger.warn(
     `⚠️ Missing optional environment variables: ${missingOptional.join(", ")}`,
   );
-  console.warn(
+  logger.warn(
     "Continuing startup; some optional functionality may be disabled.",
   );
 }
@@ -85,16 +87,16 @@ app.use(
   cors({
     origin: function (origin, callback) {
       if (allowAllOrigins) {
-        console.log(`[CORS] Allowing all origins for testing`);
+        logger.info(`[CORS] Allowing all origins for testing`);
         return callback(null, true);
       }
 
       if (allowedOrigins.includes(origin)) {
-        console.log(`[CORS] Allowing whitelisted origin: ${origin}`);
+        logger.info(`[CORS] Allowing whitelisted origin: ${origin}`);
         return callback(null, true);
       }
 
-      console.error(
+      logger.error(
         `[CORS] Rejecting origin: ${origin}. Allowed origins: ${allowedOrigins.join(", ")}`,
       );
       return callback(new Error("Not allowed by CORS"));
@@ -134,18 +136,18 @@ if (process.env.NODE_ENV !== 'production') {
       UserProfile.findOne(query).then((u) => {
         if (!u && devUid) {
           const up = new UserProfile({ userId: devUid, email: devEmail, name: 'Dev Admin' });
-          up.save().then(() => console.log('Seeded dev admin user profile')).catch(() => { });
+          up.save().then(() => logger.info('Seeded dev admin user profile')).catch(() => { });
         }
       }).catch(() => { });
     }
   } catch (err) {
-    console.warn('Dev seeding skipped:', err.message);
+    logger.warn('Dev seeding skipped:', err.message);
   }
 }
 
 // ── Logger (after body parsing, before routes) ──────────────────────────────
-const logger = require("./middleware/logger");
-app.use(logger);
+const httpLogger = require("./middleware/logger");
+app.use(httpLogger);
 //Dashboard route needs logger to parse query params for logging
 
 const dashboardRoutes = require("./routes/dashboard");
@@ -195,11 +197,11 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ error: "Payload too large" });
   }
 
-  console.error("Unhandled error:", err.message);
+  logger.error("Unhandled error:", err.message);
   res.status(500).json({ error: "Something went wrong" });
 });
 
 app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-  console.log(`CORS allowed origins: ${allowedOrigins.join(", ")}`);
+  logger.info(`Server listening on port ${port}`);
+  logger.info(`CORS allowed origins: ${allowedOrigins.join(", ")}`);
 });

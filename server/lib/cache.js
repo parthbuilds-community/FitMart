@@ -23,6 +23,7 @@ try {
 
 const EventEmitter = require('events');
 
+const logger = require('./logger');
 class Cache extends EventEmitter {
   constructor() {
     super();
@@ -38,13 +39,13 @@ class Cache extends EventEmitter {
     if (useUpstash && upstashClient) {
       this.client = upstashClient;
       this.enabled = true;
-      console.log('[cache] Connected to Upstash Redis');
+      logger.info('[cache] Connected to Upstash Redis');
       return;
     }
 
     const redisUrl = process.env.REDIS_URL || process.env.REDIS_HOST;
     if (!createClient || !redisUrl) {
-      console.warn('[cache] Redis not configured — using in-memory fallback');
+      logger.warn('[cache] Redis not configured — using in-memory fallback');
       this.enabled = false;
       return;
     }
@@ -53,23 +54,23 @@ class Cache extends EventEmitter {
       const client = createClient({ url: redisUrl });
       client.on('error', (err) => {
         if (process.env.DEBUG_REDIS === 'true') {
-          console.warn('[redis] error (full):', err);
+          logger.warn('[redis] error (full):', err);
         } else {
           const msg = err && (err.message || err.code || String(err))
             ? (err.message || err.code || String(err))
             : '<no-message>';
-          console.warn('[redis] error', msg);
+          logger.warn('[redis] error', msg);
         }
       });
       await client.connect();
       this.client = client;
       this.enabled = true;
-      console.log('[cache] Connected to Redis');
+      logger.info('[cache] Connected to Redis');
     } catch (err) {
       if (process.env.DEBUG_REDIS === 'true') {
-        console.warn('[cache] Redis connection failed — falling back to memory cache (full):', err);
+        logger.warn('[cache] Redis connection failed — falling back to memory cache (full):', err);
       } else {
-        console.warn('[cache] Redis connection failed — falling back to memory cache', this._errMsg(err));
+        logger.warn('[cache] Redis connection failed — falling back to memory cache', this._errMsg(err));
       }
       this.enabled = false;
     }
@@ -94,8 +95,8 @@ class Cache extends EventEmitter {
         if (val === null || val === undefined) return null;
         try { return JSON.parse(val); } catch (e) { return val; }
       } catch (err) {
-        console.warn('[cache] redis get failed', this._errMsg(err));
-        if (process.env.DEBUG_REDIS === 'true') console.error(err);
+        logger.warn('[cache] redis get failed', this._errMsg(err));
+        if (process.env.DEBUG_REDIS === 'true') logger.error(err);
         return null;
       }
     }
@@ -117,8 +118,8 @@ class Cache extends EventEmitter {
         }
         return true;
       } catch (err) {
-        console.warn('[cache] redis set failed', this._errMsg(err));
-        if (process.env.DEBUG_REDIS === 'true') console.error(err);
+        logger.warn('[cache] redis set failed', this._errMsg(err));
+        if (process.env.DEBUG_REDIS === 'true') logger.error(err);
         return false;
       }
     }
@@ -141,11 +142,11 @@ class Cache extends EventEmitter {
           if (keys && keys.length) await this.client.del(keys);
         } else {
           // client doesn't support pattern deletion via SDK; fallback to flush (dangerous) or skip
-          console.warn('[cache] delPattern not supported by Redis client');
+          logger.warn('[cache] delPattern not supported by Redis client');
         }
       } catch (err) {
-        console.warn('[cache] redis delPattern failed', this._errMsg(err));
-        if (process.env.DEBUG_REDIS === 'true') console.error(err);
+        logger.warn('[cache] redis delPattern failed', this._errMsg(err));
+        if (process.env.DEBUG_REDIS === 'true') logger.error(err);
       }
       return;
     }
@@ -156,7 +157,7 @@ class Cache extends EventEmitter {
 
   async clearAll() {
     if (this.enabled && this.client) {
-      try { await this.client.flushDb(); } catch (err) { console.warn('[cache] flushDb failed', this._errMsg(err)); if (process.env.DEBUG_REDIS === 'true') console.error(err); }
+      try { await this.client.flushDb(); } catch (err) { logger.warn('[cache] flushDb failed', this._errMsg(err)); if (process.env.DEBUG_REDIS === 'true') logger.error(err); }
       return;
     }
     this.mem.clear();
