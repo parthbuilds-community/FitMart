@@ -7,6 +7,7 @@ const validateRequest = require('../middleware/validateRequest');
 const { createOrderSchema } = require('../validation/requestSchemas');
 const { createOrder } = require('../services/orderService');
 
+const logger = require('../lib/logger');
 const ensureOrderOwnership = ensureOwnership('Forbidden — you can only view your own orders');
 
 /**
@@ -30,7 +31,7 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
     const order = await createOrder(userId, items);
     res.status(201).json(order);
   } catch (err) {
-    console.error('Order creation error:', err.message);
+    logger.error('Order creation error:', err.message);
     if (
       err.message === 'Cart is empty' ||
       err.message.includes('not found') ||

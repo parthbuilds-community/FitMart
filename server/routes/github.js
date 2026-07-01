@@ -1,5 +1,6 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
+const logger = require('../lib/logger');
 const router = express.Router();
 
 const githubLimiter = rateLimit({
@@ -44,7 +45,7 @@ async function fetchPaginatedCount(url) {
     const data = await res.json();
     return Array.isArray(data) ? data.length : 0;
   } catch (e) {
-    console.error("fetchPaginatedCount error:", e.message);
+    logger.error("fetchPaginatedCount error:", e.message);
     return null;
   }
 }
@@ -62,7 +63,7 @@ router.get("/stats", githubLimiter, async (req, res) => {
     if (!repoFetch.ok) {
       const body = await repoFetch.text().catch(() => "");
       const status = repoFetch.status;
-      console.error(`/api/github/stats error: GitHub API ${status} ${body}`);
+      logger.error(`/api/github/stats error: GitHub API ${status} ${body}`);
 
       // On 403/429, return cached or fallback to avoid failing the client
       if (status === 403 || status === 429) {
@@ -94,7 +95,7 @@ router.get("/stats", githubLimiter, async (req, res) => {
 
     res.json({ stats });
   } catch (err) {
-    console.error("/api/github/stats error:", err.message);
+    logger.error("/api/github/stats error:", err.message);
     // Return cached or fallback instead of 502 where possible
     if (cache.stats) return res.json({ stats: cache.stats, cached: true });
     return res.json({ stats: FALLBACK_STATS, cached: false });

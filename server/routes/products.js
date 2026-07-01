@@ -13,6 +13,7 @@ const verifyAdmin = require('../middleware/verifyAdmin');
 const validateRequest = require('../middleware/validateRequest');
 const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
 
+const logger = require('../lib/logger');
 /**
  * @route   GET /api/products
  * @desc    Returns all products sorted by productId in ascending order
@@ -106,7 +107,7 @@ router.get('/', async (req, res) => {
 
     return res.json(payload);
   } catch (err) {
-    console.error('[products] GET /api/products error:', err);
+    logger.error('[products] GET /api/products error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

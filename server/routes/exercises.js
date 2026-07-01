@@ -1,4 +1,5 @@
 const express = require("express");
+const logger = require('../lib/logger');
 const router = express.Router();
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
@@ -58,17 +59,17 @@ function normalizeExercise(ex, isFirstExercise = false) {
   // Log the raw API response structure on first exercise of each request
   // This helps diagnose if media fields are present in the API response
   if (isFirstExercise) {
-    console.log("\n[ExerciseDB] Raw API Response - Available Fields:");
-    console.log("  Keys:", Object.keys(ex).sort());
+    logger.info("\n[ExerciseDB] Raw API Response - Available Fields:");
+    logger.info("  Keys:", Object.keys(ex).sort());
     if (process.env.NODE_ENV === 'development') {
       // Only log full object in development for debugging
-      console.log("  Full Object:", JSON.stringify(ex, null, 2));
+      logger.info("  Full Object:", JSON.stringify(ex, null, 2));
     }
-    console.log("  gifUrl:", ex.gifUrl ? "✅ Present" : "❌ Missing");
-    console.log("  image:", ex.image ? "✅ Present" : "❌ Missing");
-    console.log("  imageUrl:", ex.imageUrl ? "✅ Present" : "❌ Missing");
-    console.log("  videoUrl:", ex.videoUrl ? "✅ Present" : "❌ Missing");
-    console.log("");
+    logger.info("  gifUrl:", ex.gifUrl ? "✅ Present" : "❌ Missing");
+    logger.info("  image:", ex.image ? "✅ Present" : "❌ Missing");
+    logger.info("  imageUrl:", ex.imageUrl ? "✅ Present" : "❌ Missing");
+    logger.info("  videoUrl:", ex.videoUrl ? "✅ Present" : "❌ Missing");
+    logger.info("");
   }
 
   return {
@@ -133,7 +134,7 @@ router.get("/:category", async (req, res) => {
         const exercises = await fetchExercisesFromAPI(bodyPart);
         allExercises.push(...exercises);
       } catch (error) {
-        console.warn(
+        logger.warn(
           `⚠️ Failed to fetch exercises for bodyPart "${bodyPart}": ${error.message}`
         );
         // Continue with other body parts even if one fails
@@ -141,7 +142,7 @@ router.get("/:category", async (req, res) => {
     }
 
     if (allExercises.length === 0) {
-      console.warn(`No exercises found for category "${category}" (bodyParts: ${bodyParts.join(", ")})`);
+      logger.warn(`No exercises found for category "${category}" (bodyParts: ${bodyParts.join(", ")})`);
       return res.json([]);
     }
 
@@ -156,29 +157,29 @@ router.get("/:category", async (req, res) => {
     // Log the normalized response for debugging
     if (deduplicatedExercises.length > 0) {
       const firstEx = deduplicatedExercises[0];
-      console.log("\n[ExerciseDB] First Normalized Exercise (ready for client):");
-      console.log("  Name:", firstEx.name);
+      logger.info("\n[ExerciseDB] First Normalized Exercise (ready for client):");
+      logger.info("  Name:", firstEx.name);
       
       if (firstEx.gifUrl) {
-        console.log("  gifUrl: ✅ Present");
-        console.log("    Value:", firstEx.gifUrl.substring(0, 80) + (firstEx.gifUrl.length > 80 ? "..." : ""));
-        console.log("    Starts with http:", firstEx.gifUrl.startsWith("http") ? "✅ Yes" : "❌ No");
+        logger.info("  gifUrl: ✅ Present");
+        logger.info("    Value:", firstEx.gifUrl.substring(0, 80) + (firstEx.gifUrl.length > 80 ? "..." : ""));
+        logger.info("    Starts with http:", firstEx.gifUrl.startsWith("http") ? "✅ Yes" : "❌ No");
       } else {
-        console.log("  gifUrl: ❌ null/empty");
-        console.log("    imageUrl fallback:", firstEx.imageUrl ? `Present: ${firstEx.imageUrl.substring(0, 60)}...` : "null");
+        logger.info("  gifUrl: ❌ null/empty");
+        logger.info("    imageUrl fallback:", firstEx.imageUrl ? `Present: ${firstEx.imageUrl.substring(0, 60)}...` : "null");
       }
       
-      console.log("  imageUrl:", firstEx.imageUrl ? `✅ Present` : "❌ null");
-      console.log("  videoUrl:", firstEx.videoUrl ? `✅ Present` : "❌ null");
-      console.log("");
+      logger.info("  imageUrl:", firstEx.imageUrl ? `✅ Present` : "❌ null");
+      logger.info("  videoUrl:", firstEx.videoUrl ? `✅ Present` : "❌ null");
+      logger.info("");
     }
 
-    console.log(
+    logger.info(
       `✅ Fetched ${deduplicatedExercises.length} unique exercises for category "${category}"`
     );
     res.json(deduplicatedExercises);
   } catch (error) {
-    console.error(`❌ Error fetching exercises for category "${category}":`, error);
+    logger.error(`❌ Error fetching exercises for category "${category}":`, error);
     res.status(500).json({
       error: "Failed to fetch exercises. Please try again later.",
     });

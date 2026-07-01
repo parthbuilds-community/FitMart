@@ -9,6 +9,7 @@ const verifyAdmin = require('../middleware/verifyAdmin');
 const { sendInactivityReminderEmail } = require('../services/inactiveCustomerEmailService');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
 
+const logger = require('../lib/logger');
 // ── Segmentation logic ─────────────────────────────────────────────────────
 function getSegment(orderCount, totalSpend) {
   if (orderCount >= 5 || totalSpend >= 50000) return 'high-value';
@@ -42,7 +43,7 @@ function calculateInactivityInfo(lastOrderDate) {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
-    console.log('[API] GET /customers request received');
+    logger.info('[API] GET /customers request received');
 
     const customers = await Order.aggregate([
       { $match: { status: 'paid' } },
@@ -68,16 +69,16 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     ]);
 
-    console.log(`[API] Found ${customers.length || 0} customers from orders`);
+    logger.info(`[API] Found ${customers.length || 0} customers from orders`);
 
     if (!customers || customers.length === 0) {
-      console.log('[API] No customers found, returning empty list');
+      logger.info('[API] No customers found, returning empty list');
       return res.json({ success: true, data: [] });
     }
 
     // Deduplicate UIDs and resolve Firebase user info + UserProfile in parallel
     const uniqueUids = [...new Set(customers.map(c => c.userId).filter(Boolean))];
-    console.log(`[API] Resolving ${uniqueUids.length} unique Firebase users...`);
+    logger.info(`[API] Resolving ${uniqueUids.length} unique Firebase users...`);
 
     const userMap = {};
     const profileMap = {};
@@ -88,14 +89,14 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
           userMap[uid] = await resolveFirebaseUser(uid);
           profileMap[uid] = await UserProfile.findOne({ userId: uid });
         } catch (err) {
-          console.error(`Error resolving user ${uid}:`, err.message);
+          logger.error(`Error resolving user ${uid}:`, err.message);
           userMap[uid] = { displayName: '—', email: '—', photoURL: null };
           profileMap[uid] = null;
         }
       })
     );
 
-    console.log('[API] Firebase resolution complete');
+    logger.info('[API] Firebase resolution complete');
 
     const result = customers.map(c => {
       const inactivityInfo = calculateInactivityInfo(c.lastOrder);
@@ -111,10 +112,10 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       };
     });
 
-    console.log(`[API] Returning ${result.length} enriched customers`);
+    logger.info(`[API] Returning ${result.length} enriched customers`);
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error('[API] GET /customers error:', err);
+    logger.error('[API] GET /customers error:', err);
     res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
 });
@@ -149,7 +150,7 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     try {
       profile = await UserProfile.findOne({ userId });
     } catch (err) {
-      console.error(`Error fetching profile for user ${userId}:`, err.message);
+      logger.error(`Error fetching profile for user ${userId}:`, err.message);
     }
 
     // Resolve Firebase user info for this single UID with error handling
@@ -174,7 +175,7 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Customer detail error:', err);
+    logger.error('Customer detail error:', err);
     res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
 });
@@ -197,7 +198,7 @@ router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, async (r
 
     res.json({ success: true, message: result.message });
   } catch (err) {
-    console.error('send-reminder error:', err);
+    logger.error('send-reminder error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
