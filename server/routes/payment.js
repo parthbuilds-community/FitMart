@@ -57,6 +57,7 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
       amount: Math.round(amount * 100),   // ₹ → paise
       currency,
       receipt,
+      notes: { userId },                  // passed through to webhook events
     });
 
     res.json(order);
@@ -188,6 +189,157 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
   } catch (err) {
     console.error("clear-cart error:", err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @route   POST /webhook
+ * @desc    Razorpay webhook handler — verifies x-razorpay-signature header using the
+ *          raw request body, handles payment.captured / order.paid events idempotently.
+ *          If the client callback (verify-payment) never arrived, this ensures the order
+ *          is still created and recorded. req.body is a Buffer delivered by the
+ *          express.raw() middleware registered in server/index.js.
+ * @access  Public (authenticated by Razorpay HMAC signature)
+ */
+router.post('/webhook', async (req, res) => {
+  try {
+    const rawBody = req.body;                       // Buffer from express.raw()
+    const signature = req.headers['x-razorpay-signature'];
+
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing x-razorpay-signature header' });
+    }
+
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      logger.error('RAZORPAY_WEBHOOK_SECRET is not configured — cannot verify webhooks');
+      return res.status(500).json({ error: 'Webhook secret not configured' });
+    }
+
+    // Verify HMAC-SHA256 signature against the raw body
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(rawBody)
+      .digest('hex');
+
+    // Use timing-safe comparison to prevent timing attacks
+    const sigBuf = Buffer.from(expectedSignature);
+    const reqBuf = Buffer.from(signature);
+
+    if (sigBuf.length !== reqBuf.length || !crypto.timingSafeEqual(sigBuf, reqBuf)) {
+      logger.warn('Webhook signature mismatch — possible forgery attempt');
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    // Parse the verified event payload
+    const event = JSON.parse(rawBody.toString());
+    const eventType = event.event;
+
+    logger.info(`Webhook received: ${eventType}`);
+
+    // ── Extract payment details based on event type ──────────────────────────
+    let paymentId = null;
+    let userId = null;
+
+    if (eventType === 'payment.captured') {
+      const payment = event.payload.payment.entity;
+      paymentId = payment.id;
+      userId = payment.notes?.userId;
+    } else {
+      // Acknowledge non-payment events (including order.paid) silently so Razorpay
+      // doesn't retry. We only create orders on payment.captured because it always
+      // carries paymentId + notes.userId, avoiding the race where order.paid fires
+      // first without a paymentId.
+      return res.status(200).json({ status: 'ignored' });
+    }
+
+    if (!userId) {
+      logger.warn(`Webhook ${eventType}: no userId in notes — order cannot be processed`);
+      return res.status(200).json({ status: 'ignored', reason: 'no userId in notes' });
+    }
+
+    // ── Idempotency check — prevent duplicate order creation ─────────────────
+    // If the client callback (verify-payment) already created the order with this
+    // paymentId, or a previous webhook delivery did, skip processing.
+    const Order = require('../models/Order');
+
+    if (paymentId) {
+      const existingOrder = await Order.findOne({ paymentId });
+      if (existingOrder) {
+        logger.info(`Webhook: order ${existingOrder._id} already exists for payment ${paymentId}`);
+        return res.status(200).json({ status: 'already_exists', orderId: existingOrder._id });
+      }
+    }
+
+    // ── Create the order from the user's cart ────────────────────────────────
+    let order;
+    try {
+      order = await createOrder(userId);
+    } catch (createErr) {
+      // Cart empty likely means verify-payment already ran and cleared it,
+      // or the user's session expired. Return 200 to avoid Razorpay retries.
+      logger.warn(`Webhook: createOrder failed for ${userId}: ${createErr.message}`);
+      return res.status(200).json({ status: 'skipped', reason: createErr.message });
+    }
+
+    // Attach paymentId and mark the order as paid
+    const updateFields = { status: 'paid' };
+    if (paymentId) {
+      updateFields.paymentId = paymentId;
+    }
+    await Order.findByIdAndUpdate(order._id, updateFields);
+    Object.assign(order, updateFields);
+
+    // ── Award FitRewards loyalty points ───────────────────────────────────────
+    try {
+      let rewards = await Rewards.findOne({ userId });
+      if (!rewards) {
+        rewards = await Rewards.create({
+          userId,
+          pointsBalance: 0,
+          transactions: [],
+        });
+      }
+
+      const alreadyCredited = rewards.transactions.some(
+        (t) => t.orderId === String(order._id),
+      );
+
+      if (!alreadyCredited) {
+        const purchaseAmount = order.totalAmount || order.total || order.amount || 0;
+        let points = Math.floor(Number(purchaseAmount) * rewardsConfig.POINTS_PER_RUPEE);
+
+        if (rewards.transactions.length === 0) {
+          points += rewardsConfig.FIRST_PURCHASE_BONUS;
+        }
+
+        rewards.transactions.push({
+          type: 'earned',
+          points,
+          source: 'purchase',
+          orderId: String(order._id),
+          description: 'Points earned from purchase',
+          createdAt: new Date(),
+        });
+
+        rewards.pointsBalance += points;
+        await rewards.save();
+      }
+    } catch (rewardError) {
+      logger.error('Webhook reward earning failed:', rewardError.message);
+    }
+
+    // ── Send first-purchase email (non-blocking) ─────────────────────────────
+    sendFirstPurchaseEmail(userId, order).catch((err) => {
+      logger.error('Webhook first-purchase email error:', err.message);
+    });
+
+    res.status(200).json({ status: 'ok', orderId: order._id });
+  } catch (err) {
+    logger.error('Webhook error:', err);
+    // Return 200 even on unexpected errors to prevent Razorpay from retrying
+    // for internal processing failures that will not succeed on retry.
+    res.status(200).json({ status: 'error', reason: err.message });
   }
 });
 
