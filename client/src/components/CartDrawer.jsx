@@ -205,21 +205,23 @@ function CartDrawer({
             <p className="text-[10px] text-stone-400 -mt-1 sm:-mt-2">
               Taxes and shipping calculated at checkout
             </p>
-            <Link to="/checkout" onClick={onClose}>
-              <button className="w-full bg-stone-900 text-white text-sm py-4 rounded-full
-                                 hover:bg-stone-700 transition-colors min-h-13
-                                 active:scale-[0.98]">
-                Checkout →
-              </button>
-            </Link>
-            <button
-              onClick={onClose}
-              className="w-full border border-stone-300 text-stone-700 text-sm py-3.5
-                         rounded-full hover:bg-stone-100 transition-colors min-h-12
-                         active:scale-[0.98]"
-            >
-              Continue Shopping
-            </button>
+            <div className="flex flex-col gap-3">
+  <Link to="/checkout" onClick={onClose}>
+    <button className="w-full bg-stone-900 text-white text-sm py-4 rounded-full
+                       hover:bg-stone-700 transition-colors min-h-13
+                       active:scale-[0.98]">
+      Checkout →
+    </button>
+  </Link>
+  <button
+    onClick={onClose}
+    className="w-full border border-stone-300 text-stone-700 text-sm py-3.5
+               rounded-full hover:bg-stone-100 transition-colors min-h-12
+               active:scale-[0.98]"
+  >
+    Continue Shopping
+  </button>
+</div>
           </div>
         )}
       </aside>
