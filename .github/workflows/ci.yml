@@ -30,6 +30,9 @@ jobs:
       - name: Install client dependencies
         working-directory: client
         run: npm ci
+      - name: Run client tests
+        working-directory: client
+        run: npm test
       - name: Build client
         working-directory: client
         run: npm run build
