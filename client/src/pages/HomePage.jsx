@@ -681,10 +681,15 @@ export default function HomePage() {
       </footer>
 
       <CartDrawer
-        isOpen={cartOpen} onClose={() => setCartOpen(false)}
-        cart={cart} cartCount={cartCount} cartTotal={cartTotal}
-        updateQty={updateQty} removeFromCart={removeFromCart}
-      />
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        cart={cart}
+        cartCount={cartCount}
+        cartTotal={cartTotal}
+        updateQty={updateQty}
+        removeFromCart={removeFromCart}
+        topOffset="80px"
+    />
       <ErrorBoundary fallback={
         <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">
           <p className="text-xs tracking-[0.15em] uppercase text-stone-400 mb-1">Assistant</p>
