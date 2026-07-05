@@ -11,6 +11,7 @@ function CartDrawer({
   cartTotal,
   updateQty,
   removeFromCart,
+  topOffset = "0px",
 }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -34,13 +35,20 @@ function CartDrawer({
     <>
       {/* Overlay */}
       <div
-        className={`overlay fixed inset-0 bg-black/30 z-50 ${isOpen ? "show" : ""}`}
+        className={`overlay fixed left-0 right-0 bottom-0 bg-black/30 z-50 ${
+          isOpen ? "show" : ""
+        }`}
+        style={{ top: topOffset }}
         onClick={onClose}
       />
 
       {/* Drawer — full-width on mobile, max-sm on larger screens */}
       <aside
-        className={`cart-slide fixed right-0 top-0 h-full z-50 shadow-2xl flex flex-col
+        style={{
+          top: topOffset,
+          height: `calc(100vh - ${topOffset})`,
+        }}
+        className={`cart-slide fixed right-0 z-50 shadow-2xl flex flex-col
                     bg-white w-full sm:max-w-sm ${isOpen ? "open" : ""}`}
       >
         {/* ── Header ── */}
