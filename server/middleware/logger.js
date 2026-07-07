@@ -1,7 +1,5 @@
 // server/middleware/logger.js
 
-// server/middleware/logger.js
-
 // Function to get base route only
 const getBaseRoute = (url) => {
   // Match patterns like /api/cart, /api/products, /api/orders
@@ -17,7 +15,32 @@ const getBaseRoute = (url) => {
   return url;
 };
 
-// Simple logger with colors (without timestamps)
+const sensitiveKeyPattern = /(password|token|secret|apikey|api_key|authorization|credential)/i;
+
+const isPlainObject = (value) =>
+  Object.prototype.toString.call(value) === '[object Object]';
+
+const redactSensitiveFields = (value, seen = new WeakSet()) => {
+  if (Array.isArray(value)) return value.map((item) => redactSensitiveFields(item, seen));
+  if (!value || typeof value !== 'object') return value;
+  if (!isPlainObject(value)) return value;
+  if (seen.has(value)) return '[Circular]';
+
+  seen.add(value);
+
+  const redacted = Object.fromEntries(
+    Object.entries(value).map(([key, nestedValue]) => [
+      key,
+      sensitiveKeyPattern.test(key) ? '[REDACTED]' : redactSensitiveFields(nestedValue, seen),
+    ])
+  );
+
+  seen.delete(value);
+
+  return redacted;
+};
+
+// Simple logger with colors, timestamps, body size guards, and sensitive-field redaction
 const logger = (req, res, next) => {
   const start = Date.now();
 
@@ -50,16 +73,7 @@ const logger = (req, res, next) => {
 
     if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
       try {
-        const sensitiveKeys = ['password', 'token', 'secret', 'apiKey'];
-        const safeBody = { ...req.body };
-
-        sensitiveKeys.forEach((key) => {
-          if (safeBody[key]) {
-            safeBody[key] = '[REDACTED]';
-          }
-        });
-
-        const bodyStr = JSON.stringify(safeBody);
+        const bodyStr = JSON.stringify(redactSensitiveFields(req.body));
 
         if (bodyStr.length < 1000) {
           console.log(`   Body: ${bodyStr}`);
