@@ -13,6 +13,31 @@ async function adjustReserved(productId, delta) {
   return prod;
 }
 
+// Helper: validate cart mutation inputs before stock/cart updates
+function validateCartItemInput(req, res) {
+  const { productId, quantity } = req.body || {};
+
+  if (productId == null || quantity == null) {
+    res.status(400).json({ error: 'productId and quantity required' });
+    return null;
+  }
+
+  const normalizedProductId = Number(productId);
+  const normalizedQuantity = Number(quantity);
+
+  if (!Number.isSafeInteger(normalizedProductId) || normalizedProductId <= 0) {
+    res.status(400).json({ error: 'productId must be a positive integer' });
+    return null;
+  }
+
+  if (!Number.isSafeInteger(normalizedQuantity) || normalizedQuantity <= 0) {
+    res.status(400).json({ error: 'quantity must be a positive integer' });
+    return null;
+  }
+
+  return { productId: normalizedProductId, quantity: normalizedQuantity };
+}
+
 // Helper: check that the token uid matches the userId in the route
 function checkOwnership(req, res) {
   if (req.user.uid !== req.params.userId) {
@@ -52,13 +77,11 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
 
   try {
     const { userId } = req.params;
-    const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
+    const validInput = validateCartItemInput(req, res);
+    if (!validInput) return;
+    const { productId, quantity: qty } = validInput;
 
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
-
-    const product = await Product.findOne({ productId: Number(productId) });
+    const product = await Product.findOne({ productId });
     if (!product) return res.status(404).json({ error: 'Product not found' });
 
     const available = product.stock == null ? Infinity : (product.stock - (product.reserved || 0));
@@ -67,11 +90,11 @@ router.post('/:userId/add', verifyFirebaseToken, async (req, res) => {
     let cart = await Cart.findOne({ userId });
     if (!cart) cart = new Cart({ userId, items: [] });
 
-    const itemIdx = cart.items.findIndex(i => i.productId === Number(productId));
+    const itemIdx = cart.items.findIndex(i => Number(i.productId) === productId);
     if (itemIdx >= 0) {
       cart.items[itemIdx].quantity += qty;
     } else {
-      cart.items.push({ productId: Number(productId), quantity: qty });
+      cart.items.push({ productId, quantity: qty });
     }
 
     await adjustReserved(productId, qty);
@@ -94,16 +117,14 @@ router.post('/:userId/remove', verifyFirebaseToken, async (req, res) => {
 
   try {
     const { userId } = req.params;
-    const { productId, quantity } = req.body;
-    if (productId == null || quantity == null) return res.status(400).json({ error: 'productId and quantity required' });
-
-    const qty = Number(quantity);
-    if (Number.isNaN(qty) || qty <= 0) return res.status(400).json({ error: 'quantity must be a positive number' });
+    const validInput = validateCartItemInput(req, res);
+    if (!validInput) return;
+    const { productId, quantity: qty } = validInput;
 
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
 
-    const itemIdx = cart.items.findIndex(i => i.productId === Number(productId));
+    const itemIdx = cart.items.findIndex(i => Number(i.productId) === productId);
     if (itemIdx === -1) return res.status(404).json({ error: 'Item not in cart' });
 
     const removeQty = Math.min(cart.items[itemIdx].quantity, qty);
