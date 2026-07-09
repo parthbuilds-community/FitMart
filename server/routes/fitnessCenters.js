@@ -3,6 +3,7 @@ const router = express.Router();
 const FitnessCenter = require("../models/FitnessCenter");
 const UserProfile = require("../models/UserProfile");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const logger = require("../utils/logger");
 
 // Simple helper to compute a mocked distance score and readable distance
 function computeDistanceScore(userAddr, center) {
@@ -77,7 +78,7 @@ router.get("/nearby", verifyFirebaseToken, async (req, res) => {
     const top = scored.slice(0, 10);
     return res.json(top);
   } catch (err) {
-    console.error("/api/fitness-centers/nearby error:", err);
+    logger.error(`/api/fitness-centers/nearby error: ${err.stack || err.message}`);
     return res.status(500).json({ error: "Server error" });
   }
 });

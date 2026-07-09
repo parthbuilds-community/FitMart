@@ -11,6 +11,7 @@ const Product = require("../models/Product");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
 const { createOrder } = require("../services/orderService");
+const logger = require("../utils/logger");
 
 const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
   ? new Razorpay({
@@ -61,7 +62,7 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
 
     res.json(order);
   } catch (err) {
-    console.error("Razorpay create-order error:", err);
+    logger.error(`Razorpay create-order error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -154,20 +155,20 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
         await rewards.save();
       }
     } catch (rewardError) {
-      console.error("Reward earning failed:", rewardError.message);
+      logger.error(`Reward earning failed: ${rewardError.message}`);
     }
 
     // STEP 4: Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
     sendFirstPurchaseEmail(userId, order).catch((err) => {
-      console.error("First-purchase email service error:", err.message);
+      logger.error(`First-purchase email service error: ${err.message}`);
       // Don't throw — email failure should not break payment success
     });
 
     res.json({ success: true, order });
 
   } catch (err) {
-    console.error("verify-payment error:", err);
+    logger.error(`verify-payment error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -186,7 +187,7 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
     await releaseAndClearCart(userId);
     res.json({ success: true });
   } catch (err) {
-    console.error("clear-cart error:", err);
+    logger.error(`clear-cart error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -237,13 +238,13 @@ router.post("/demo-success", async (req, res) => {
     // Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
     sendFirstPurchaseEmail(userId, order).catch((err) => {
-      console.error("First-purchase email service error:", err.message);
+      logger.error(`First-purchase email service error: ${err.message}`);
       // Don't throw — email failure should not break payment success
     });
 
     res.json({ success: true, paymentId: fakePaymentId, order });
   } catch (err) {
-    console.error("demo-success error:", err);
+    logger.error(`demo-success error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });

@@ -3,6 +3,7 @@ const router = express.Router();
 const WorkoutLog = require('../models/WorkoutLog');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const validateRequest = require('../middleware/validateRequest');
+const logger = require('../utils/logger');
 const { updateWorkoutLogSchema } = require('../validation/requestSchemas');
 
 /**
@@ -26,7 +27,7 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
     
     res.json(formattedLogs);
   } catch (err) {
-    console.error('Error fetching workout logs:', err);
+    logger.error(`Error fetching workout logs: ${err.stack || err.message}`);
     res.status(500).json({ error: 'Server error fetching workout logs' });
   }
 });
@@ -54,7 +55,7 @@ router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), a
 
     res.json(updatedLog);
   } catch (err) {
-    console.error('Error saving workout log:', err);
+    logger.error(`Error saving workout log: ${err.stack || err.message}`);
     res.status(500).json({ error: 'Server error saving workout log' });
   }
 });
@@ -70,7 +71,7 @@ router.delete('/:date', verifyFirebaseToken, async (req, res) => {
     await WorkoutLog.findOneAndDelete({ userId: req.user.uid, date });
     res.json({ success: true });
   } catch (err) {
-    console.error('Error deleting workout log:', err);
+    logger.error(`Error deleting workout log: ${err.stack || err.message}`);
     res.status(500).json({ error: 'Server error deleting workout log' });
   }
 });
