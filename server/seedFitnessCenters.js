@@ -1,6 +1,7 @@
 // seedFitnessCenters.js
 require("dotenv").config();
 const mongoose = require("./db");
+const logger = require("./utils/logger");
 const FitnessCenter = require("./models/FitnessCenter");
 
 async function seed() {
@@ -524,7 +525,7 @@ async function seed() {
     console.log("Inserted fitness centers:", centers.length);
     process.exit(0);
   } catch (err) {
-    console.error("Seeding failed:", err);
+    logger.error(`Seeding failed: ${err.stack || err.message}`);
     process.exit(1);
   }
 }

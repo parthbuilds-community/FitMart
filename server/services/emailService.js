@@ -1,5 +1,6 @@
 // server/services/emailService.js
 const nodemailer = require("nodemailer");
+const logger = require("../utils/logger");
 
 let transporter = null;
 
@@ -40,7 +41,7 @@ function getEmailTransporter() {
     console.log("✅ Email transporter initialized successfully");
     return transporter;
   } catch (err) {
-    console.error("❌ Failed to initialize email transporter:", err.message);
+    logger.error(`❌ Failed to initialize email transporter: ${err.message}`);
     return null;
   }
 }
@@ -71,7 +72,7 @@ async function sendEmail(mailOptions) {
     console.log(`✅ Email sent successfully to ${mailOptions.to}:`, info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`❌ Failed to send email to ${mailOptions.to}:`, err.message);
+    logger.error(`❌ Failed to send email to ${mailOptions.to}: ${err.message}`);
     return { success: false, error: err.message };
   }
 }

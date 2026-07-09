@@ -178,7 +178,7 @@ router.get("/:category", async (req, res) => {
     );
     res.json(deduplicatedExercises);
   } catch (error) {
-    console.error(`❌ Error fetching exercises for category "${category}":`, error);
+    logger.error(`❌ Error fetching exercises for category "${category}": ${error.stack || error.message}`);
     res.status(500).json({
       error: "Failed to fetch exercises. Please try again later.",
     });

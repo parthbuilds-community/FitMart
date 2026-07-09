@@ -8,6 +8,7 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const { sendInactivityReminderEmail } = require('../services/inactiveCustomerEmailService');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
+const logger = require('../utils/logger');
 
 // ── Segmentation logic ─────────────────────────────────────────────────────
 function getSegment(orderCount, totalSpend) {
@@ -88,7 +89,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
           userMap[uid] = await resolveFirebaseUser(uid);
           profileMap[uid] = await UserProfile.findOne({ userId: uid });
         } catch (err) {
-          console.error(`Error resolving user ${uid}:`, err.message);
+          logger.error(`Error resolving user ${uid}: ${err.message}`);
           userMap[uid] = { displayName: '—', email: '—', photoURL: null };
           profileMap[uid] = null;
         }
@@ -114,7 +115,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     console.log(`[API] Returning ${result.length} enriched customers`);
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error('[API] GET /customers error:', err);
+    logger.error(`[API] GET /customers error: ${err.stack || err.message}`);
     res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
 });
@@ -149,7 +150,7 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     try {
       profile = await UserProfile.findOne({ userId });
     } catch (err) {
-      console.error(`Error fetching profile for user ${userId}:`, err.message);
+      logger.error(`Error fetching profile for user ${userId}: ${err.message}`);
     }
 
     // Resolve Firebase user info for this single UID with error handling
@@ -174,7 +175,7 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Customer detail error:', err);
+    logger.error(`Customer detail error: ${err.stack || err.message}`);
     res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
 });
@@ -197,7 +198,7 @@ router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, async (r
 
     res.json({ success: true, message: result.message });
   } catch (err) {
-    console.error('send-reminder error:', err);
+    logger.error(`send-reminder error: ${err.stack || err.message}`);
     res.status(500).json({ success: false, error: err.message });
   }
 });

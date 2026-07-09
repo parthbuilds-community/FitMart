@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 let createClient = null;
 try {
   const _redis = require('redis');
@@ -95,7 +97,7 @@ class Cache extends EventEmitter {
         try { return JSON.parse(val); } catch (e) { return val; }
       } catch (err) {
         console.warn('[cache] redis get failed', this._errMsg(err));
-        if (process.env.DEBUG_REDIS === 'true') console.error(err);
+        if (process.env.DEBUG_REDIS === 'true') logger.error(err.stack || err.message);
         return null;
       }
     }
@@ -118,7 +120,7 @@ class Cache extends EventEmitter {
         return true;
       } catch (err) {
         console.warn('[cache] redis set failed', this._errMsg(err));
-        if (process.env.DEBUG_REDIS === 'true') console.error(err);
+        if (process.env.DEBUG_REDIS === 'true') logger.error(err.stack || err.message);
         return false;
       }
     }
@@ -145,7 +147,7 @@ class Cache extends EventEmitter {
         }
       } catch (err) {
         console.warn('[cache] redis delPattern failed', this._errMsg(err));
-        if (process.env.DEBUG_REDIS === 'true') console.error(err);
+        if (process.env.DEBUG_REDIS === 'true') logger.error(err.stack || err.message);
       }
       return;
     }
@@ -156,7 +158,7 @@ class Cache extends EventEmitter {
 
   async clearAll() {
     if (this.enabled && this.client) {
-      try { await this.client.flushDb(); } catch (err) { console.warn('[cache] flushDb failed', this._errMsg(err)); if (process.env.DEBUG_REDIS === 'true') console.error(err); }
+      try { await this.client.flushDb(); } catch (err) { console.warn('[cache] flushDb failed', this._errMsg(err)); if (process.env.DEBUG_REDIS === 'true') logger.error(err.stack || err.message); }
       return;
     }
     this.mem.clear();

@@ -1,10 +1,11 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
+const logger = require('./utils/logger');
 const Product = require('./models/Product');
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
-  console.error('MONGO_URI missing in server/.env — please add your connection string with password replaced');
+  logger.error('MONGO_URI missing in server/.env — please add your connection string with password replaced');
   process.exit(1);
 }
 
@@ -328,7 +329,7 @@ async function seed() {
     }
     process.exit(0);
   } catch (err) {
-    console.error('Seeding error:', err);
+    logger.error(`Seeding error: ${err.stack || err.message}`);
     try { await mongoose.disconnect(); } catch (e) { }
     process.exit(1);
   }

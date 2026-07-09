@@ -12,6 +12,7 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const validateRequest = require('../middleware/validateRequest');
 const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
+const logger = require('../utils/logger');
 
 /**
  * @route   GET /api/products
@@ -106,7 +107,7 @@ router.get('/', async (req, res) => {
 
     return res.json(payload);
   } catch (err) {
-    console.error('[products] GET /api/products error:', err);
+    logger.error(`[products] GET /api/products error: ${err.stack || err.message}`);
     res.status(500).json({ error: 'Server error' });
   }
 });

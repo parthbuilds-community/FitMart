@@ -3,6 +3,7 @@ const router = express.Router();
 const Order = require('../models/Order');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
+const logger = require('../utils/logger');
 
 /**
  * @route   GET /api/reports/sales
@@ -114,7 +115,7 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       productPerformance,
     });
   } catch (err) {
-    console.error('Reports error:', err);
+    logger.error(`Reports error: ${err.stack || err.message}`);
     res.status(500).json({ error: 'Server error' });
   }
 });

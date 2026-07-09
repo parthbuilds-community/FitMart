@@ -1,5 +1,6 @@
 // server/index.js
 require("dotenv").config();
+const logger = require("./utils/logger");
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
 const cors = require("cors");
@@ -45,10 +46,10 @@ const missingCritical = CRITICAL_ENV_VARS.filter((v) => !process.env[v]);
 const missingOptional = OPTIONAL_ENV_VARS.filter((v) => !process.env[v]);
 
 if (missingCritical.length > 0) {
-  console.error(
+  logger.error(
     `❌ Missing critical environment variables: ${missingCritical.join(", ")}`,
   );
-  console.error(
+  logger.error(
     "Server cannot start without these. Please set them in your environment.",
   );
   process.exit(1);
@@ -94,7 +95,7 @@ app.use(
         return callback(null, true);
       }
 
-      console.error(
+      logger.error(
         `[CORS] Rejecting origin: ${origin}. Allowed origins: ${allowedOrigins.join(", ")}`,
       );
       return callback(new Error("Not allowed by CORS"));
@@ -144,8 +145,8 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // ── Logger (after body parsing, before routes) ──────────────────────────────
-const logger = require("./middleware/logger");
-app.use(logger);
+const requestLogger = require("./middleware/logger");
+app.use(requestLogger);
 //Dashboard route needs logger to parse query params for logging
 
 const dashboardRoutes = require("./routes/dashboard");
@@ -195,7 +196,7 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ error: "Payload too large" });
   }
 
-  console.error("Unhandled error:", err.message);
+  logger.error(`Unhandled error: ${err.message}`);
   res.status(500).json({ error: "Something went wrong" });
 });
 

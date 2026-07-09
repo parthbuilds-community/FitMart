@@ -2,6 +2,7 @@
 const Order = require("../models/Order");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
+const logger = require("../utils/logger");
 const { sendEmail } = require("./emailService");
 const { generateFirstPurchaseEmail } = require("./emailTemplates");
 
@@ -31,7 +32,7 @@ async function resolveUserEmail(userId, existingProfile = null) {
     console.warn(`⚠️  Could not resolve email for user ${userId}`);
     return { email: null, displayName: null };
   } catch (err) {
-    console.error(`Error resolving email for user ${userId}:`, err.message);
+    logger.error(`Error resolving email for user ${userId}: ${err.message}`);
     return { email: null, displayName: null };
   }
 }
@@ -48,7 +49,7 @@ async function isFirstPaidOrder(userId) {
     });
     return paidOrderCount === 1;
   } catch (err) {
-    console.error(`Error checking first paid order for ${userId}:`, err.message);
+    logger.error(`Error checking first paid order for ${userId}: ${err.message}`);
     return false;
   }
 }
@@ -115,7 +116,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     });
 
     if (!result.success) {
-      console.error(`❌ Failed to send first-purchase email to ${email}:`, result.error);
+      logger.error(`❌ Failed to send first-purchase email to ${email}: ${result.error}`);
       return {
         sent: false,
         message: "Email send failed",
@@ -137,7 +138,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
       messageId: result.messageId,
     };
   } catch (err) {
-    console.error(`❌ Error in sendFirstPurchaseEmail for ${userId}:`, err.message);
+    logger.error(`❌ Error in sendFirstPurchaseEmail for ${userId}: ${err.message}`);
     return {
       sent: false,
       message: "Error occurred while sending email",

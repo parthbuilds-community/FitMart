@@ -6,6 +6,7 @@ const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const logger = require("../utils/logger");
 const router = express.Router();
 
 // Use memory storage for serverless environments
@@ -86,7 +87,7 @@ router.post("/login", async (req, res) => {
       discountPercent: profile.discountPercent,
     });
   } catch (err) {
-    console.error("user/login error:", err);
+    logger.error(`user/login error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -110,7 +111,7 @@ router.post("/dismiss-banner", async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
-    console.error("user/dismiss-banner error:", err);
+    logger.error(`user/dismiss-banner error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -139,7 +140,7 @@ router.post("/use-discount", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("user/use-discount error:", err);
+    logger.error(`user/use-discount error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -165,7 +166,7 @@ router.get("/discount-status/:userId", async (req, res) => {
       discountPercent: profile.discountPercent,
     });
   } catch (err) {
-    console.error("user/discount-status error:", err);
+    logger.error(`user/discount-status error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -184,7 +185,7 @@ router.get("/profile/:userId", async (req, res) => {
     if (!profile) return res.json({});
     res.json(profile);
   } catch (err) {
-    console.error("user/profile GET error:", err);
+    logger.error(`user/profile GET error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -219,7 +220,7 @@ router.put("/profile/:userId", async (req, res) => {
 
     res.json(profile);
   } catch (err) {
-    console.error("user/profile PUT error:", err);
+    logger.error(`user/profile PUT error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -266,11 +267,11 @@ router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo")
 
       res.json({ success: true, photoURL, profile });
     } catch (uploadErr) {
-      console.error("Cloudinary upload failed:", uploadErr);
+      logger.error(`Cloudinary upload failed: ${uploadErr.stack || uploadErr.message}`);
       return res.status(500).json({ error: "Failed to upload photo" });
     }
   } catch (err) {
-    console.error("user/upload-photo error:", err);
+    logger.error(`user/upload-photo error: ${err.stack || err.message}`);
     res.status(500).json({ error: err.message });
   }
 });

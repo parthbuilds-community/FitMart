@@ -6,6 +6,7 @@ const Product = require('../models/Product');
 const admin = require('../firebaseAdmin');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
+const logger = require('../utils/logger');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
 
 // ── Helper: get the start date based on the time range filter
@@ -142,7 +143,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Dashboard route error:', err);
+    logger.error(`Dashboard route error: ${err.stack || err.message}`);
     res.status(500).json({ success: false, message: 'Failed to load dashboard data' });
   }
 });
