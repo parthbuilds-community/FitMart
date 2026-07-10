@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
+    "test": "vitest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
@@ -23,7 +24,11 @@
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.16.0",
     "recharts": "^3.8.1",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "vitest": "^3.2.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.6.0",
+    "jsdom": "^26.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
