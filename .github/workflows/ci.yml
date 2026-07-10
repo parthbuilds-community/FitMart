@@ -33,6 +33,11 @@ jobs:
       - name: Build client
         working-directory: client
         run: npm run build
+        
+      #   Issue #638
+      - name: Run client tests
+        working-directory: client
+        run: npm test -- --run
 
   backend:
     name: Backend — tests
