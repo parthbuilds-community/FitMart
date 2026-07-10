@@ -1,13 +1,14 @@
 // server/middleware/logger.js
+var express = require("express");
+var morgan = require("morgan");
 
-// server/middleware/logger.js
-
+var app = express();
+app.use(morgan('dev'));
+app.use(express.json());
 // Function to get base route only
 const getBaseRoute = (url) => {
-  // Match patterns like /api/cart, /api/products, /api/orders
   const match = url.match(/^(\/api\/(?:cart|products|orders))/);
   if (match) {
-    // If it's a cart route with additional path, append the action
     if (url.includes('/cart/') && !url.match(/^\/api\/cart\/?$/)) {
       if (url.includes('/add')) return '/api/cart/add';
       if (url.includes('/remove')) return '/api/cart/remove';
@@ -17,62 +18,48 @@ const getBaseRoute = (url) => {
   return url;
 };
 
-// Simple logger with colors (without timestamps)
-const logger = (req, res, next) => {
-  const start = Date.now();
+morgan.token("base-route", (req) => {
+  return getBaseRoute(req.originalUrl);
+});
+morgan.token("timestamp", () => {
+  return new Date().toISOString();
+});
 
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    const status = res.statusCode;
-    const simplifiedUrl = getBaseRoute(req.originalUrl);
-    const timestamp = new Date().toISOString();
+const logger = morgan(function (tokens, req, res) {
+  return [
+    `[${tokens.timestamp(req, res)}]`,
+    tokens.method(req, res),
+    tokens.status(req, res),
+    tokens["base-route"](req, res),
+    `(${tokens["response-time"](req, res)} ms)`
+  ].join(" ");
+});
 
-    const methodColor = {
-      'GET': '\x1b[34m',
-      'POST': '\x1b[32m',
-      'PUT': '\x1b[33m',
-      'DELETE': '\x1b[31m',
-      'PATCH': '\x1b[35m',
-    }[req.method] || '\x1b[0m';
-
-    const statusColor = status >= 500 ? '\x1b[31m' :
-      status >= 400 ? '\x1b[33m' :
-        status >= 300 ? '\x1b[36m' :
-          status >= 200 ? '\x1b[32m' :
-            '\x1b[0m';
-
-    console.log(
-      `[${timestamp}] ` +
-      `${methodColor}${req.method.padEnd(6)}\x1b[0m ` +
-      `${statusColor}${status}\x1b[0m ` +
-      `${simplifiedUrl} (${duration}ms)`
-    );
-
-    if (req.method !== 'GET' && Object.keys(req.body || {}).length > 0) {
-      try {
-        const sensitiveKeys = ['password', 'token', 'secret', 'apiKey'];
-        const safeBody = { ...req.body };
-
-        sensitiveKeys.forEach((key) => {
-          if (safeBody[key]) {
-            safeBody[key] = '[REDACTED]';
-          }
-        });
-
-        const bodyStr = JSON.stringify(safeBody);
-
-        if (bodyStr.length < 1000) {
-          console.log(`   Body: ${bodyStr}`);
-        } else {
-          console.log(`   Body: [too large to log]`);
+app.use(logger);
+app.use((req, res, next) => {
+  try {
+    if (
+      req.method !== "GET" && req.body && (Object.keys(req.body).length > 0)
+    ) {
+      const safeBody = { ...req.body };
+      ['password', 'token', 'secret', 'apikey'].forEach((key) => {
+        if (safeBody[key]) {
+          safeBody[key] = "[REDACTED]";
         }
-      } catch (err) {
-        console.log(`   Body: [error parsing body]`);
+      });
+
+      const bodyStr = JSON.stringify(safeBody);
+      if (bodyStr.length < 1000) {
+        console.log(` Body: ${bodyStr}`);
+      } else {
+        console.log(` Body : [Log length exceeded]`);
       }
     }
-  });
-
+  } catch (err) {
+    console.log(`Body : [Error parsing body]`);
+  }
   next();
-};
+
+});
 
 module.exports = logger;
