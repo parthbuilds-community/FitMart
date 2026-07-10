@@ -370,18 +370,18 @@ React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin 
 
 ### Prerequisites
 
+### Prerequisites
+
 Make sure you have the following installed:
 
-- [Node.js](https://nodejs.org/) v16+
-
-# Optional: Redis caching for products API
-# When set, the server will use Redis to cache product-list responses.
-# Use `REDIS_URL` for a full Redis connection string (e.g. redis://localhost:6379)
-# or `REDIS_HOST` for a host-only configuration. TTL (seconds) is configurable:
-# PRODUCTS_CACHE_TTL=60
-
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- A [MongoDB](https://www.mongodb.com/atlas) connection (Atlas or local)
+- Node.js v16+
+- npm or yarn
+- A MongoDB connection (Atlas or local)
+- A Firebase project (for auth)
+- A Razorpay account (for payments)
+- A Google Gemini API key (for the AI chatbot)
+- A RapidAPI account with ExerciseDB access
+- An SMTP provider (optional)
 - A [Firebase](https://firebase.google.com/) project (for auth)
 - A [Razorpay](https://razorpay.com/) account (for payments)
 - A [Google Gemini API key](https://ai.google.dev/) (for the AI chatbot)
