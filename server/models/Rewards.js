@@ -22,13 +22,15 @@ const rewardTransactionSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
+    }
   },
-  { _id: true }
+  { 
+    _id: true ,
+  },
+
+  {
+    timestamps: true,
+  }
 );
 
 const rewardsSchema = new mongoose.Schema(
