@@ -1,4 +1,3 @@
-
 // src/pages/HomePage.jsx
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -276,8 +275,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Add to cart failed:", err); 
+    } catch (err) {
+      console.error("Add to cart failed:", err);
       alert(err.message);
     }
   };
@@ -297,8 +296,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Remove from cart failed:", err); 
+    } catch (err) {
+      console.error("Remove from cart failed:", err);
       alert(err.message);
     }
   };
@@ -318,8 +317,26 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Update qty failed:", err); 
+    } catch (err) {
+      console.error("Update qty failed:", err);
+      alert(err.message);
+    }
+  };
+
+  const clearCart = async () => {
+    if (!user) return;
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API}/api/cart/${user.uid}`, {
+        method: "DELETE", headers, credentials: "include",
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to clear cart");
+      }
+      setCart([]);
+    } catch (err) {
+      console.error("Clear cart failed:", err);
       alert(err.message);
     }
   };
@@ -684,6 +701,7 @@ export default function HomePage() {
         isOpen={cartOpen} onClose={() => setCartOpen(false)}
         cart={cart} cartCount={cartCount} cartTotal={cartTotal}
         updateQty={updateQty} removeFromCart={removeFromCart}
+        clearCart={clearCart}
       />
       <ErrorBoundary fallback={
         <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">
