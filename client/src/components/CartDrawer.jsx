@@ -11,6 +11,7 @@ function CartDrawer({
   cartTotal,
   updateQty,
   removeFromCart,
+  clearCart,
 }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -58,15 +59,29 @@ function CartDrawer({
               )}
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close cart"
-            className="text-stone-400 hover:text-stone-900 transition-colors
-                       text-2xl leading-none min-w-11 min-h-11 flex items-center
-                       justify-center rounded-full hover:bg-stone-100 active:scale-95"
-          >
-            ×
-          </button>
+          <div className="flex items-center">
+            {cart.length > 0 && clearCart && (
+              <button
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to clear your cart?")) {
+                    clearCart();
+                  }
+                }}
+                className="text-xs tracking-wider text-stone-400 hover:text-stone-900 transition-colors mr-3 min-h-9 px-3 py-1.5 rounded-full hover:bg-stone-100 font-medium cursor-pointer"
+              >
+                Clear All
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              aria-label="Close cart"
+              className="text-stone-400 hover:text-stone-900 transition-colors
+                         text-2xl leading-none min-w-11 min-h-11 flex items-center
+                         justify-center rounded-full hover:bg-stone-100 active:scale-95"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* ── Body ── */}

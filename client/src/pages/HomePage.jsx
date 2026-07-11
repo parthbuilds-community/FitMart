@@ -324,6 +324,26 @@ export default function HomePage() {
     }
   };
 
+  const clearCart = async () => {
+    if (!user) return;
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API}/api/cart/${user.uid}`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to clear cart");
+      }
+      setCart([]);
+    } catch (err) {
+      console.error("Clear cart failed:", err);
+      alert(err.message);
+    }
+  };
+
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
   const firstName = user?.displayName?.split(" ")[0] || "there";
@@ -684,6 +704,7 @@ export default function HomePage() {
         isOpen={cartOpen} onClose={() => setCartOpen(false)}
         cart={cart} cartCount={cartCount} cartTotal={cartTotal}
         updateQty={updateQty} removeFromCart={removeFromCart}
+        clearCart={clearCart}
       />
       <ErrorBoundary fallback={
         <div className="fixed bottom-6 right-6 z-50 bg-white border border-stone-200 rounded-2xl p-4 shadow-lg max-w-xs">

@@ -206,6 +206,27 @@ export default function ProductPage() {
     }
   };
 
+  const clearCart = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API}/api/cart/${user.uid}`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to clear cart");
+      }
+      setCart([]);
+    } catch (err) {
+      console.error("Clear cart failed:", err);
+      alert(err.message);
+    }
+  };
+
   if (loading) return (
     <Shell cartCount={0} onCartOpen={() => setCartOpen(true)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-10 sm:py-24
@@ -691,6 +712,7 @@ export default function ProductPage() {
         cartTotal={cartTotal}
         updateQty={updateQty}
         removeFromCart={removeFromCart}
+        clearCart={clearCart}
       />
     </>
   );
