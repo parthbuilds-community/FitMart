@@ -1,5 +1,5 @@
 // src/components/CartDrawer.jsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
 
@@ -11,7 +11,10 @@ function CartDrawer({
   cartTotal,
   updateQty,
   removeFromCart,
+  clearCart,
 }) {
+  const [confirmingClear, setConfirmingClear] = useState(false);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && isOpen) onClose();
@@ -19,6 +22,16 @@ function CartDrawer({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Reset the confirmation state whenever the drawer closes
+  useEffect(() => {
+    if (!isOpen) setConfirmingClear(false);
+  }, [isOpen]);
+
+  const handleClearConfirmed = () => {
+    setConfirmingClear(false);
+    clearCart?.();
+  };
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -69,7 +82,42 @@ function CartDrawer({
           </button>
         </div>
 
+        {/* ── Clear Cart bar ── */}
+        {cart.length > 0 && (
+          <div className="flex items-center justify-end px-5 sm:px-7 py-2
+                          border-b border-stone-100 shrink-0 min-h-11">
+            {confirmingClear ? (
+              <div className="flex items-center gap-3 text-xs sm:text-sm">
+                <span className="text-stone-500">Clear all items?</span>
+                <button
+                  onClick={handleClearConfirmed}
+                  className="text-red-600 hover:text-red-800 font-medium
+                             transition-colors min-h-8 px-1"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setConfirmingClear(false)}
+                  className="text-stone-500 hover:text-stone-900 transition-colors
+                             min-h-8 px-1"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingClear(true)}
+                className="text-xs sm:text-sm text-stone-400 hover:text-red-600
+                           transition-colors min-h-8 px-1"
+              >
+                Clear Cart
+              </button>
+            )}
+          </div>
+        )}
+
         {/* ── Body ── */}
+
         <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-4">
           {cart.length === 0 ? (
 
