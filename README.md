@@ -515,6 +515,10 @@ npm run dev
 MONGO_URI=<your_mongodb_connection_string>
 PORT=5000
 
+# Inventory
+LOW_STOCK_THRESHOLD=5
+
+
 # Optional — payment processing
 RAZORPAY_KEY_ID=<your_razorpay_key_id>
 RAZORPAY_KEY_SECRET=<your_razorpay_key_secret>
