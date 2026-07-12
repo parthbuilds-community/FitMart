@@ -6,7 +6,7 @@ on:
 
 jobs:
   frontend:
-    name: Frontend — build & lint
+    name: Frontend — build, lint & test
     runs-on: ubuntu-latest
     env:
       VITE_API_URL: http://localhost:5000
@@ -30,6 +30,9 @@ jobs:
       - name: Install client dependencies
         working-directory: client
         run: npm ci
+      - name: Run client tests
+        working-directory: client
+        run: npm test -- --run
       - name: Build client
         working-directory: client
         run: npm run build
