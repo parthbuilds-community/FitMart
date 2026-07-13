@@ -29,6 +29,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import LegalTerms from "./pages/LegalTerms";
 import LegalPrivacy from "./pages/LegalPrivacy";
 import DevAdminLogin from "./components/DevAdminLogin";
+import ScrollToTopFAB from "./components/ScrollToTopFAB";
 
 export default function App() {
   const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <ScrollToTopFAB />
           <Routes>
             {/* Public routes (redirect admin users to admin dashboard) */}
             <Route path="/" element={<NonAdminRoute><LandingPage /></NonAdminRoute>} />
