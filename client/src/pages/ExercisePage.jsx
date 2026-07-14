@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { addExerciseToWorkout, getWorkoutByDate } from "../utils/workoutStorage";
+import useWorkoutStore from "../store/useWorkoutStore";
 
 const CATEGORIES = [
   { id: "chest", name: "Chest" },
@@ -27,16 +28,8 @@ export default function ExercisePage() {
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const selectedDate = useWorkoutStore((state) => state.selectedDate);
   const [imageErrors, setImageErrors] = useState(new Set());
-
-  // Get selected date from localStorage on mount
-  useEffect(() => {
-    const storedDate = localStorage.getItem("selectedDate");
-    if (storedDate) {
-      setSelectedDate(storedDate);
-    }
-  }, []);
 
   // Fetch exercises when category changes
   useEffect(() => {
@@ -92,7 +85,6 @@ export default function ExercisePage() {
     await addExerciseToWorkout(selectedDate, exercise);
 
     // Navigate back to notes page
-    localStorage.setItem("selectedDate", selectedDate);
     navigate("/notes");
   };
 

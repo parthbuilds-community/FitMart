@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../utils/workoutStorage";
+import useWorkoutStore from "../store/useWorkoutStore";
 
 /**
  * NotesPage
@@ -11,6 +12,12 @@ import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../uti
  */
 export default function NotesPage() {
   const navigate = useNavigate();
+  const selectedDate = useWorkoutStore((state) => state.selectedDate);
+  const draftWorkout = useWorkoutStore((state) => state.draftWorkout);
+  const setSelectedDate = useWorkoutStore((state) => state.setSelectedDate);
+  const updateDraftWorkout = useWorkoutStore((state) => state.updateDraftWorkout);
+  const clearDraftWorkout = useWorkoutStore((state) => state.clearDraftWorkout);
+
   const [date, setDate] = useState("");
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -20,23 +27,28 @@ export default function NotesPage() {
   const [imageErrors, setImageErrors] = useState(new Set());
 
   useEffect(() => {
-    // Get selectedDate from localStorage
-    const storedDate = localStorage.getItem("selectedDate");
-    if (!storedDate) {
+    if (!selectedDate) {
       setError("No date selected. Please go back to the calendar and select a date.");
       return;
     }
-    setDate(storedDate);
+    setDate(selectedDate);
 
-    // Pre-fill if data exists
-    getWorkoutByDate(storedDate).then(workout => {
-      if (workout) {
-        setTitle(workout.title || "");
-        setNotes(workout.notes || "");
-        setExercises(workout.exercises || []);
-      }
-    });
-  }, []);
+    // Restore draft if available (more recent than backend), otherwise fetch
+    if (draftWorkout.title || draftWorkout.notes || draftWorkout.exercises.length > 0) {
+      setTitle(draftWorkout.title);
+      setNotes(draftWorkout.notes);
+      setExercises(draftWorkout.exercises);
+    } else {
+      // Pre-fill if data exists on the backend
+      getWorkoutByDate(selectedDate).then(workout => {
+        if (workout) {
+          setTitle(workout.title || "");
+          setNotes(workout.notes || "");
+          setExercises(workout.exercises || []);
+        }
+      });
+    }
+  }, [selectedDate]);
 
   const handleSave = async () => {
     // Prevent saving empty title
@@ -56,6 +68,7 @@ export default function NotesPage() {
     // Save functionality
     await saveWorkout(entry);
     setSaved(true);
+    clearDraftWorkout();
 
     // Redirect to "/tracker" after a brief confirmation
     setTimeout(() => {
@@ -64,9 +77,9 @@ export default function NotesPage() {
   };
 
   const handleAddExercise = async () => {
-    // Save draft state to backend
-    await saveWorkout({ date, title: title || "", notes: notes || "", exercises });
-    
+    // Save draft state to store (preserves across navigation)
+    updateDraftWorkout({ title: title || "", notes: notes || "", exercises });
+
     // Determine suggested category
     const combinedText = `${title} ${notes}`.toLowerCase();
     let suggestedCategory = "chest"; // default
@@ -78,7 +91,6 @@ export default function NotesPage() {
     else if (combinedText.includes("cardio") || combinedText.includes("run")) suggestedCategory = "cardio";
     else if (combinedText.includes("chest") || combinedText.includes("push") || combinedText.includes("pec")) suggestedCategory = "chest";
 
-    localStorage.setItem("selectedDate", date);
     navigate("/exercises", { state: { suggestedCategory } });
   };
 
