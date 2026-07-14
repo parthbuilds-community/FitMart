@@ -4,6 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { getAllWorkoutEvents } from "../utils/workoutStorage";
+import useWorkoutStore from "../store/useWorkoutStore";
 
 /**
  * WorkoutCalendar Component
@@ -22,14 +23,16 @@ export default function WorkoutCalendar() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, []);
 
+  const setSelectedDate = useWorkoutStore((state) => state.setSelectedDate);
+
   const handleDateClick = (arg) => {
-    localStorage.setItem("selectedDate", arg.dateStr);
+    setSelectedDate(arg.dateStr);
     navigate("/notes");
   };
 
   const handleEventClick = (arg) => {
     const dateStr = arg.event.startStr.split("T")[0];
-    localStorage.setItem("selectedDate", dateStr);
+    setSelectedDate(dateStr);
     navigate("/notes");
   };
 
