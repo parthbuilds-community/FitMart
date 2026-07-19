@@ -1,6 +1,7 @@
 // src/pages/AdminCustomers.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useFetch from "../hooks/useFetch";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import AdminNavbar from "../components/AdminNavbar";
@@ -114,33 +115,32 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
 );
 
 export default function AdminCustomers() {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const {
+  data: customers,
+  loading,
+  error,
+  setData: setCustomers,
+} = useFetch(async () => {
+  const headers = await getAuthHeaders();
+
+  const res = await fetch(`${API_BASE}/customers`, {
+    headers,
+  });
+
+  const json = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.error || "Failed to load customers");
+  }
+
+  return json.data || [];
+}, []);
   const [sendingReminderId, setSendingReminderId] = useState(null);
   const [reminderSent, setReminderSent] = useState({});
   const [reminderError, setReminderError] = useState({});
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers`, { headers });
-        const json = await res.json();
-        if (!json.success) {
-          throw new Error(json.error || "Failed to load customers");
-        }
-        setCustomers(json.data || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Customers fetch error:", err);
-        setError(err.message || "Failed to load customers");
-        setLoading(false);
-      }
-    })();
-  }, []);
 
   // Send reminder email for a customer
   const handleSendReminder = async (e, customerId) => {
