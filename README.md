@@ -373,13 +373,7 @@ React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin 
 Make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) v16+
-
-# Optional: Redis caching for products API
-# When set, the server will use Redis to cache product-list responses.
-# Use `REDIS_URL` for a full Redis connection string (e.g. redis://localhost:6379)
-# or `REDIS_HOST` for a host-only configuration. TTL (seconds) is configurable:
-# PRODUCTS_CACHE_TTL=60
-
+- [Redis](https://redis.io/) (optional) — for product API caching
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - A [MongoDB](https://www.mongodb.com/atlas) connection (Atlas or local)
 - A [Firebase](https://firebase.google.com/) project (for auth)
@@ -521,6 +515,10 @@ RAZORPAY_KEY_SECRET=<your_razorpay_key_secret>
 
 # Optional — database name override
 MONGO_DB=<your_database_name>
+
+# Optional — Redis caching for products API
+UPSTASH_REDIS_REST_URL=     # full connection string e.g. redis://localhost:6379
+UPSTASH_REDIS_REST_TOKEN=   # redis rest token
 
 # CORS
 ALLOWED_ORIGIN=http://localhost:5173    # comma-separate multiple origins

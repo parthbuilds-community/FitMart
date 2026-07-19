@@ -1,5 +1,5 @@
 // src/components/CartDrawer.jsx
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
 
@@ -12,13 +12,78 @@ function CartDrawer({
   updateQty,
   removeFromCart,
 }) {
+  // Refs for focus management
+  const drawerRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const triggerElementRef = useRef(null);
+
+  // Handle Escape key and focus trapping
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e) => {
-      if (e.key === "Escape" && isOpen) onClose();
+      // Close drawer on Escape
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+
+      // Focus trap: Tab and Shift+Tab cycle through focusable elements
+      if (e.key === "Tab") {
+        const focusableElements = drawerRef.current?.querySelectorAll(
+          "button, [href], input, [tabindex]:not([tabindex='-1'])"
+        );
+
+        if (!focusableElements || focusableElements.length === 0) return;
+
+        const focusableArray = Array.from(focusableElements);
+        const currentIndex = focusableArray.indexOf(document.activeElement);
+
+        if (e.shiftKey) {
+          // Shift+Tab: move focus backward
+          if (currentIndex <= 0) {
+            e.preventDefault();
+            focusableArray[focusableArray.length - 1].focus();
+          }
+        } else {
+          // Tab: move focus forward
+          if (currentIndex >= focusableArray.length - 1) {
+            e.preventDefault();
+            focusableArray[0].focus();
+          }
+        }
+      }
     };
+
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Focus management: Save trigger element and manage focus on open/close
+  useEffect(() => {
+    if (isOpen) {
+      // Save the element that triggered the drawer (currently focused element)
+      triggerElementRef.current = document.activeElement;
+
+      // Move focus to close button or first focusable element in drawer
+      setTimeout(() => {
+        if (closeButtonRef.current) {
+          closeButtonRef.current.focus();
+        } else {
+          const firstFocusable = drawerRef.current?.querySelector(
+            "button, [href], input, [tabindex]:not([tabindex='-1'])"
+          );
+          firstFocusable?.focus();
+        }
+      }, 0);
+    } else {
+      // Restore focus to trigger element when drawer closes
+      if (triggerElementRef.current && typeof triggerElementRef.current.focus === "function") {
+        triggerElementRef.current.focus();
+      }
+    }
+  }, [isOpen]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -36,10 +101,16 @@ function CartDrawer({
       <div
         className={`overlay fixed inset-0 bg-black/30 z-50 ${isOpen ? "show" : ""}`}
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Drawer — full-width on mobile, max-sm on larger screens */}
       <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-drawer-title"
+        aria-hidden={!isOpen}
         className={`cart-slide fixed right-0 top-0 h-full z-50 shadow-2xl flex flex-col
                     bg-white w-full sm:max-w-sm ${isOpen ? "open" : ""}`}
       >
@@ -50,8 +121,11 @@ function CartDrawer({
             <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">
               Your
             </p>
-            <h2 className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
-                           leading-tight">
+            <h2
+              id="cart-drawer-title"
+              className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
+                           leading-tight"
+            >
               Cart
               {cartCount > 0 && (
                 <span className="text-stone-400"> — {cartCount}</span>
@@ -59,6 +133,7 @@ function CartDrawer({
             </h2>
           </div>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             aria-label="Close cart"
             className="text-stone-400 hover:text-stone-900 transition-colors
@@ -79,7 +154,8 @@ function CartDrawer({
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-stone-100
                               flex items-center justify-center">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                  stroke="#d6d3d1" strokeWidth="1.5">
+                  stroke="#d6d3d1" strokeWidth="1.5"
+                  aria-hidden="true">
                   <circle cx="12" cy="12" r="9" />
                   <line x1="5" y1="5" x2="19" y2="19" />
                 </svg>
@@ -130,7 +206,8 @@ function CartDrawer({
                       />
                     ) : (
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="#d6d3d1" strokeWidth="1.5">
+                        stroke="#d6d3d1" strokeWidth="1.5"
+                        aria-hidden="true">
                         <circle cx="12" cy="12" r="9" />
                         <line x1="5" y1="5" x2="19" y2="19" />
                       </svg>
@@ -157,6 +234,7 @@ function CartDrawer({
                       onClick={() => removeFromCart(item.id)}
                       className="text-xs text-stone-300 hover:text-stone-900 transition-colors
                                  min-h-7 flex items-center"
+                      aria-label={`Remove ${item.name} from cart`}
                     >
                       Remove
                     </button>
@@ -166,19 +244,20 @@ function CartDrawer({
                         onClick={() => updateQty(item.id, -1)}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
-                        aria-label="Decrease quantity"
+                        aria-label={`Decrease quantity for ${item.name}`}
                       >
                         −
                       </button>
                       <span className="text-xs text-stone-900 min-w-4 text-center
-                                       select-none">
+                                       select-none"
+                        aria-label={`Current quantity: ${item.qty}`}>
                         {item.qty}
                       </span>
                       <button
                         onClick={() => updateQty(item.id, 1)}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
-                        aria-label="Increase quantity"
+                        aria-label={`Increase quantity for ${item.name}`}
                       >
                         +
                       </button>
