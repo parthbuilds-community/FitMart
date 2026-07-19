@@ -22,17 +22,24 @@ jobs:
       VITE_SUPER_ADMIN_UID: ci_dummy
       VITE_DEV_ADMIN_EMAIL: admin@example.com
       VITE_DEV_ADMIN_UID: dev-admin-uid
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install client dependencies
-        working-directory: client
-        run: npm ci
-      - name: Build client
-        working-directory: client
-        run: npm run build
+   steps:
+  - uses: actions/checkout@v4
+
+  - uses: actions/setup-node@v4
+    with:
+      node-version: '20'
+
+  - name: Install client dependencies
+    working-directory: client
+    run: npm ci
+
+  - name: Run client tests
+    working-directory: client
+    run: npm test
+
+  - name: Build client
+    working-directory: client
+    run: npm run build
 
   backend:
     name: Backend — tests
