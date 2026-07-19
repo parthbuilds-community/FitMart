@@ -1,7 +1,6 @@
 // src/components/FitnessChatBot.jsx
 import { useState, useEffect, useRef } from "react";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
+import ReactMarkdown from "react-markdown";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -13,12 +12,6 @@ const WELCOME = {
 // Maximum number of history entries (messages) to send to the server.
 // Matches the server-side MAX_HISTORY_TURNS cap.
 const MAX_HISTORY = 6;
-// Configure marked options once
-marked.setOptions({
-  breaks: true,   // convert \n to <br>
-  gfm: true,      // GitHub-flavored markdown
-});
-
 const QUICK_REPLIES = [
   {
     label: "💪 Build muscle",
@@ -158,23 +151,14 @@ export default function FitnessChatBot() {
     }
   };
 
-  // Renders bot messages as sanitized HTML markdown, user messages as plain text
+  // Render bot messages as Markdown while keeping user messages as plain text.
   const formatMessageText = (text, isBot = false) => {
     if (!isBot) return <span>{text}</span>;
-    try {
-      const rawHtml = marked.parse(text);
-      const cleanHtml = DOMPurify.sanitize(rawHtml, {
-        ALLOWED_TAGS: [
-          "strong", "em", "ul", "ol", "li", "p", "br",
-          "code", "pre", "blockquote", "h1", "h2", "h3",
-        ],
-        ALLOWED_ATTR: ["class"],
-      });
-      return <div className="fm-bot-content" dangerouslySetInnerHTML={{ __html: cleanHtml }} />;
-    } catch {
-      // Fallback to plain text if markdown parsing fails
-      return <span>{text}</span>;
-    }
+    return (
+      <div className="fm-bot-content prose prose-sm max-w-none">
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+    );
   };
 
   const closeChat = () => {
