@@ -2,12 +2,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import useCart from "../hooks/useCart";
+import useProductDetails from "../hooks/useProductDetails";
 
 const FEATURE_MAP = {
   Equipment: ["Free shipping", "Assembly guide included", "2-year warranty", "Returns within 30 days"],
@@ -15,40 +14,19 @@ const FEATURE_MAP = {
   Wearables: ["1-year warranty", "Water resistant", "Free shipping", "Returns within 15 days"],
 };
 
-async function apiAddToCart(userId, productId, quantity) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}/add`, {
-    method: "POST", headers, credentials: "include",
-    body: JSON.stringify({ productId, quantity }),
-  });
-  if (!res.ok) throw new Error("Failed to add to cart");
-  return res.json();
-}
-
-async function apiGetCart(userId) {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch cart");
-  return res.json();
-}
-
-function enrichCart(cartDoc, products) {
-  return (cartDoc.items || []).map(it => {
-    const prod = products.find(p => Number(p.productId) === Number(it.productId));
-    if (!prod) return { id: it.productId, qty: it.quantity, name: "Unknown", price: 0 };
-    return { ...prod, id: prod.productId, qty: it.quantity };
-  });
-}
-
 export default function ProductPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
 
-  const [product, setProduct] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [related, setRelated] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(u => setUser(u));
+    return () => unsub();
+  }, []);
+
+  const { product, relatedProducts: related, allProducts, loading, error } = useProductDetails(productId);
+  const { cart, cartCount, cartTotal, addToCart: hookAddToCart, removeFromCart, updateQty } = useCart(user, allProducts);
+
   const [visible, setVisible] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
@@ -59,13 +37,10 @@ export default function ProductPage() {
   const [buyingNow, setBuyingNow] = useState(false);
 
   const [cartOpen, setCartOpen] = useState(false);
-  const [cart, setCart] = useState([]);
 
   const imgRef = useRef(null);
   const stickyRef = useRef(null);
 
-  const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
-  const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discount = product?.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
@@ -75,66 +50,29 @@ export default function ProductPage() {
   ];
   const busy = adding || buyingNow;
 
-  const refreshCart = async (productsList = products) => {
-    const user = auth.currentUser;
-    if (!user || !productsList.length) return;
-    try {
-      const cartDoc = await apiGetCart(user.uid);
-      setCart(enrichCart(cartDoc, productsList));
-    } catch (err) {
-      console.error("refreshCart error:", err);
-    }
-  };
-
   useEffect(() => {
     setVisible(false);
     setImgLoaded(false);
     setAdded(false);
     setQuantity(1);
     window.scrollTo({ top: 0 });
-
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`${API}/api/products?all=true`);
-        if (!res.ok) throw new Error("Failed to load products");
-        const all = res.ok ? await res.json() : [];
-        const normalised = all.map(p => ({ ...p, id: p.productId }));
-        setProducts(normalised);
-        const found = normalised.find(p => String(p.productId) === String(productId));
-        if (!found) throw new Error("Product not found");
-        setProduct(found);
-        setRelated(
-          normalised
-            .filter(p => p.category === found.category && String(p.productId) !== String(productId))
-            .slice(0, 4)
-        );
-        const user = auth.currentUser;
-        if (user) {
-          const cartDoc = await apiGetCart(user.uid);
-          setCart(enrichCart(cartDoc, normalised));
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-        setTimeout(() => setVisible(true), 80);
-      }
-    })();
   }, [productId]);
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => setVisible(true), 80);
+    }
+  }, [loading]);
 
   useEffect(() => {
     if (product) document.title = `${product.name} — FitMart`;
   }, [product]);
 
   const handleAddToCart = async () => {
-    const user = auth.currentUser;
     if (!user) { navigate("/auth"); return; }
     setAdding(true);
     try {
-      const cartDoc = await apiAddToCart(user.uid, product.productId, quantity);
-      setCart(enrichCart(cartDoc, products));
+      await hookAddToCart(product.productId, quantity);
       setAdded(true);
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
@@ -145,51 +83,14 @@ export default function ProductPage() {
   };
 
   const handleBuyNow = async () => {
-    const user = auth.currentUser;
     if (!user) { navigate("/auth"); return; }
     setBuyingNow(true);
     try {
-      await apiAddToCart(user.uid, product.productId, quantity);
+      await hookAddToCart(product.productId, quantity);
       navigate("/checkout");
     } catch (err) {
       console.error("Buy Now failed:", err);
       setBuyingNow(false);
-    }
-  };
-
-  const removeFromCart = async (id) => {
-    const user = auth.currentUser;
-    if (!user) return;
-    try {
-      const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
-      });
-      if (!res.ok) throw new Error("Failed to remove");
-      const cartDoc = await res.json();
-      setCart(enrichCart(cartDoc, products));
-    } catch (err) {
-      console.error("removeFromCart error:", err);
-    }
-  };
-
-  const updateQty = async (id, delta) => {
-    const user = auth.currentUser;
-    if (!user) return;
-    try {
-      const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
-      });
-      if (!res.ok) throw new Error("Failed to update qty");
-      const cartDoc = await res.json();
-      setCart(enrichCart(cartDoc, products));
-    } catch (err) {
-      console.error("updateQty error:", err);
     }
   };
 

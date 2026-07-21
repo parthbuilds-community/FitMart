@@ -7,10 +7,10 @@ import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import CartDrawer from "../components/CartDrawer";
 import { fmt } from "../utils/formatters";
-import { getAuthHeaders } from "../utils/getAuthHeaders";
 import FitnessChatBot from "../components/FitnessChatBot";
 import WelcomeBanner from "../components/WelcomeBanner";
 import { useWelcomeDiscount } from "../auth/useWelcomeDiscount";
+import useCart from "../hooks/useCart";
 import BMICalculator from "../components/BMICalculator";
 import CalorieCalculator from "../components/CalorieCalculator";
 import NearbyFitnessCenters from "../components/NearbyFitnessCenters";
@@ -37,13 +37,7 @@ const PLANS = [
 ];
 
 
-function mapCart(cartDoc, products) {
-  return cartDoc.items.map(it => {
-    const prod = products.find(p => Number(p.productId) === Number(it.productId));
-    if (!prod) return { id: it.productId, qty: it.quantity, name: "Unknown", price: 0 };
-    return { ...prod, id: prod.id || prod.productId, qty: it.quantity };
-  });
-}
+
 
 // ── ProductCard ───────────────────────────────────────────────────────────
 const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], updateQty }) {
@@ -181,7 +175,6 @@ export default function HomePage() {
   const [user, setUser] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCategory = searchParams.get("category") || "all";
-  const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -237,20 +230,14 @@ export default function HomePage() {
     setProducts(loadedProducts);
   }, [loadedProducts]);
 
-  useEffect(() => {
-    if (!user || !products.length) return;
-    (async () => {
-      try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) return;
-        const cartDoc = await res.json();
-        setCart(mapCart(cartDoc, products));
-      } catch (err) {
-        console.error("Error loading cart:", err);
-      }
-    })();
-  }, [user, products]);
+  const {
+    cart,
+    cartTotal,
+    cartCount,
+    addToCart,
+    removeFromCart,
+    updateQty
+  } = useCart(user, products);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -261,52 +248,6 @@ export default function HomePage() {
     navigate("/");
   };
 
-  const addToCart = async (product) => {
-    if (!user) return;
-    try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/add`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
-      });
-      if (!res.ok) throw new Error("Failed to add to cart");
-      const cartDoc = await res.json();
-      setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Add to cart failed:", err); }
-  };
-
-  const removeFromCart = async (id) => {
-    if (!user) return;
-    try {
-      const existing = cart.find(i => i.id === id);
-      const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
-      });
-      if (!res.ok) throw new Error("Failed to remove");
-      const cartDoc = await res.json();
-      setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Remove from cart failed:", err); }
-  };
-
-  const updateQty = async (id, delta) => {
-    if (!user) return;
-    try {
-      const url = delta > 0 ? "add" : "remove";
-      const headers = await getAuthHeaders();
-      await fetch(`${API}/api/cart/${user.uid}/${url}`, {
-        method: "POST", headers, credentials: "include",
-        body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
-      });
-      const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
-      const cartDoc = await res.json();
-      setCart(mapCart(cartDoc, products));
-    } catch (err) { console.error("Update qty failed:", err); }
-  };
-
-  const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
   const firstName = user?.displayName?.split(" ")[0] || "there";
 
   const filtered = products.filter(p => {
