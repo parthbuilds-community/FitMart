@@ -2,6 +2,7 @@
 require("dotenv").config();
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -184,6 +185,15 @@ app.use("/api/github", require("./routes/github"));
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => res.send("FitMart server running"));
+app.get("/health", (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  const statusCode = isDbConnected ? 200 : 503;
+  res.status(statusCode).json({
+    status: isDbConnected ? "ok" : "error",
+    database: isDbConnected ? "connected" : "disconnected",
+    timestamp: new Date().toISOString()
+  });
+});
 
 // ── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
