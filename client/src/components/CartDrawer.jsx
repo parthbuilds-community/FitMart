@@ -11,7 +11,17 @@ function CartDrawer({
   cartTotal,
   updateQty,
   removeFromCart,
+  clearCart,
 }) {
+  const handleClearCart = () => {
+    if (window.confirm("Are you sure you want to clear your cart?")) {
+      if (typeof clearCart === "function") {
+        clearCart();
+      } else if (cart && cart.length > 0) {
+        cart.forEach((item) => removeFromCart(item.id));
+      }
+    }
+  };
   // Refs for focus management
   const drawerRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -131,6 +141,15 @@ function CartDrawer({
                 <span className="text-stone-400"> — {cartCount}</span>
               )}
             </h2>
+            {cartCount > 0 && (
+              <button
+                onClick={handleClearCart}
+                className="text-xs text-stone-400 hover:text-red-600 transition-colors mt-1 underline block"
+                aria-label="Clear all items in cart"
+              >
+                Clear Cart
+              </button>
+            )}
           </div>
           <button
             ref={closeButtonRef}
