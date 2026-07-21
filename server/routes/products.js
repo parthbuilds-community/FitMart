@@ -206,6 +206,9 @@ router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   }
   try {
     const deleted = await Product.findOneAndDelete({ productId });
+    if (!deleted) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
     try { await cache.delPattern('products:'); } catch (e) { }
     res.json({ success: true });
   } catch (err) {
