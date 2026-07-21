@@ -2,6 +2,7 @@
 require("dotenv").config();
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -199,7 +200,25 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong" });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(", ")}`);
 });
+
+// ── Graceful Shutdown ────────────────────────────────────────────────────────
+const gracefulShutdown = (signal) => {
+  console.log(`${signal} received: closing HTTP server`);
+  server.close(async () => {
+    console.log("HTTP server closed.");
+    try {
+      await mongoose.connection.close();
+      console.log("MongoDB connection closed.");
+    } catch (err) {
+      console.error("Error closing MongoDB connection:", err);
+    }
+    process.exit(0);
+  });
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
