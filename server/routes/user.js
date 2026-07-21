@@ -57,6 +57,7 @@ router.post("/login", async (req, res) => {
         showBanner: true,
         discountUsed: false,
         discountPercent: profile.discountPercent,
+        role: profile.role,
       });
     }
 
@@ -76,6 +77,7 @@ router.post("/login", async (req, res) => {
         showBanner: true,
         discountUsed: profile.discountUsed,
         discountPercent: profile.discountPercent,
+        role: profile.role,
       });
     }
 
@@ -84,6 +86,7 @@ router.post("/login", async (req, res) => {
       showBanner: false,
       discountUsed: profile.discountUsed,
       discountPercent: profile.discountPercent,
+      role: profile.role,
     });
   } catch (err) {
     console.error("user/login error:", err);

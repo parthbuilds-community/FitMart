@@ -16,8 +16,26 @@ import {
 import { auth } from "../auth/firebase";
 import { useGithubStats } from "../utils/useGithubStats";
 
-const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
 const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// Fetch the user's role from the backend to determine navigation destination
+async function getRedirectPath(user) {
+  try {
+    const token = await user.getIdToken();
+    const res = await fetch(`${API}/api/user/profile/${user.uid}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
+    });
+    if (res.ok) {
+      const profile = await res.json();
+      if (profile.role === 'admin') return '/admin/dashboard';
+    }
+  } catch (err) {
+    console.error('Failed to fetch user role:', err);
+  }
+  return '/home';
+}
 
 const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
 
@@ -78,7 +96,8 @@ export default function Authentication() {
           await auth.currentUser.reload();
           if (auth.currentUser.emailVerified || auth.currentUser.uid === SUPER_ADMIN_UID) {
             clearInterval(pollInterval);
-            navigate(auth.currentUser.uid === ADMIN_UID || auth.currentUser.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+            const path = await getRedirectPath(auth.currentUser);
+            navigate(path);
           }
         } catch (err) {
           console.error("Failed to reload user:", err);
@@ -118,7 +137,8 @@ export default function Authentication() {
         setMode("pending-verification");
         return;
       }
-      navigate(cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+      const path = await getRedirectPath(cred.user);
+      navigate(path);
     } catch (err) {
       console.error('handleSignIn error', err);
       setError(parseError(err.code));
@@ -169,7 +189,8 @@ export default function Authentication() {
         }
       }
       if (cred && cred.user) {
-        navigate(cred.user.uid === ADMIN_UID || cred.user.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+        const path = await getRedirectPath(cred.user);
+        navigate(path);
       }
     } catch (err) {
       console.error('handleGoogle error', err);
@@ -187,7 +208,8 @@ export default function Authentication() {
         const result = await getRedirectResult(auth);
         if (!mounted || !result || !result.user) return;
         const u = result.user;
-        navigate(u.uid === ADMIN_UID || u.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+        const path = await getRedirectPath(u);
+        navigate(path);
       } catch (err) {
         // Not an error in many cases (no redirect result), but log for debugging
         if (err && err.code) console.error('getRedirectResult error', err);
