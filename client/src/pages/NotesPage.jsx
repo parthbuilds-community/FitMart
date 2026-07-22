@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import Navbar from "../components/Navbar";
 import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../utils/workoutStorage";
 
@@ -41,7 +42,7 @@ export default function NotesPage() {
   const handleSave = async () => {
     // Prevent saving empty title
     if (!title.trim()) {
-      alert("Please enter a workout title.");
+      toast.error("Please enter a workout title.");
       return;
     }
 

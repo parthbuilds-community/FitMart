@@ -1,6 +1,7 @@
 // src/pages/AdminCustomerDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import AdminNavbar from "../components/AdminNavbar";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
@@ -243,7 +244,7 @@ export default function AdminCustomerDetail() {
       win.focus();
     } catch (e) {
       console.error('Invoice error', e);
-      alert('Failed to generate invoice');
+      toast.error('Failed to generate invoice');
     }
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import Navbar from "../components/Navbar";
 import { addExerciseToWorkout, getWorkoutByDate } from "../utils/workoutStorage";
 
@@ -84,7 +85,7 @@ export default function ExercisePage() {
 
   const handleExerciseSelect = async (exercise) => {
     if (!selectedDate) {
-      alert("No date selected. Please go back and select a date first.");
+      toast.error("No date selected. Please go back and select a date first.");
       return;
     }
 

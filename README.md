@@ -152,6 +152,7 @@ Whether you're a beginner learning full-stack development or an experienced deve
 | **Recharts** | Admin dashboard charts (AreaChart, BarChart) |
 | **Framer Motion** | Smooth animations & transitions |
 | **FullCalendar** | Interactive workout calendar (`@fullcalendar/react`) |
+| **Sonner** | Non-blocking toast notifications for errors & feedback |
 
 ### Backend
 

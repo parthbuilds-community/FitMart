@@ -2,6 +2,7 @@
 // src/pages/HomePage.jsx
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import Navbar from "../components/Navbar";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
@@ -278,7 +279,7 @@ export default function HomePage() {
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Add to cart failed:", err); 
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -299,7 +300,7 @@ export default function HomePage() {
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Remove from cart failed:", err); 
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -320,7 +321,7 @@ export default function HomePage() {
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Update qty failed:", err); 
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
