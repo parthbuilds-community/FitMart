@@ -6,6 +6,8 @@ const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const validateRequest = require("../middleware/validateRequest");
+const { userProfileUpdateSchema } = require("../validation/requestSchemas");
 const router = express.Router();
 
 // Use memory storage for serverless environments
@@ -195,25 +197,13 @@ router.get("/profile/:userId", async (req, res) => {
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", async (req, res) => {
+router.put("/profile/:userId", validateRequest(userProfileUpdateSchema), async (req, res) => {
   try {
     const { userId } = req.params;
-    if (!userId) return res.status(400).json({ error: "userId required" });
-
-    const phoneRegex = /^\+?[\d\s\-]{7,15}$/;
-    if (req.body.phone && !phoneRegex.test(req.body.phone)) {
-      return res.status(400).json({ error: "Invalid phone number format" });
-    }
-
-    const update = {};
-    const allowed = ["name", "phone", "addresses", "defaultAddressId", "photoURL"];
-    for (const k of allowed) {
-      if (req.body[k] !== undefined) update[k] = req.body[k];
-    }
 
     const profile = await UserProfile.findOneAndUpdate(
       { userId },
-      { $set: update },
+      { $set: req.body },
       { upsert: true, returnDocument: 'after' }
     );
 
