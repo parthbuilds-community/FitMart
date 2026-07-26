@@ -74,6 +74,34 @@ const workoutLogBodySchema = z.object({
   exercises: z.array(workoutExerciseSchema).optional()
 }).strict();
 
+const addressSchema = z.object({
+  id: z.string().optional(),
+  _id: z.string().optional(),
+  label: z.string().optional(),
+  line1: z.string().optional(),
+  line2: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
+  country: z.string().optional(),
+  phone: z.string().optional(),
+}).strict();
+
+const userProfileUpdateBodySchema = z.object({
+  name: z.string().trim().min(1, 'name cannot be empty').optional(),
+  phone: z.string().regex(/^\+?[\d\s\-]{7,15}$/, 'Invalid phone number format').optional(),
+  addresses: z.array(addressSchema).optional(),
+  defaultAddressId: z.string().optional(),
+  photoURL: z.string().optional(),
+}).strict();
+
+const customerUpdateBodySchema = z.object({
+  name: z.string().trim().min(1, 'name cannot be empty').optional(),
+  phone: z.string().regex(/^\+?[\d\s\-]{7,15}$/, 'Invalid phone number format').optional(),
+  email: z.string().email('Invalid email address').optional(),
+  notes: z.string().optional(),
+}).strict();
+
 module.exports = {
   cartAddSchema: {
     params: userIdParamsSchema,
@@ -98,5 +126,13 @@ module.exports = {
   },
   updateWorkoutLogSchema: {
     body: workoutLogBodySchema,
+  },
+  userProfileUpdateSchema: {
+    params: z.object({ userId: z.string().min(1, 'userId is required') }),
+    body: userProfileUpdateBodySchema,
+  },
+  customerUpdateSchema: {
+    params: z.object({ userId: z.string().min(1, 'userId is required') }),
+    body: customerUpdateBodySchema,
   },
 };
