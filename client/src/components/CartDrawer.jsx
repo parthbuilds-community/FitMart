@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
+import { toast } from 'sonner';
 
 function CartDrawer({
   isOpen,
@@ -95,6 +96,16 @@ function CartDrawer({
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
+  const handleRemove = (id, name) => {
+    removeFromCart(id);
+    toast.success(`${name || "Item"} removed from cart`);
+  };
+
+  const handleUpdateQty = (id, delta) => {
+    updateQty(id, delta);
+    toast.success("Cart updated");
+  };
+
   return (
     <>
       {/* Overlay */}
@@ -124,7 +135,7 @@ function CartDrawer({
             <h2
               id="cart-drawer-title"
               className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900
-                           leading-tight"
+                         leading-tight"
             >
               Cart
               {cartCount > 0 && (
@@ -231,7 +242,7 @@ function CartDrawer({
                   {/* Qty + Remove */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => handleRemove(item.id, item.name)}
                       className="text-xs text-stone-300 hover:text-stone-900 transition-colors
                                  min-h-7 flex items-center"
                       aria-label={`Remove ${item.name} from cart`}
@@ -241,7 +252,7 @@ function CartDrawer({
                     <div className="flex items-center gap-1.5 sm:gap-2 border border-stone-200
                                     rounded-full px-2.5 sm:px-3 py-1">
                       <button
-                        onClick={() => updateQty(item.id, -1)}
+                        onClick={() => handleUpdateQty(item.id, -1)}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
                         aria-label={`Decrease quantity for ${item.name}`}
@@ -254,7 +265,7 @@ function CartDrawer({
                         {item.qty}
                       </span>
                       <button
-                        onClick={() => updateQty(item.id, 1)}
+                        onClick={() => handleUpdateQty(item.id, 1)}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
                         aria-label={`Increase quantity for ${item.name}`}
