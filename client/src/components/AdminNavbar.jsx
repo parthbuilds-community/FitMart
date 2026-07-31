@@ -90,6 +90,7 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
           {!authLoading && (
             <div className="relative shrink-0">
               <button
+                aria-label="Admin Profile Menu"
                 onClick={() => setMenuOpen?.((p) => !p)}
                 className="flex items-center gap-2 border border-stone-200 rounded-full
                            px-2 sm:px-2.5 py-1.5 hover:bg-stone-50 transition-colors

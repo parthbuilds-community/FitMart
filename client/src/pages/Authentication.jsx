@@ -310,6 +310,7 @@ export default function Authentication() {
           href="https://github.com/parthbuilds-community/FitMart"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="Star on GitHub"
           className="flex items-center gap-2 text-sm text-white border border-stone-600 px-3 py-1 rounded-md hover:border-white transition"
         >
           <GithubIcon />
@@ -346,11 +347,11 @@ export default function Authentication() {
           {mode === "signin" && (
             <form onSubmit={handleSignIn} className="flex flex-col gap-4">
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
+                <label htmlFor="signin-email" className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
                   Email
                 </label>
                 <input
-                  type="email" name="email" value={form.email}
+                  id="signin-email" type="email" name="email" value={form.email}
                   onChange={handleChange} required placeholder="you@example.com"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
@@ -359,7 +360,7 @@ export default function Authentication() {
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-xs text-stone-500 tracking-wide uppercase">Password</label>
+                  <label htmlFor="signin-password" className="text-xs text-stone-500 tracking-wide uppercase">Password</label>
                   <button
                     type="button" onClick={() => switchMode("reset")}
                     className="text-xs text-stone-400 hover:text-stone-600 transition-colors min-h-8 px-1"
@@ -368,7 +369,7 @@ export default function Authentication() {
                   </button>
                 </div>
                 <input
-                  type="password" name="password" value={form.password}
+                  id="signin-password" type="password" name="password" value={form.password}
                   onChange={handleChange} required placeholder="••••••••"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
@@ -407,11 +408,11 @@ export default function Authentication() {
           {mode === "signup" && (
             <form onSubmit={handleSignUp} className="flex flex-col gap-4">
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
+                <label htmlFor="signup-name" className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
                   Full Name
                 </label>
                 <input
-                  type="text" name="name" value={form.name}
+                  id="signup-name" type="text" name="name" value={form.name}
                   onChange={handleChange} placeholder="Arjun Mehta"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
@@ -419,9 +420,9 @@ export default function Authentication() {
               </div>
 
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">Email</label>
+                <label htmlFor="signup-email" className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">Email</label>
                 <input
-                  type="email" name="email" value={form.email}
+                  id="signup-email" type="email" name="email" value={form.email}
                   onChange={handleChange} required placeholder="you@example.com"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
@@ -429,9 +430,9 @@ export default function Authentication() {
               </div>
 
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">Password</label>
+                <label htmlFor="signup-password" className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">Password</label>
                 <input
-                  type="password" name="password" value={form.password}
+                  id="signup-password" type="password" name="password" value={form.password}
                   onChange={handleChange} required placeholder="Minimum 6 characters"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
@@ -439,11 +440,11 @@ export default function Authentication() {
               </div>
 
               <div>
-                <label className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
+                <label htmlFor="signup-confirm" className="block text-xs text-stone-500 mb-1.5 tracking-wide uppercase">
                   Confirm Password
                 </label>
                 <input
-                  type="password" name="confirm" value={form.confirm}
+                  id="signup-confirm" type="password" name="confirm" value={form.confirm}
                   onChange={handleChange} required placeholder="••••••••"
                   className="input-field w-full border border-stone-200 bg-white rounded-lg
                              px-4 py-3 text-sm text-stone-900 placeholder-stone-300"
