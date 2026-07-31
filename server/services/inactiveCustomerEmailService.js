@@ -2,7 +2,7 @@
 const Order = require("../models/Order");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
-const { sendEmail } = require("./emailService");
+const { emailQueue } = require("../queues/emailQueue");
 const { generateInactivityReminderEmail } = require("./emailTemplates");
 
 /**
@@ -111,21 +111,15 @@ async function sendInactivityReminderEmail(userId) {
       customerName: displayName || "Friend",
     });
 
-    // Send email
-    const result = await sendEmail({
+    // Enqueue email job
+    const job = await emailQueue.add('inactive-customer-email', {
       to: email,
       subject,
       html: htmlTemplate,
       text: textTemplate,
     });
 
-    if (!result.success) {
-      console.error(`❌ Failed to send reminder email to ${email}:`, result.error);
-      return {
-        success: false,
-        error: result.error,
-      };
-    }
+    console.log(`✅ Inactivity reminder email job enqueued (Job ID: ${job.id}) to ${email}`);
 
     // Update profile with timestamp
     await UserProfile.findOneAndUpdate(
@@ -134,11 +128,11 @@ async function sendInactivityReminderEmail(userId) {
       { upsert: true, returnDocument: 'after' }
     );
 
-    console.log(`✅ Inactivity reminder email sent to ${email} for user ${userId} (${daysSinceLastOrder} days inactive)`);
+    console.log(`✅ Inactivity reminder email job tracked successfully for user ${userId} (${daysSinceLastOrder} days inactive)`);
     return {
       success: true,
-      message: "Reminder email sent successfully",
-      messageId: result.messageId,
+      message: "Reminder email job enqueued successfully",
+      messageId: job.id,
     };
   } catch (err) {
     console.error(`❌ Error in sendInactivityReminderEmail for ${userId}:`, err.message);

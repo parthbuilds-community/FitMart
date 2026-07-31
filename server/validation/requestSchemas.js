@@ -74,6 +74,23 @@ const workoutLogBodySchema = z.object({
   exercises: z.array(workoutExerciseSchema).optional()
 }).strict();
 
+const userBodySchema = z.object({
+  userId: z.string().min(1, 'userId is required'),
+}).strict();
+
+const userProfileUpdateSchema = z.object({
+  name: z.string().optional(),
+  phone: z.string().regex(/^\+?[\d\s\-]{7,15}$/, 'Invalid phone number format').optional(),
+  addresses: z.array(z.any()).optional(),
+  defaultAddressId: z.string().optional(),
+  photoURL: z.string().optional()
+}).strict();
+
+const customersQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional()
+}).strict();
+
 module.exports = {
   cartAddSchema: {
     params: userIdParamsSchema,
@@ -98,5 +115,24 @@ module.exports = {
   },
   updateWorkoutLogSchema: {
     body: workoutLogBodySchema,
+  },
+  userIdParamSchema: {
+    params: userIdParamsSchema,
+  },
+  userLoginSchema: {
+    body: userBodySchema,
+  },
+  userDismissBannerSchema: {
+    body: userBodySchema,
+  },
+  userUseDiscountSchema: {
+    body: userBodySchema,
+  },
+  userProfileUpdateSchema: {
+    params: userIdParamsSchema,
+    body: userProfileUpdateSchema,
+  },
+  customersQuerySchema: {
+    query: customersQuerySchema,
   },
 };

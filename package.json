@@ -1,0 +1,29 @@
+{
+  "name": "fitmart",
+  "version": "1.0.0",
+  "description": "<div align=\"center\">\r   <img src=\"https://raw.githubusercontent.com/parthbuilds-community/FitMart/main/client/public/logo.png\" alt=\"FitMart\" width=\"100\"/>",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parthbuilds-community/FitMart.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/parthbuilds-community/FitMart/issues"
+  },
+  "homepage": "https://github.com/parthbuilds-community/FitMart#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "husky": "^9.1.7"
+  }
+}

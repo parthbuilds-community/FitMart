@@ -2,7 +2,7 @@
 const Order = require("../models/Order");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
-const { sendEmail } = require("./emailService");
+const { emailQueue } = require("../queues/emailQueue");
 const { generateFirstPurchaseEmail } = require("./emailTemplates");
 
 /**
@@ -106,22 +106,15 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
       appBaseUrl,
     });
 
-    // Send email
-    const result = await sendEmail({
+    // Enqueue email job
+    const job = await emailQueue.add('first-purchase-email', {
       to: email,
       subject,
       html: htmlTemplate,
       text: textTemplate,
     });
 
-    if (!result.success) {
-      console.error(`❌ Failed to send first-purchase email to ${email}:`, result.error);
-      return {
-        sent: false,
-        message: "Email send failed",
-        error: result.error,
-      };
-    }
+    console.log(`✅ First-purchase email job enqueued (Job ID: ${job.id}) to ${email}`);
 
     // Update profile with timestamp
     await UserProfile.findOneAndUpdate(
@@ -130,11 +123,11 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
       { upsert: true, returnDocument: 'after' }
     );
 
-    console.log(`✅ First-purchase email sent successfully to ${email} for user ${userId}`);
+    console.log(`✅ First-purchase email job tracked successfully for user ${userId}`);
     return {
       sent: true,
-      message: "Email sent successfully",
-      messageId: result.messageId,
+      message: "Email job enqueued successfully",
+      messageId: job.id,
     };
   } catch (err) {
     console.error(`❌ Error in sendFirstPurchaseEmail for ${userId}:`, err.message);

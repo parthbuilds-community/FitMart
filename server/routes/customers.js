@@ -6,6 +6,8 @@ const UserProfile = require('../models/UserProfile');
 const admin = require('../firebaseAdmin');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
+const validateRequest = require('../middleware/validateRequest');
+const schemas = require('../validation/requestSchemas');
 const { sendInactivityReminderEmail } = require('../services/inactiveCustomerEmailService');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
 
@@ -40,7 +42,7 @@ function calculateInactivityInfo(lastOrderDate) {
 // All customers aggregated from orders, enriched with Firebase user info
 // Admin-only access to protect customer PII
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+router.get('/', verifyFirebaseToken, verifyAdmin, validateRequest(schemas.customersQuerySchema), async (req, res) => {
   try {
     console.log('[API] GET /customers request received');
 
@@ -147,7 +149,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
 // Single customer stats + order history, enriched with Firebase user info
 // Admin-only access to protect customer PII
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+router.get('/:userId', verifyFirebaseToken, verifyAdmin, validateRequest(schemas.userIdParamSchema), async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -207,7 +209,7 @@ router.get('/:userId', verifyFirebaseToken, verifyAdmin, async (req, res) => {
 // Send inactivity reminder email to a customer
 // Admin-only endpoint: requires Firebase auth token from admin user
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+router.post('/:userId/send-reminder', verifyFirebaseToken, verifyAdmin, validateRequest(schemas.userIdParamSchema), async (req, res) => {
   try {
     const { userId } = req.params;
 

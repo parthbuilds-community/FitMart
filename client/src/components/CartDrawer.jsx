@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 function CartDrawer({
   isOpen,
@@ -231,7 +232,10 @@ function CartDrawer({
                   {/* Qty + Remove */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={async () => {
+                        await removeFromCart(item.id);
+                        toast.success("Item removed from cart");
+                      }}
                       className="text-xs text-stone-300 hover:text-stone-900 transition-colors
                                  min-h-7 flex items-center"
                       aria-label={`Remove ${item.name} from cart`}
@@ -241,7 +245,10 @@ function CartDrawer({
                     <div className="flex items-center gap-1.5 sm:gap-2 border border-stone-200
                                     rounded-full px-2.5 sm:px-3 py-1">
                       <button
-                        onClick={() => updateQty(item.id, -1)}
+                        onClick={async () => {
+                          await updateQty(item.id, -1);
+                          toast.success("Quantity updated");
+                        }}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
                         aria-label={`Decrease quantity for ${item.name}`}
@@ -254,7 +261,10 @@ function CartDrawer({
                         {item.qty}
                       </span>
                       <button
-                        onClick={() => updateQty(item.id, 1)}
+                        onClick={async () => {
+                          await updateQty(item.id, 1);
+                          toast.success("Quantity updated");
+                        }}
                         className="text-stone-500 hover:text-stone-900 transition-colors
                                    text-sm w-5 h-5 flex items-center justify-center"
                         aria-label={`Increase quantity for ${item.name}`}

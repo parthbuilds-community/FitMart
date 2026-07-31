@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /checkout/
+
+Sitemap: https://fitmart.com/sitemap.xml

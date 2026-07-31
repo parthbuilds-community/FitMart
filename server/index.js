@@ -1,5 +1,6 @@
 // server/index.js
 require("dotenv").config();
+require("./queues/emailQueue");
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
 const cors = require("cors");
@@ -105,7 +106,8 @@ app.use(
   }),
 );
 
-app.use(helmet());
+const cspDirectives = require("./config/csp");
+app.use(helmet({ contentSecurityPolicy: { directives: cspDirectives } }));
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses

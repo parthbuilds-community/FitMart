@@ -6,6 +6,8 @@ const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const validateRequest = require("../middleware/validateRequest");
+const schemas = require("../validation/requestSchemas");
 const router = express.Router();
 
 // Use memory storage for serverless environments
@@ -28,7 +30,7 @@ const upload = multer({
 // - If profile exists and isFirstLogin is false → return showBanner: false
 // Also syncs user email from Firebase to the profile for email sending.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
+router.post("/login", validateRequest(schemas.userLoginSchema), async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -98,7 +100,7 @@ router.post("/login", async (req, res) => {
 // Called when user dismisses the welcome banner.
 // Flips isFirstLogin → false so it never shows again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/dismiss-banner", async (req, res) => {
+router.post("/dismiss-banner", validateRequest(schemas.userDismissBannerSchema), async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -122,7 +124,7 @@ router.post("/dismiss-banner", async (req, res) => {
 // Called after a successful first order.
 // Flips discountUsed → true so it can't be used again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/use-discount", async (req, res) => {
+router.post("/use-discount", validateRequest(schemas.userUseDiscountSchema), async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -150,7 +152,7 @@ router.post("/use-discount", async (req, res) => {
 // Returns current discount eligibility for a user.
 // Used by Checkout to decide whether to apply the 10% discount.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/discount-status/:userId", async (req, res) => {
+router.get("/discount-status/:userId", validateRequest(schemas.userIdParamSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     const profile = await UserProfile.findOne({ userId });
@@ -175,7 +177,7 @@ router.get("/discount-status/:userId", async (req, res) => {
 // GET /api/user/profile/:userId
 // Returns stored profile (including addresses) for a user
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/profile/:userId", async (req, res) => {
+router.get("/profile/:userId", validateRequest(schemas.userIdParamSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -195,7 +197,7 @@ router.get("/profile/:userId", async (req, res) => {
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", async (req, res) => {
+router.put("/profile/:userId", validateRequest(schemas.userProfileUpdateSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -229,7 +231,7 @@ router.put("/profile/:userId", async (req, res) => {
 // Authenticated endpoint to upload profile photo to Cloudinary
 // Body: multipart form-data with 'photo' field
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo"), async (req, res) => {
+router.post("/upload-photo/:userId", verifyFirebaseToken, validateRequest(schemas.userIdParamSchema), upload.single("photo"), async (req, res) => {
   try {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "userId required" });

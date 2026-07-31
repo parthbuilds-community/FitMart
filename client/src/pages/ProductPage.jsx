@@ -6,6 +6,7 @@ import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
+import { toast } from "sonner";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -139,10 +140,11 @@ export default function ProductPage() {
       const cartDoc = await apiAddToCart(user.uid, product.productId, quantity);
       setCart(enrichCart(cartDoc, products));
       setAdded(true);
+      toast.success("Added to cart!");
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
       console.error("Add to cart failed:", err);
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setAdding(false);
     }
@@ -157,7 +159,7 @@ export default function ProductPage() {
       navigate("/checkout");
     } catch (err) {
       console.error("Buy Now failed:", err);
-      alert(err.message);
+      toast.error(err.message);
       setBuyingNow(false);
     }
   };
@@ -180,7 +182,7 @@ export default function ProductPage() {
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("removeFromCart error:", err);
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -202,7 +204,7 @@ export default function ProductPage() {
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("updateQty error:", err);
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
