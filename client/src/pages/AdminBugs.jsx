@@ -95,8 +95,15 @@ export default function AdminBugs() {
   const [loadingBugs, setLoadingBugs] = useState(true);
   const [updatingIds, setUpdatingIds] = useState(new Set());
   const [toast, setToast] = useState(null);
-  // Mobile status picker state: { id, status }
   const [mobilePicker, setMobilePicker] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const openMobilePicker = (bug) => {
     setMobilePicker({ id: bug._id, status: bug.status });
@@ -166,6 +173,17 @@ export default function AdminBugs() {
     const ob = order[b.status] ?? 3;
     if (oa !== ob) return oa - ob;
     return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  const filteredBugs = sortedBugs.filter(bug => {
+    if (!debouncedQuery) return true;
+    const q = debouncedQuery.toLowerCase();
+    return (
+      bug.title?.toLowerCase().includes(q) ||
+      bug.description?.toLowerCase().includes(q) ||
+      bug.reporterName?.toLowerCase().includes(q) ||
+      bug.reporterEmail?.toLowerCase().includes(q)
+    );
   });
 
   return (
@@ -273,14 +291,23 @@ export default function AdminBugs() {
         <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden
                         hover:border-stone-300 transition-all duration-300">
           <div className="px-4 sm:px-7 py-4 sm:py-5 border-b border-stone-100
-                          flex justify-between items-center">
+                          flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">Directory</p>
               <h2 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-xl text-stone-900">
                 All Reports
               </h2>
             </div>
-            {!loadingBugs && <p className="text-xs text-stone-400">{bugs.length} reports</p>}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+              <input
+                type="text"
+                placeholder="Search bugs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-64 px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-stone-400 focus:bg-white transition-colors"
+              />
+              {!loadingBugs && <p className="text-xs text-stone-400 shrink-0">{filteredBugs.length} reports</p>}
+            </div>
           </div>
 
           {/* Mobile card list */}
@@ -297,7 +324,7 @@ export default function AdminBugs() {
                 <p className="text-xs text-stone-300">Bug reports will appear here when users submit them</p>
               </div>
             )}
-            {!loadingBugs && sortedBugs.map((bug, index) => (
+            {!loadingBugs && filteredBugs.map((bug, index) => (
               <BugMobileCard
                 key={bug._id}
                 bug={bug}
@@ -381,7 +408,7 @@ export default function AdminBugs() {
                 {loadingBugs && [...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
                 {!loadingBugs && bugs.length === 0 && <Empty />}
 
-                {!loadingBugs && sortedBugs.map((bug, index) => (
+                {!loadingBugs && filteredBugs.map((bug, index) => (
                   <tr key={bug._id}
                     role="button"
                     tabIndex={0}

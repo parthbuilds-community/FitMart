@@ -1,6 +1,7 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import LandingPage from "./pages/LandingPage";
 import Authentication from "./pages/Authentication";
 import HomePage from "./pages/HomePage";
@@ -34,6 +35,7 @@ export default function App() {
   const queryClient = new QueryClient();
   return (
     <ErrorBoundary>
+      <Toaster position="top-right" richColors />
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>

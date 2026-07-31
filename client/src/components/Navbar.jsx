@@ -18,6 +18,7 @@ export default function Navbar({
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [localMenuOpen, setLocalMenuOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Treat tracker and notes as limited nav routes (no "Track Fitness" option)
   const isLimitedNavRoute =
@@ -61,20 +62,32 @@ export default function Navbar({
 
   return (
     <nav className={`w-full ${positionClass} transition-all duration-300 ${bgClass}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 h-14 sm:h-16 flex items-center justify-between">
-        {/* Brand */}
-        <span
-          role="button"
-          tabIndex={0}
-          aria-label="FitMart – go to home"
-          onClick={handleNav}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleNav();
-          }}
-          className={`font-['DM_Serif_Display'] text-lg sm:text-xl tracking-tight cursor-pointer transition-colors ${logoColor}`}
-        >
-          FitMart
-        </span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 h-14 sm:h-16 flex items-center justify-between relative">
+        {/* Left: Hamburger + Brand */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={() => setMobileDrawerOpen(true)}
+            aria-label="Open menu"
+            className={`p-1.5 sm:hidden -ml-1 transition-colors ${iconColor}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+          </button>
+          
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="FitMart – go to home"
+            onClick={handleNav}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") handleNav();
+            }}
+            className={`font-['DM_Serif_Display'] text-lg sm:text-xl tracking-tight cursor-pointer transition-colors ${logoColor}`}
+          >
+            FitMart
+          </span>
+        </div>
 
         {/* Right */}
         <div className="flex items-center gap-0.5 sm:gap-1.5">
@@ -208,6 +221,90 @@ export default function Navbar({
               )}
             </>
           )}
+        </div>
+      </div>
+
+      {/* ── Mobile Slide Drawer ── */}
+      {/* Backdrop */}
+      <div 
+        className={`fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-[10000] sm:hidden transition-opacity duration-300 ${
+          mobileDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setMobileDrawerOpen(false)}
+        aria-hidden="true"
+      />
+      {/* Drawer */}
+      <div 
+        className={`fixed inset-y-0 left-0 w-64 bg-white z-[10001] sm:hidden flex flex-col shadow-2xl transition-transform duration-300 ease-in-out transform ${
+          mobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="h-14 flex items-center justify-between px-4 border-b border-stone-100">
+          <span className="font-['DM_Serif_Display'] text-lg text-stone-900">FitMart</span>
+          <button 
+            onClick={() => setMobileDrawerOpen(false)}
+            aria-label="Close menu"
+            className="p-2 text-stone-400 hover:text-stone-900 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto py-4 px-4 flex flex-col gap-1">
+          {isLanding && (
+            <button 
+              onClick={() => { setMobileDrawerOpen(false); navigate('/home'); }} 
+              className="text-left px-3 py-3 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors"
+            >
+              Shop
+            </button>
+          )}
+          <button 
+            onClick={() => { setMobileDrawerOpen(false); navigate('/tracker'); }} 
+            className="text-left px-3 py-3 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            Track Fitness
+          </button>
+          {user && (
+            <button 
+              onClick={() => { setMobileDrawerOpen(false); navigate('/profile'); }} 
+              className="text-left px-3 py-3 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors"
+            >
+              My Profile
+            </button>
+          )}
+          
+          <div className="mt-auto pt-4 border-t border-stone-100">
+            {user ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-xs font-medium text-stone-600">
+                      {(user.displayName?.[0] || user.email?.[0] || "U").toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-stone-700 truncate max-w-32">{user.displayName || user.email?.split("@")[0]}</span>
+                </div>
+                <button 
+                  onClick={() => { setMobileDrawerOpen(false); handleSignOut(); }}
+                  className="text-xs text-stone-500 font-medium hover:text-stone-900"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => { setMobileDrawerOpen(false); navigate("/auth"); }}
+                className="w-full text-center px-4 py-2.5 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+              >
+                Sign In / Get Started
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </nav>

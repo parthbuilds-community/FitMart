@@ -32,12 +32,25 @@ if (!MONGO_URI) {
 mongoose.set("strictQuery", true);
 
 async function connect() {
-    try {
-        await mongoose.connect(MONGO_URI);
-        console.log("MongoDB connected successfully");
-    } catch (err) {
-        console.error("MongoDB connection failed:", err.message);
-        process.exit(1);
+    let retries = 0;
+    let delay = 1000;
+
+    while (true) {
+        try {
+            await mongoose.connect(MONGO_URI);
+            console.log("MongoDB connected successfully");
+            break;
+        } catch (err) {
+            console.error("MongoDB connection failed:", err.message);
+            if (retries >= 5) {
+                console.error("All retries exhausted. Exiting.");
+                process.exit(1);
+            }
+            console.log(`Retrying in ${delay / 1000} seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            delay *= 2;
+            retries++;
+        }
     }
 }
 

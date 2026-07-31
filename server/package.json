@@ -13,6 +13,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@upstash/redis": "^1.38.0",
+    "bullmq": "^6.0.2",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
@@ -20,6 +21,7 @@
     "express-rate-limit": "^8.6.0",
     "firebase-admin": "^13.10.0",
     "helmet": "^8.3.0",
+    "ioredis": "^5.11.1",
     "mongoose": "^9.8.0",
     "multer": "^2.2.0",
     "nodemailer": "^9.0.3",
