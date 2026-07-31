@@ -62,15 +62,7 @@ export default function ExercisePage() {
 
       // Client-side debug logging
       if (data && data.length > 0) {
-        const firstEx = data[0];
-        console.log(`\n[Exercise Client] Received ${data.length} exercises for "${bodyPart}"`);
-        console.log("  First exercise name:", firstEx.name);
-        console.log("  First exercise gifUrl:", firstEx.gifUrl ? `✅ Present` : "❌ null");
-        console.log("  First exercise imageUrl:", firstEx.imageUrl ? `✅ Present` : "❌ null");
-        if (firstEx.gifUrl) {
-          console.log("  GIF URL preview:", firstEx.gifUrl.substring(0, 100));
-        }
-        console.log("");
+        // Debug logs removed for production
       }
 
       setExercises(data || []);
