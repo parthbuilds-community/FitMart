@@ -31,13 +31,29 @@ if (!MONGO_URI) {
 
 mongoose.set("strictQuery", true);
 
-async function connect() {
+async function connect(retries = 5, delay = 1000) {
     try {
         await mongoose.connect(MONGO_URI);
         console.log("MongoDB connected successfully");
     } catch (err) {
         console.error("MongoDB connection failed:", err.message);
-        process.exit(1);
+
+        if (retries === 0) {
+            console.error(
+                "Maximum retry attempts reached. Exiting..."
+            );
+            process.exit(1);
+        }
+
+        console.log(
+            `Retrying connection in ${delay / 1000} seconds... (${retries} retries left)`
+        );
+
+        await new Promise((resolve) =>
+            setTimeout(resolve, delay)
+        );
+
+        return connect(retries - 1, delay * 2);
     }
 }
 
