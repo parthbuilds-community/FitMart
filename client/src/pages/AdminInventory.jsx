@@ -1,8 +1,9 @@
 // src/pages/AdminInventory.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 const LOW_STOCK_THRESHOLD = 5;
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
@@ -121,21 +122,31 @@ export default function AdminInventory() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(null); // product being edited
   const [saving, setSaving] = useState(false);
-  const fetchProducts = async () => {
+  const [isMobile, setIsMobile] = useState(
+    () => 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  );
+
+  useEffect(() => {
+    const check = () => setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE}/products`, { headers });
       const data = await res.json();
-      setProducts(data);
+      setProducts(Array.isArray(data) ? data : (data.data ?? []));
       setLoading(false);
     } catch (err) {
       setError('Failed to load inventory');
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const stats = {
     total: products.length,
@@ -324,13 +335,20 @@ export default function AdminInventory() {
                 <div key={i} className="h-16 bg-stone-100 rounded-2xl animate-pulse" />
               ))
             )}
-            {!loading && filtered.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-3xl text-stone-200 mb-3">∅</p>
-                <p className="text-sm text-stone-400">No products match this filter</p>
-              </div>
+            {!loading && (
+              <PullToRefresh onRefresh={fetchProducts} isPullable={isMobile}>
+                <div>
+                  {filtered.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="text-3xl text-stone-200 mb-3">∅</p>
+                      <p className="text-sm text-stone-400">No products match this filter</p>
+                    </div>
+                  ) : (
+                    filtered.map(p => <InventoryMobileCard key={p.productId} p={p} onEdit={openEditor} />)
+                  )}
+                </div>
+              </PullToRefresh>
             )}
-            {!loading && filtered.map(p => <InventoryMobileCard key={p.productId} p={p} onEdit={openEditor} />)}
           </div>
 
           {/* Desktop table */}

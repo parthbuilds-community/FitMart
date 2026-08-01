@@ -30,8 +30,9 @@ import LegalTerms from "./pages/LegalTerms";
 import LegalPrivacy from "./pages/LegalPrivacy";
 import DevAdminLogin from "./components/DevAdminLogin";
 
+const queryClient = new QueryClient();
+
 export default function App() {
-  const queryClient = new QueryClient();
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

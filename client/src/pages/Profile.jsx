@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -12,6 +12,7 @@ import {
   getTransactionIcon,
 } from "../utils/rewardsUtils";
 import Navbar from "../components/Navbar";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -129,6 +130,15 @@ export default function Profile() {
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [rewardsData, setRewardsData] = useState(null);
+  const [isMobile, setIsMobile] = useState(
+    () => 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  );
+
+  useEffect(() => {
+    const check = () => setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 const [rewardsLoading, setRewardsLoading] = useState(false);
 const [rewardsError, setRewardsError] = useState("");
 
@@ -194,30 +204,28 @@ const [rewardsError, setRewardsError] = useState("");
   }, [activeTab]);
 
   // Fetch orders when orders tab is active
-  useEffect(() => {
-    if (activeTab !== "orders") return;
-    
-    const fetchOrders = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      
-      setLoadingOrders(true);
-      try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load orders");
-        const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message);
-        setOrders([]);
-      } finally {
-        setLoadingOrders(false);
-      }
-    };
+  const fetchOrders = useCallback(async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
 
-    fetchOrders();
-  }, [activeTab]);
+    setLoadingOrders(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API}/api/orders/${currentUser.uid}`, { headers, credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load orders");
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+      setOrders([]);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "orders") fetchOrders();
+  }, [activeTab, fetchOrders]);
 
   const handleSaveProfile = async () => {
     const user = auth.currentUser;
@@ -545,8 +553,9 @@ const [rewardsError, setRewardsError] = useState("");
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {orders.map((order) => (
+              <PullToRefresh onRefresh={fetchOrders} isPullable={isMobile}>
+                <div className="space-y-3">
+                  {orders.map((order) => (
                   <div key={order._id} className="bg-white border border-stone-200 rounded-2xl p-5 hover:border-stone-300 hover:shadow-sm transition-all">
                     <div className="flex justify-between items-start gap-4 mb-3">
                       <div className="flex-1">
@@ -588,7 +597,8 @@ const [rewardsError, setRewardsError] = useState("");
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+              </PullToRefresh>
             )}
           </div>
         )}

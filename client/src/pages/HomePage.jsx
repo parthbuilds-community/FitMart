@@ -19,6 +19,7 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 
 
@@ -193,6 +194,15 @@ export default function HomePage() {
   const [backendError, setBackendError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  );
+
+  useEffect(() => {
+    const check = () => setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
 
@@ -221,6 +231,7 @@ export default function HomePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useInfiniteProducts({ limit: 24 });
 
   useEffect(() => {
@@ -360,22 +371,26 @@ export default function HomePage() {
     );
 
     if (backendError) return (
-      <div className="text-center py-12 text-stone-400">
-        <p className="text-3xl mb-2">🔌</p>
-        <p className="text-sm mb-1">Cannot connect to the server</p>
-        <p className="text-xs">Make sure the backend is running on port 5000</p>
-        <button onClick={() => window.location.reload()}
-          className="mt-4 text-xs bg-stone-900 text-white px-4 py-2 rounded-full
-                     hover:bg-stone-700 transition-colors">
-          Retry Connection
-        </button>
-      </div>
+      <PullToRefresh onRefresh={refetch} isPullable={isMobile}>
+        <div className="text-center py-12 text-stone-400">
+          <p className="text-3xl mb-2">🔌</p>
+          <p className="text-sm mb-1">Cannot connect to the server</p>
+          <p className="text-xs">Make sure the backend is running on port 5000</p>
+          <button onClick={() => window.location.reload()}
+            className="mt-4 text-xs bg-stone-900 text-white px-4 py-2 rounded-full
+                       hover:bg-stone-700 transition-colors">
+            Retry Connection
+          </button>
+        </div>
+      </PullToRefresh>
     );
     if (!filtered.length) return (
-      <div className="text-center py-12 text-stone-400">
-        <p className="text-3xl mb-2">∅</p>
-        <p className="text-sm">No products match your search.</p>
-      </div>
+      <PullToRefresh onRefresh={refetch} isPullable={isMobile}>
+        <div className="text-center py-12 text-stone-400">
+          <p className="text-3xl mb-2">∅</p>
+          <p className="text-sm">No products match your search.</p>
+        </div>
+      </PullToRefresh>
     );
 
     // Limit to 8 products if in "all" category and showAll is false
@@ -384,13 +399,15 @@ export default function HomePage() {
       : filtered;
 
     return (
-      // 2-col on mobile, 3-col on md, 4-col on lg
-      <div className={`fade-in d3 ${visible ? "show" : ""}
-                       grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5`}>
-        {displayedProducts.map(p => (
-          <ProductCard key={p.id} product={p} onAdd={addToCart} cartItems={cart} updateQty={updateQty} />
-        ))}
-      </div>
+      <PullToRefresh onRefresh={refetch} isPullable={isMobile}>
+        {/* 2-col on mobile, 3-col on md, 4-col on lg */}
+        <div className={`fade-in d3 ${visible ? "show" : ""}
+                         grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5`}>
+          {displayedProducts.map(p => (
+            <ProductCard key={p.id} product={p} onAdd={addToCart} cartItems={cart} updateQty={updateQty} />
+          ))}
+        </div>
+      </PullToRefresh>
     );
   };
 
