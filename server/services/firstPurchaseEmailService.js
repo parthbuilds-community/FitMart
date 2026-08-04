@@ -127,7 +127,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     await UserProfile.findOneAndUpdate(
       { userId },
       { $set: { firstPurchaseEmailSentAt: new Date() } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     console.log(`✅ First-purchase email sent successfully to ${email} for user ${userId}`);
