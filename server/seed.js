@@ -309,7 +309,7 @@ const PRODUCTS = [
 async function seed() {
   try {
     console.log('Connecting to MongoDB...');
-    await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true, ...(process.env.MONGO_DB ? { dbName: process.env.MONGO_DB } : {}) });
+    await mongoose.connect(MONGO_URI, { ...(process.env.MONGO_DB ? { dbName: process.env.MONGO_DB } : {}) });
     console.log('Connected —', 'database:', mongoose.connection.name, 'host:', mongoose.connection.host, ' — seeding products');
 
     await Product.deleteMany({});

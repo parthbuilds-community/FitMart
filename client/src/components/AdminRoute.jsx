@@ -10,13 +10,14 @@ export default function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
-  // In development allow a local dev admin session
+
+  // In development, a local dev token bypasses Firebase auth entirely
   if (import.meta.env.MODE === 'development') {
-    const isDevLocal = localStorage.getItem('dev_token') && (DEV_ADMIN_EMAIL ? true : true);
-    if (isDevLocal) return children;
+    const devToken = localStorage.getItem('dev_token');
+    if (devToken) return children;
   }
 
+  if (!user) return <Navigate to="/auth" replace />;
   if (user.uid !== ADMIN_UID && user.uid !== SUPER_ADMIN_UID) return <Navigate to="/home" replace />;
   return children;
 }

@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
 import { getBugs, patchBugStatus } from '../utils/api/bugs';
 import Toast from '../components/Toast';
 import BugScreenshot from '../components/BugScreenshot';
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import PullToRefresh from 'react-simple-pull-to-refresh';
 
 const SEGMENT_STYLES = {
   open: "bg-stone-900 text-white",
@@ -97,6 +96,52 @@ export default function AdminBugs() {
   const [toast, setToast] = useState(null);
   // Mobile status picker state: { id, status }
   const [mobilePicker, setMobilePicker] = useState(null);
+  const [isMobile, setIsMobile] = useState(
+    () => 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  );
+
+  useEffect(() => {
+    const check = () => setIsMobile('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const fetchBugsData = useCallback(async () => {
+    if (!user) return;
+    setLoadingBugs(true);
+    try {
+      const token = await user.getIdToken();
+      const bugsData = await getBugs(token);
+      setBugs(bugsData);
+    } catch (err) {
+      console.error(err);
+      setError('Unable to load bug reports');
+    } finally {
+      setLoadingBugs(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    let mounted = true;
+
+    const run = async () => {
+      setLoadingBugs(true);
+      try {
+        const token = await user.getIdToken();
+        const bugsData = await getBugs(token);
+        if (mounted) setBugs(bugsData);
+      } catch (err) {
+        console.error(err);
+        if (mounted) setError('Unable to load bug reports');
+      } finally {
+        if (mounted) setLoadingBugs(false);
+      }
+    };
+
+    run();
+    return () => { mounted = false; };
+  }, [loading, user]);
 
   const openMobilePicker = (bug) => {
     setMobilePicker({ id: bug._id, status: bug.status });
@@ -133,25 +178,6 @@ export default function AdminBugs() {
       });
     }
   };
-
-  useEffect(() => {
-    if (loading || !user) return;
-    let mounted = true;
-    setLoadingBugs(true);
-    (async () => {
-      try {
-        const token = await user.getIdToken();
-        const bugsData = await getBugs(token);
-        if (mounted) setBugs(bugsData);
-      } catch (err) {
-        console.error(err);
-        setError('Unable to load bug reports');
-      } finally {
-        if (mounted) setLoadingBugs(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [loading, user]);
 
   // Derived metrics for visualizations
   const statusCounts = bugs.reduce((acc, bug) => {
@@ -290,23 +316,30 @@ export default function AdminBugs() {
                 <div key={i} className="h-14 bg-stone-100 rounded-xl animate-pulse mb-3" />
               ))
             )}
-            {!loadingBugs && bugs.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-3xl text-stone-200 mb-3">∅</p>
-                <p className="text-sm text-stone-400 mb-1">No bug reports found</p>
-                <p className="text-xs text-stone-300">Bug reports will appear here when users submit them</p>
-              </div>
+            {!loadingBugs && (
+              <PullToRefresh onRefresh={fetchBugsData} isPullable={isMobile}>
+                <div>
+                  {bugs.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="text-3xl text-stone-200 mb-3">∅</p>
+                      <p className="text-sm text-stone-400 mb-1">No bug reports found</p>
+                      <p className="text-xs text-stone-300">Bug reports will appear here when users submit them</p>
+                    </div>
+                  ) : (
+                    sortedBugs.map((bug, index) => (
+                      <BugMobileCard
+                        key={bug._id}
+                        bug={bug}
+                        index={index}
+                        onClick={() => { }} // Add navigation if you have a detail view
+                        onStatusClick={openMobilePicker}
+                        isUpdating={updatingIds.has(bug._id)}
+                      />
+                    ))
+                  )}
+                </div>
+              </PullToRefresh>
             )}
-            {!loadingBugs && sortedBugs.map((bug, index) => (
-              <BugMobileCard
-                key={bug._id}
-                bug={bug}
-                index={index}
-                onClick={() => { }} // Add navigation if you have a detail view
-                onStatusClick={openMobilePicker}
-                isUpdating={updatingIds.has(bug._id)}
-              />
-            ))}
 
             {mobilePicker && (
               <div className="fixed inset-x-0 bottom-0 z-50 bg-white border-t border-stone-200 p-4 md:hidden">
