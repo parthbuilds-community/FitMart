@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Navbar from "../components/Navbar";
+import { workoutLogSchema } from "../utils/formSchemas";
 import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../utils/workoutStorage";
 
 /**
@@ -12,12 +15,21 @@ import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../uti
 export default function NotesPage() {
   const navigate = useNavigate();
   const [date, setDate] = useState("");
-  const [title, setTitle] = useState("");
-  const [notes, setNotes] = useState("");
   const [exercises, setExercises] = useState([]);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState(new Set());
+
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(workoutLogSchema),
+    defaultValues: { date: "", title: "", notes: "" },
+  });
 
   useEffect(() => {
     // Get selectedDate from localStorage
@@ -27,29 +39,27 @@ export default function NotesPage() {
       return;
     }
     setDate(storedDate);
+    // Set the date synchronously so the form is never submitted with an
+    // empty date while the stored workout is still loading.
+    reset({ date: storedDate });
 
     // Pre-fill if data exists
     getWorkoutByDate(storedDate).then(workout => {
-      if (workout) {
-        setTitle(workout.title || "");
-        setNotes(workout.notes || "");
-        setExercises(workout.exercises || []);
-      }
+      reset({
+        date: storedDate,
+        title: workout?.title || "",
+        notes: workout?.notes || "",
+      });
+      setExercises(workout?.exercises || []);
     });
-  }, []);
+  }, [reset]);
 
-  const handleSave = async () => {
-    // Prevent saving empty title
-    if (!title.trim()) {
-      alert("Please enter a workout title.");
-      return;
-    }
-
+  const handleSave = async (data) => {
     // Create entry object
     const entry = {
-      date,
-      title,
-      notes,
+      date: data.date,
+      title: data.title,
+      notes: data.notes,
       exercises,
     };
 
@@ -64,9 +74,11 @@ export default function NotesPage() {
   };
 
   const handleAddExercise = async () => {
-    // Save draft state to backend
+    // Save draft state to backend (title/notes may be empty at this point)
+    const title = getValues("title");
+    const notes = getValues("notes");
     await saveWorkout({ date, title: title || "", notes: notes || "", exercises });
-    
+
     // Determine suggested category
     const combinedText = `${title} ${notes}`.toLowerCase();
     let suggestedCategory = "chest"; // default
@@ -133,35 +145,46 @@ export default function NotesPage() {
             <h1 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl md:text-4xl text-stone-900">{formattedDate}</h1>
           </header>
 
-          <div className="space-y-8">
+          <form onSubmit={handleSubmit(handleSave)} className="space-y-8" noValidate>
             {/* Input field for "Workout Title" */}
             <div>
-              <label className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
+              <label htmlFor="workout-title" className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
                 Workout Title
               </label>
               <input
+                id="workout-title"
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Chest Day"
-                className="w-full border-b border-stone-200 bg-transparent py-3 text-2xl sm:text-3xl md:text-4xl text-stone-900 
-                           font-['DM_Serif_Display'] placeholder-stone-200 focus:outline-none focus:border-stone-900 transition-colors"
+                aria-invalid={errors.title ? true : undefined}
+                aria-describedby={errors.title ? "workout-title-error" : undefined}
+                className={`w-full border-b bg-transparent py-3 text-2xl sm:text-3xl md:text-4xl text-stone-900
+                           font-['DM_Serif_Display'] placeholder-stone-200 focus:outline-none transition-colors
+                           ${errors.title
+                    ? "border-red-400 focus:border-red-500"
+                    : "border-stone-200 focus:border-stone-900"
+                  }`}
+                {...register("title")}
               />
+              {errors.title && (
+                <p id="workout-title-error" role="alert" className="text-xs text-red-600 mt-2">
+                  {errors.title.message}
+                </p>
+              )}
             </div>
 
             {/* Textarea for "Workout Notes" */}
             <div>
-              <label className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
+              <label htmlFor="workout-notes" className="block text-xs text-stone-500 mb-2 tracking-wide uppercase">
                 Workout Notes
               </label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                id="workout-notes"
                 placeholder="List exercises, weight, reps..."
                 rows={12}
-                className="w-full border border-stone-200 bg-white rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-6 text-sm sm:text-base text-stone-700 
+                className="w-full border border-stone-200 bg-white rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-6 text-sm sm:text-base text-stone-700
                            placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors resize-none
                            min-h-75 sm:min-h-112.5 leading-relaxed"
+                {...register("notes")}
               />
             </div>
 
@@ -226,6 +249,7 @@ export default function NotesPage() {
                         </div>
 
                         <button
+                          type="button"
                           onClick={() => handleRemoveExercise(exercise.id)}
                           className="text-xs text-stone-500 hover:text-stone-700 font-medium uppercase tracking-wide transition-colors"
                         >
@@ -240,6 +264,7 @@ export default function NotesPage() {
 
             {/* Add Exercise Button */}
             <button
+              type="button"
               onClick={handleAddExercise}
               className="w-full bg-stone-100 text-stone-900 text-sm py-4 rounded-full hover:bg-stone-900 hover:text-white transition-all font-medium border border-stone-200 hover:border-stone-900 active:scale-95"
             >
@@ -248,13 +273,13 @@ export default function NotesPage() {
 
             {/* Save Button */}
             <button
-              onClick={handleSave}
+              type="submit"
               className={`w-full text-sm py-4 rounded-full transition-all font-medium
                          ${saved ? "bg-stone-700 text-stone-300" : "bg-stone-900 text-white hover:bg-stone-700 shadow-lg shadow-stone-200/50"}`}
             >
               {saved ? "Saved ✓" : "Save Workout"}
             </button>
-          </div>
+          </form>
         </div>
       </main>
     </div>
