@@ -6,6 +6,7 @@ import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
+import PullToRefresh from "../components/PullToRefresh";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -89,6 +90,31 @@ export default function ProductPage() {
     }
   };
 
+  const fetchProductData = async () => {
+    try {
+      const res = await fetch(`${API}/api/products?all=true`);
+      if (!res.ok) throw new Error("Failed to load products");
+      const all = res.ok ? await res.json() : [];
+      const normalised = all.map(p => ({ ...p, id: p.productId }));
+      setProducts(normalised);
+      const found = normalised.find(p => String(p.productId) === String(productId));
+      if (!found) throw new Error("Product not found");
+      setProduct(found);
+      setRelated(
+        normalised
+          .filter(p => p.category === found.category && String(p.productId) !== String(productId))
+          .slice(0, 4)
+      );
+      const user = auth.currentUser;
+      if (user) {
+        const cartDoc = await apiGetCart(user.uid);
+        setCart(enrichCart(cartDoc, normalised));
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   useEffect(() => {
     setVisible(false);
     setImgLoaded(false);
@@ -99,31 +125,9 @@ export default function ProductPage() {
     (async () => {
       setLoading(true);
       setError(null);
-      try {
-        const res = await fetch(`${API}/api/products?all=true`);
-        if (!res.ok) throw new Error("Failed to load products");
-        const all = res.ok ? await res.json() : [];
-        const normalised = all.map(p => ({ ...p, id: p.productId }));
-        setProducts(normalised);
-        const found = normalised.find(p => String(p.productId) === String(productId));
-        if (!found) throw new Error("Product not found");
-        setProduct(found);
-        setRelated(
-          normalised
-            .filter(p => p.category === found.category && String(p.productId) !== String(productId))
-            .slice(0, 4)
-        );
-        const user = auth.currentUser;
-        if (user) {
-          const cartDoc = await apiGetCart(user.uid);
-          setCart(enrichCart(cartDoc, normalised));
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-        setTimeout(() => setVisible(true), 80);
-      }
+      await fetchProductData();
+      setLoading(false);
+      setTimeout(() => setVisible(true), 80);
     })();
   }, [productId]);
 
@@ -242,7 +246,8 @@ export default function ProductPage() {
   return (
     <>
       <Shell cartCount={cartCount} onCartOpen={() => setCartOpen(true)}>
-        <style>{`
+        <PullToRefresh onRefresh={fetchProductData}>
+          <style>{`
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
           .pd-fade { opacity:0; transform:translateY(20px); transition:opacity .6s ease,transform .6s ease; }
           .pd-fade.in { opacity:1; transform:translateY(0); }
@@ -681,6 +686,7 @@ export default function ProductPage() {
             </div>
           </div>
         )}
+      </PullToRefresh>
       </Shell>
 
       <CartDrawer
