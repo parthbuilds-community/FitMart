@@ -647,12 +647,12 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading
 
         {/* Right */}
         <div className="flex items-center gap-2">
-          {/* GitHub Star — visible on sm+ in nav, hidden on mobile to save space */}
+          {/* GitHub Star — always visible; compact (icon + count) on mobile, full label on sm+ */}
           <a
             href={GITHUB_REPO}
             target="_blank"
             rel="noopener noreferrer"
-            className={`hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full
+            className={`flex items-center gap-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-full
                           border transition-all min-h-8.5
                           ${isOpaque
                 ? "border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900"
@@ -661,7 +661,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading
           >
             <GithubIcon className="w-3.5 h-3.5" />
             <StarIcon className="w-3 h-3" />
-            <span>Star</span>
+            <span className="hidden sm:inline">Star</span>
             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
                                 ${isOpaque ? "bg-stone-100 text-stone-700" : "bg-white/10 text-white/70"}`}>
               {formatStat(ghStats.stars, ghLoading)}
