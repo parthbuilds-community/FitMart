@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth';
 import { getBugs, patchBugStatus } from '../utils/api/bugs';
 import Toast from '../components/Toast';
 import BugScreenshot from '../components/BugScreenshot';
+import PullToRefresh from '../components/PullToRefresh';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -134,22 +135,25 @@ export default function AdminBugs() {
     }
   };
 
+  const fetchBugs = async () => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const bugsData = await getBugs(token);
+      setBugs(bugsData);
+    } catch (err) {
+      console.error(err);
+      setError('Unable to load bug reports');
+    }
+  };
+
   useEffect(() => {
     if (loading || !user) return;
     let mounted = true;
     setLoadingBugs(true);
-    (async () => {
-      try {
-        const token = await user.getIdToken();
-        const bugsData = await getBugs(token);
-        if (mounted) setBugs(bugsData);
-      } catch (err) {
-        console.error(err);
-        setError('Unable to load bug reports');
-      } finally {
-        if (mounted) setLoadingBugs(false);
-      }
-    })();
+    fetchBugs().finally(() => {
+      if (mounted) setLoadingBugs(false);
+    });
     return () => { mounted = false; };
   }, [loading, user]);
 
@@ -285,28 +289,32 @@ export default function AdminBugs() {
 
           {/* Mobile card list */}
           <div className="md:hidden px-4 py-2">
-            {loadingBugs && (
-              [...Array(5)].map((_, i) => (
-                <div key={i} className="h-14 bg-stone-100 rounded-xl animate-pulse mb-3" />
-              ))
-            )}
-            {!loadingBugs && bugs.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-3xl text-stone-200 mb-3">∅</p>
-                <p className="text-sm text-stone-400 mb-1">No bug reports found</p>
-                <p className="text-xs text-stone-300">Bug reports will appear here when users submit them</p>
+            <PullToRefresh onRefresh={fetchBugs}>
+              <div>
+                {loadingBugs && (
+                  [...Array(5)].map((_, i) => (
+                    <div key={i} className="h-14 bg-stone-100 rounded-xl animate-pulse mb-3" />
+                  ))
+                )}
+                {!loadingBugs && bugs.length === 0 && (
+                  <div className="py-12 text-center">
+                    <p className="text-3xl text-stone-200 mb-3">∅</p>
+                    <p className="text-sm text-stone-400 mb-1">No bug reports found</p>
+                    <p className="text-xs text-stone-300">Bug reports will appear here when users submit them</p>
+                  </div>
+                )}
+                {!loadingBugs && sortedBugs.map((bug, index) => (
+                  <BugMobileCard
+                    key={bug._id}
+                    bug={bug}
+                    index={index}
+                    onClick={() => { }} // Add navigation if you have a detail view
+                    onStatusClick={openMobilePicker}
+                    isUpdating={updatingIds.has(bug._id)}
+                  />
+                ))}
               </div>
-            )}
-            {!loadingBugs && sortedBugs.map((bug, index) => (
-              <BugMobileCard
-                key={bug._id}
-                bug={bug}
-                index={index}
-                onClick={() => { }} // Add navigation if you have a detail view
-                onStatusClick={openMobilePicker}
-                isUpdating={updatingIds.has(bug._id)}
-              />
-            ))}
+            </PullToRefresh>
 
             {mobilePicker && (
               <div className="fixed inset-x-0 bottom-0 z-50 bg-white border-t border-stone-200 p-4 md:hidden">
