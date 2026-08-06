@@ -1,4 +1,4 @@
-
+import PullToRefresh from "react-simple-pull-to-refresh";
 // src/pages/HomePage.jsx
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -64,6 +64,17 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
+    const handleRefresh = async () => {
+      try {
+        if (hasNextPage) {
+          await fetchNextPage();
+        } else {
+          window.location.reload();
+      }
+    } catch (err) {
+      console.error("Refresh failed:", err);
+    }
+  };
 
   return (
     <div className="group bg-white border border-stone-100 rounded-2xl overflow-hidden
@@ -74,7 +85,7 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
       <div
         onClick={() => navigate(`/product/${productId}`)}
         className="relative bg-stone-100 aspect-square flex items-center justify-center
-                   overflow-hidden cursor-pointer"
+                  overflow-hidden cursor-pointer"
       >
         {product.image ? (
           <img
@@ -90,14 +101,14 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
         )}
         {product.badge && (
           <span className="absolute top-2 left-2 sm:top-3 sm:left-3 text-[9px] sm:text-[10px]
-                           tracking-widest uppercase bg-stone-900 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full">
+                          tracking-widest uppercase bg-stone-900 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full">
             {product.badge}
           </span>
         )}
         {discount && (
           <span className="absolute top-2 right-2 sm:top-3 sm:right-3 text-[9px] sm:text-[10px]
-                           font-medium text-stone-600 bg-white px-1.5 sm:px-2 py-0.5 sm:py-1
-                           rounded-full border border-stone-200">
+                          font-medium text-stone-600 bg-white px-1.5 sm:px-2 py-0.5 sm:py-1
+                          rounded-full border border-stone-200">
             −{discount}%
           </span>
         )}
@@ -116,7 +127,7 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
           role="button"
           tabIndex={0}
           className="text-xs sm:text-sm font-medium text-stone-900 leading-snug mb-1.5 sm:mb-2
-                     line-clamp-2 cursor-pointer hover:text-stone-600 transition-colors select-none sm:select-auto"
+                    line-clamp-2 cursor-pointer hover:text-stone-600 transition-colors select-none sm:select-auto"
         >
           {product.name}
         </h3>
@@ -143,7 +154,7 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
                 <button
                   onClick={e => { e.stopPropagation(); updateQty(productId, -1); }}
                   className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center
-                             text-stone-600 hover:bg-stone-100 transition-colors"
+                        text-stone-600 hover:bg-stone-100 transition-colors"
                 >
                   <span className="text-base sm:text-lg leading-none">−</span>
                 </button>
@@ -151,7 +162,7 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
                 <button
                   onClick={e => { e.stopPropagation(); updateQty(productId, 1); }}
                   className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center
-                             text-stone-600 hover:bg-stone-100 transition-colors"
+                            text-stone-600 hover:bg-stone-100 transition-colors"
                 >
                   <span className="text-base sm:text-lg leading-none">+</span>
                 </button>
@@ -478,6 +489,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-10 py-8 sm:py-10 space-y-12 sm:space-y-16">
 
         {/* ── Products section ── */}
+        <PullToRefresh onRefresh={handleRefresh}>
         <section>
           <div className={`fade-in d1 ${visible ? "show" : ""}
                            flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6`}>
@@ -541,6 +553,9 @@ export default function HomePage() {
             </div>
           )}
         </section>
+        </PullToRefresh>
+
+
 
         {/* Nearby fitness centers */}
         <NearbyFitnessCenters visible={visible} />
