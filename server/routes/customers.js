@@ -44,7 +44,12 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   try {
     console.log('[API] GET /customers request received');
 
-    const customers = await Order.aggregate([
+    // ── Pagination params ─────────────────────────────────────────────────
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const skip = (page - 1) * limit;
+
+    const aggResult = await Order.aggregate([
       { $match: { status: 'paid' } },
       {
         $group: {
@@ -66,13 +71,27 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
           lastOrder: 1,
         },
       },
+      {
+        $facet: {
+          metadata: [{ $count: 'total' }],
+          data: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
     ]);
 
-    console.log(`[API] Found ${customers.length || 0} customers from orders`);
+    const total = aggResult[0]?.metadata[0]?.total || 0;
+    const customers = aggResult[0]?.data || [];
+    const totalPages = Math.ceil(total / limit);
+
+    console.log(`[API] Found ${total} total customers, returning page ${page}/${totalPages} (${customers.length} records)`);
 
     if (!customers || customers.length === 0) {
       console.log('[API] No customers found, returning empty list');
-      return res.json({ success: true, data: [] });
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { page, limit, total, totalPages },
+      });
     }
 
     // Deduplicate UIDs and resolve Firebase user info + UserProfile in parallel
@@ -112,7 +131,11 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     });
 
     console.log(`[API] Returning ${result.length} enriched customers`);
-    res.json({ success: true, data: result });
+    res.json({
+      success: true,
+      data: result,
+      pagination: { page, limit, total, totalPages },
+    });
   } catch (err) {
     console.error('[API] GET /customers error:', err);
     res.status(500).json({ success: false, error: err.message || 'Server error' });

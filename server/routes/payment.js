@@ -205,6 +205,12 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  * @access  Public (TESTING ONLY) - No authentication required
  */
 router.post("/demo-success", async (req, res) => {
+  // TEST-ONLY bypass — never register behavior in production. Returns 404 so the
+  // endpoint is inert outside of non-production environments (same gate as /api/dev).
+  if (process.env.NODE_ENV === "production") {
+    return res.status(404).json({ error: "Not found" });
+  }
+
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
@@ -220,7 +226,7 @@ router.post("/demo-success", async (req, res) => {
     } catch (createErr) {
       if (createErr.message === "Cart is empty") {
          // Still clear any empty cart just in case
-         await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { new: true });
+         await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { returnDocument: 'after' });
       }
       return res.status(400).json({ error: createErr.message });
     }

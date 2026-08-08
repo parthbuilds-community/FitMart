@@ -193,7 +193,7 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
   }
 
   try {
-    const updated = await Product.findOneAndUpdate({ productId }, req.body, { new: true });
+    const updated = await Product.findOneAndUpdate({ productId }, req.body, { returnDocument: 'after' });
     if (!updated) return res.status(404).json({ error: 'Product not found' });
     try { await cache.delPattern('products:'); } catch (e) { }
     res.json(updated);

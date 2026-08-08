@@ -26,8 +26,15 @@ const nullableStringSchema = z
   .optional();
 
 const cartItemSchema = z.object({
-  productId: productIdSchema,
-  quantity: quantitySchema,
+  productId: z.number({
+    required_error: "productId is required",
+    invalid_type_error: "Expected number, received string"
+  }).int().positive(),
+
+  quantity: z.number({
+    required_error: "quantity is required",
+    invalid_type_error: "Expected number, received string"
+  }).int().min(1,{message: "Number must be greater than 0" }).max(99,{message: "Quantity cannot exceed 99" })
 }).strict();
 
 const productFieldsSchema = z.object({

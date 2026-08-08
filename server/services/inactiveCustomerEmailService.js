@@ -131,7 +131,7 @@ async function sendInactivityReminderEmail(userId) {
     await UserProfile.findOneAndUpdate(
       { userId },
       { $set: { lastReminderEmailSentAt: new Date() } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     console.log(`✅ Inactivity reminder email sent to ${email} for user ${userId} (${daysSinceLastOrder} days inactive)`);

@@ -55,11 +55,11 @@ describe('requestSchemas - cartAddSchema', () => {
       expect(result.success).toBe(false);
     });
 
-    test('should coerce string productId to number', () => {
+    test('should reject string productId and quantity (strict number type)', () => {
+      // cartItemSchema uses z.number() (not z.coerce.number()), so strings are
+      // intentionally rejected — see invalid_type_error in requestSchemas.js
       const result = cartAddSchema.body.safeParse({ productId: '5', quantity: '2' });
-      expect(result.success).toBe(true);
-      expect(result.data.productId).toBe(5);
-      expect(result.data.quantity).toBe(2);
+      expect(result.success).toBe(false);
     });
   });
 });

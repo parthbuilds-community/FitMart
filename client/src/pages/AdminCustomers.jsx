@@ -113,26 +113,36 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
   </div>
 );
 
+const PAGE_LIMIT = 50;
+
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [sendingReminderId, setSendingReminderId] = useState(null);
   const [reminderSent, setReminderSent] = useState({});
   const [reminderError, setReminderError] = useState({});
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Scroll to top and reset loading state when page changes
   useEffect(() => {
     (async () => {
       try {
+        setLoading(true);
+        setError(null);
         const headers = await getAuthHeaders();
-        const res = await fetch(`${API_BASE}/customers`, { headers });
+        const res = await fetch(`${API_BASE}/customers?page=${page}&limit=${PAGE_LIMIT}`, { headers });
         const json = await res.json();
         if (!json.success) {
           throw new Error(json.error || "Failed to load customers");
         }
         setCustomers(json.data || []);
+        setTotalCustomers(json.pagination?.total || 0);
+        setTotalPages(json.pagination?.totalPages || 0);
         setLoading(false);
       } catch (err) {
         console.error("Customers fetch error:", err);
@@ -140,7 +150,13 @@ export default function AdminCustomers() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [page]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Send reminder email for a customer
   const handleSendReminder = async (e, customerId) => {
@@ -221,7 +237,7 @@ export default function AdminCustomers() {
         {/* KPI Cards — single col on mobile, 3-col on sm+ */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-5 mb-8 sm:mb-10">
           {[
-            { label: "Total Customers", value: customers.length, icon: "◎" },
+            { label: "Total Customers", value: totalCustomers, icon: "◎" },
             { label: "High Value", value: customers.filter(c => c.segment === "high-value").length, icon: "⭑" },
             { label: "New Customers", value: customers.filter(c => c.segment === "new").length, icon: "+" },
           ].map(({ label, value, icon }) => (
@@ -308,7 +324,12 @@ export default function AdminCustomers() {
                 All Customers
               </h2>
             </div>
-            {!loading && <p className="text-xs text-stone-400">{customers.length} customers</p>}
+            {!loading && (
+              <p className="text-xs text-stone-400">
+                {totalCustomers} customer{totalCustomers !== 1 ? "s" : ""}
+                {totalPages > 1 && <span className="text-stone-300"> &middot; Page {page} of {totalPages}</span>}
+              </p>
+            )}
           </div>
 
           {/* Mobile card list */}
@@ -442,6 +463,55 @@ export default function AdminCustomers() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination controls */}
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 sm:px-7 py-4 border-t border-stone-100">
+              <p className="text-xs text-stone-400 hidden sm:block">
+                Showing page {page} of {totalPages} ({totalCustomers} total customers)
+              </p>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  className="px-3 sm:px-4 py-1.5 text-xs font-medium rounded-lg
+                             bg-stone-100 text-stone-600
+                             hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed
+                             transition-all active:scale-95"
+                >
+                  Previous
+                </button>
+
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`w-8 h-8 text-xs font-medium rounded-lg transition-all hidden sm:inline-block ${
+                        pageNum === page
+                          ? "bg-stone-900 text-white"
+                          : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                  className="px-3 sm:px-4 py-1.5 text-xs font-medium rounded-lg
+                             bg-stone-100 text-stone-600
+                             hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed
+                             transition-all active:scale-95"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

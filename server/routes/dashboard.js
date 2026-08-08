@@ -1,4 +1,6 @@
 // server/routes/dashboard.js
+
+const { LOW_STOCK_THRESHOLD } = require('../config/constants');
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
@@ -50,7 +52,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     const totalCustomers = uniqueCustomers.length;
 
     // ── 3. KPI: Products Low on Stock ─────────────────────────────────────
-    const LOW_STOCK_THRESHOLD = 10;
+    
     const lowStockCount = await Product.countDocuments({
       stock: { $ne: null, $lt: LOW_STOCK_THRESHOLD },
     });
