@@ -25,7 +25,7 @@ async function adjustReserved(productId, delta, session = null) {
   // Check if product exists first
   const product = await Product.findOne({ productId: Number(productId) }).session(session);
   if (!product) {
-    throw new Error(`adjustReserved failed for productId ${productId}`);
+    throw new Error('product not found');
   }
 
   // Always enforce: reserved + delta must be >= 0
@@ -67,7 +67,7 @@ async function adjustReserved(productId, delta, session = null) {
   if (!updated) {
     const reason = delta > 0
       ? 'insufficient stock'
-      : 'reserved already at 0';
+      : 'reserved count cannot drop below zero';
     throw new Error(reason);
   }
 
