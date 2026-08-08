@@ -11,23 +11,33 @@ const { LOW_STOCK_THRESHOLD } = require('../config/constants');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const validateRequest = require('../middleware/validateRequest');
-const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
+const { createProductSchema, updateProductSchema, productQuerySchema } = require('../validation/requestSchemas');
 
 /**
  * @route   GET /api/products
  * @desc    Returns all products sorted by productId in ascending order
  * @access  Public
  */
-router.get('/', async (req, res) => {
+router.get('/', (req, res, next) => {
+  const result = productQuerySchema.safeParse(req.query);
+  if (!result.success) {
+    return res.status(400).json({
+      error: 'Invalid query parameters',
+      details: result.error.flatten().fieldErrors,
+    });
+  }
+  Object.defineProperty(req, 'query', { value: result.data, writable: true, configurable: true });
+  next();
+}, async (req, res) => {
   try {
-    // Query parameters
+    // Query parameters (already validated + coerced by Zod middleware above)
     const all = req.query.all === 'true';
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 24;
+    const page = req.query.page;
+    const limit = req.query.limit;
     const category = req.query.category;
     const search = req.query.search;
-    const sort = req.query.sort || 'productId_asc';
-    const fields = req.query.fields; // comma separated
+    const sort = req.query.sort;
+    const fields = req.query.fields;
 
     // Build mongoose filter
     const filter = {};

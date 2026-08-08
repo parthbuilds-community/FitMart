@@ -8,7 +8,9 @@ function validateRequest(schema) {
   return (req, res, next) => {
     try {
       if (schema.params) req.params = schema.params.parse(req.params);
-      if (schema.query) req.query = schema.query.parse(req.query);
+      if (schema.query) {
+        Object.defineProperty(req, 'query', { value: schema.query.parse(req.query), writable: true, configurable: true });
+      }
       if (schema.body) req.body = schema.body.parse(req.body);
       next();
     } catch (err) {

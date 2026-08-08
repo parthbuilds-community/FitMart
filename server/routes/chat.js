@@ -42,7 +42,6 @@ const MAX_HISTORY_TURNS = 6;
  * @param {*} raw - raw value from req.body.history
  * @returns {Array<{role: string, parts: [{text: string}]}>}
  */
-
 function sanitiseHistory(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.filter(
@@ -62,7 +61,6 @@ function sanitiseHistory(raw) {
  * @param {Array<{role: string, parts: [{text: string}]}>} history
  * @returns {string}
  */
-
 function buildHistoryBlock(history) {
   if (!history || history.length === 0) return "";
 
@@ -92,7 +90,7 @@ const chatSchema = z.object({
 
 router.post("/", chatLimiter, async (req, res) => {
   try {
-    // Request validation (from origin/main)
+    // Request validation
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({ error: 'Invalid request', details: ['body: JSON object expected'] });
     }
@@ -106,20 +104,16 @@ router.post("/", chatLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid request', details: [`message: Message must be ${MAX_MESSAGE_LENGTH} characters or fewer`] });
     }
 
-    // Schema validation if available (from origin/main)
+    // Schema validation
     let message;
-    if (typeof chatSchema !== 'undefined' && chatSchema) {
-      const parse = chatSchema.safeParse(req.body);
-      if (!parse.success) {
-        const issues = parse.error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
-        return res.status(400).json({ error: 'Invalid request', details: issues });
-      }
-      message = parse.data.message;
-    } else {
-      message = inputMessage;
+    const parse = chatSchema.safeParse(req.body);
+    if (!parse.success) {
+      const issues = parse.error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
+      return res.status(400).json({ error: 'Invalid request', details: issues });
     }
+    message = parse.data.message;
 
-    // History handling (from HEAD)
+    // History handling
     const { history: rawHistory } = req.body;
     const history = sanitiseHistory(rawHistory);
 
@@ -129,45 +123,31 @@ router.post("/", chatLimiter, async (req, res) => {
       timestamp: Date.now(),
     });
 
-    // Sanitization / neutralization (from origin/main)
+    // Sanitize user message
     function sanitizeMessage(input) {
       let s = input;
-
-      // Remove disallowed control characters (keep tab, newline, carriage return)
       s = s.replace(/[^\x09\x0A\x0D\x20-\x7E\u0080-\uFFFF]/g, '');
-
-      // Collapse 3+ consecutive newlines to 2
       s = s.replace(/\n{3,}/g, '\n\n');
-
-      // Collapse excessive whitespace
       s = s.replace(/[ \t]{3,}/g, ' ');
-
-      // Neutralize common role-override / prompt-injection phrases
       const injRegex = /(?:ignore(?: all)? previous instructions?|ignore previous instruction(?:s)?|you are now|act as if|act as|from now on(?:,)?|role[- ]?play as|roleplay as|pretend to be|become|follow these new instructions)/gi;
       s = s.replace(injRegex, '[redacted]');
-
-      // Remove fenced code blocks markers to avoid multi-line instruction tricks
       s = s.replace(/```/g, "'");
-
-      // Trim and return
       return s.trim();
     }
 
     const sanitized = sanitizeMessage(message);
 
-    // Build the full prompt (combining both approaches)
+    // Build prompt — always include SAFETY_INSTRUCTION, inject history when present
     const historyBlock = buildHistoryBlock(history);
 
-    let prompt;
-    if (typeof SAFETY_INSTRUCTION !== 'undefined' && SAFETY_INSTRUCTION) {
-      // Use the safer prompt construction from origin/main
-      prompt = `${SYSTEM_PROMPT}\n\n${SAFETY_INSTRUCTION}\n\n[USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
-    } else if (historyBlock) {
-      // Use the history-aware prompt from HEAD
-      prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${historyBlock}\n\nUser: ${message}`;
-    } else {
-      prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}`;
-    }
+    const prompt = [
+      SYSTEM_PROMPT,
+      SAFETY_INSTRUCTION,
+      historyBlock ? `Conversation so far:\n${historyBlock}` : "",
+      `[USER INPUT START]\n${sanitized}\n[USER INPUT END]`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
     let reply;
     let usedFallback = false;
