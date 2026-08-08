@@ -2,7 +2,7 @@
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminNavbar from "../components/AdminNavbar";
-import AdminKPIGrid from "../components/AdminKPIGrid";
+import AdminKPIGrid, {AdminKPIGridSkeleton} from "../components/AdminKPIGrid";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import {
   AreaChart, Area,
@@ -258,9 +258,7 @@ export default function AdminDashboard() {
 
         {loading && (
           <div className="space-y-4 sm:space-y-5">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 sm:h-36" />)}
-            </div>
+            <AdminKPIGridSkeleton />
             <div className="grid md:grid-cols-2 gap-4 sm:gap-5">
               <Skeleton className="h-60 sm:h-72" />
               <Skeleton className="h-60 sm:h-72" />
