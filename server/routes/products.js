@@ -26,7 +26,7 @@ router.get('/', (req, res, next) => {
       details: result.error.flatten().fieldErrors,
     });
   }
-  req.query = result.data;
+  Object.defineProperty(req, 'query', { value: result.data, writable: true, configurable: true });
   next();
 }, async (req, res) => {
   try {

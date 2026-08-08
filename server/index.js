@@ -5,6 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const compression = require("compression");
 const { RATE_LIMIT_WINDOW_MS, API_LIMIT_MAX, PAYMENT_LIMIT_MAX, DEFAULT_PORT } = require("./config/constants");
 const app = express();
 const port = process.env.PORT || DEFAULT_PORT;
@@ -106,6 +107,7 @@ app.use(
 );
 
 app.use(helmet());
+app.use(compression());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses

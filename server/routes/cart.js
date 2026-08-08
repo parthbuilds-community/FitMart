@@ -20,6 +20,12 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
  */
 // Atomic: check + increment happen in one findOneAndUpdate — no separate read needed.
 async function adjustReserved(productId, delta, session = null) {
+  // Check if product exists first
+  const product = await Product.findOne({ productId: Number(productId) }).session(session);
+  if (!product) {
+    throw new Error(`adjustReserved failed for productId ${productId}`);
+  }
+
   // Always enforce: reserved + delta must be >= 0
   const filter = {
     productId: Number(productId),
@@ -58,9 +64,9 @@ async function adjustReserved(productId, delta, session = null) {
 
   if (!updated) {
     const reason = delta > 0
-      ? 'insufficient stock or product not found'
-      : 'reserved count cannot drop below zero or product not found';
-    throw new Error(`Failed to adjust reserved stock: ${reason}`);
+      ? 'insufficient stock'
+      : 'reserved already at 0';
+    throw new Error(reason);
   }
 
   return updated;
@@ -199,4 +205,5 @@ router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
   }
 });
 
+router.adjustReserved = adjustReserved;
 module.exports = router;
