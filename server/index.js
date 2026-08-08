@@ -1,5 +1,6 @@
 // server/index.js
 require("dotenv").config();
+const ApiError = require("./utils/ApiError");
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
 const cors = require("cors");
@@ -188,15 +189,33 @@ app.get("/", (req, res) => res.send("FitMart server running"));
 // ── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
-    return res.status(400).json({ error: "Invalid JSON payload" });
+    return res.status(400).json({
+      success: false,
+      error: "Invalid JSON payload",
+    });
   }
 
-  if (err.type === 'entity.too.large' || err.status === 413) {
-    return res.status(413).json({ error: "Payload too large" });
+  if (err.type === "entity.too.large" || err.status === 413) {
+    return res.status(413).json({
+      success: false,
+      error: "Payload too large",
+    });
   }
 
-  console.error("Unhandled error:", err.message);
-  res.status(500).json({ error: "Something went wrong" });
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      error: err.message,
+      ...(err.details !== undefined && { details: err.details }),
+    });
+  }
+
+  console.error("Unhandled error:", err);
+
+  return res.status(500).json({
+    success: false,
+    error: "Something went wrong",
+  });
 });
 
 app.listen(port, () => {
