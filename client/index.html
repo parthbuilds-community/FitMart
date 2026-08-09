@@ -1,31 +1,71 @@
 <!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.png" />
 
     <!-- SEO META TAGS -->
     <title>FitMart - Fitness Equipment, Nutrition & Coaching</title>
 
-    <meta name="description"
-        content="FitMart is Mumbai’s fitness marketplace offering gym equipment, supplements, and personalized fitness plans. Shop smart and achieve your fitness goals." />
+    <meta
+      name="description"
+      content="FitMart is Mumbai’s fitness marketplace offering gym equipment, supplements, and personalized fitness plans. Shop smart and achieve your fitness goals."
+    />
 
-    <meta name="keywords"
-        content="fitness, gym equipment, protein, supplements, workout, fitness plans, Mumbai fitness, FitMart" />
+    <meta
+      name="keywords"
+      content="fitness, gym equipment, protein, supplements, workout, fitness plans, Mumbai fitness, FitMart"
+    />
 
-    <meta name="google-site-verification" content="JH_7_BoMUyjZ_Ex3ufbrEIsSW4cM-Bex1lJ3nwPT7_A" />
+    <meta
+      name="google-site-verification"
+      content="JH_7_BoMUyjZ_Ex3ufbrEIsSW4cM-Bex1l3nwPT7_A"
+    />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
 
-    <!-- OPTIONAL (extra marks 🔥) -->
     <meta name="author" content="FitMart Team" />
+  </head>
 
-</head>
+  <body>
+    <!-- Pre-hydration loader.
+         This renders immediately, before React is loaded. -->
+    <div id="prehydration-loader" aria-label="Loading">
+      <div class="prehydration-spinner"></div>
+    </div>
 
-<body>
+    <!-- React mounts here -->
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-</body>
 
+    <style>
+      #prehydration-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fafaf9;
+      }
+
+      .prehydration-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e7e5e4;
+        border-top-color: #1c1917;
+        border-radius: 50%;
+        animation: prehydration-spin 0.8s linear infinite;
+      }
+
+      @keyframes prehydration-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
