@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getWorkoutByDate, saveWorkout, removeExerciseFromWorkout } from "../utils/workoutStorage";
+import Toast from "../components/Toast";
 
 /**
  * NotesPage
@@ -18,6 +19,7 @@ export default function NotesPage() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [imageErrors, setImageErrors] = useState(new Set());
+  const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
 
   useEffect(() => {
     // Get selectedDate from localStorage
@@ -41,7 +43,8 @@ export default function NotesPage() {
   const handleSave = async () => {
     // Prevent saving empty title
     if (!title.trim()) {
-      alert("Please enter a workout title.");
+      setToast({ message: 'Please enter a workout title.', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
       return;
     }
 
@@ -257,6 +260,13 @@ export default function NotesPage() {
           </div>
         </div>
       </main>
+      {toast.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+        />
+      )}
     </div>
   );
 }
