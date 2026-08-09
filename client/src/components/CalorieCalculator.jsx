@@ -139,6 +139,8 @@ const CalorieCalculator = () => {
                     key={g}
                     type="button"
                     onClick={() => setFormData({ ...formData, gender: g })}
+                    aria-label={`Select ${g}`}
+                    aria-pressed={formData.gender === g}
                     className={`flex-1 py-3 px-4 sm:px-8 rounded-full text-xs tracking-widest
                                 uppercase transition-all duration-300 border min-h-11
                                 active:scale-[0.98]
@@ -234,6 +236,7 @@ const CalorieCalculator = () => {
 
             <button
               type="submit"
+              aria-label="Calculate daily calorie needs"
               className="w-full bg-stone-900 text-white text-sm tracking-widest uppercase
                          py-4 rounded-full hover:bg-stone-700 transition-colors shadow-sm
                          min-h-13 active:scale-[0.98]"
