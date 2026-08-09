@@ -21,7 +21,7 @@
         "marked": "^18.0.7",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
-        "react-router-dom": "^7.18.1",
+        "react-router-dom": "^7.18.2",
         "recharts": "^3.10.0",
         "tailwindcss": "^4.0.0"
     },
