@@ -19,6 +19,7 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+import Toast from "../components/Toast";
 
 
 
@@ -193,6 +194,7 @@ export default function HomePage() {
   const [backendError, setBackendError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
 
@@ -278,7 +280,8 @@ export default function HomePage() {
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Add to cart failed:", err); 
-      alert(err.message);
+      setToast({ message: err.message || 'Failed to add to cart', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
     }
   };
 
@@ -299,7 +302,8 @@ export default function HomePage() {
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Remove from cart failed:", err); 
-      alert(err.message);
+      setToast({ message: err.message || 'Failed to remove from cart', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
     }
   };
 
@@ -320,7 +324,8 @@ export default function HomePage() {
       setCart(mapCart(cartDoc, products));
     } catch (err) { 
       console.error("Update qty failed:", err); 
-      alert(err.message);
+      setToast({ message: err.message || 'Failed to update quantity', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
     }
   };
 
@@ -693,6 +698,13 @@ export default function HomePage() {
       }>
         <FitnessChatBot />
       </ErrorBoundary>
+      {toast.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+        />
+      )}
     </div>
   );
 }
