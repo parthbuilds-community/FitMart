@@ -278,12 +278,15 @@ export default function ProductPage() {
                           flex items-center gap-1.5 sm:gap-2 text-xs text-stone-400 overflow-x-auto
                           whitespace-nowrap scrollbar-none">
             <button onClick={() => navigate("/")}
+              aria-label="Navigate to home"
               className="hover:text-stone-700 transition-colors shrink-0">Home</button>
             <span className="shrink-0">→</span>
             <button onClick={() => navigate("/home")}
+              aria-label="Navigate to shop"
               className="hover:text-stone-700 transition-colors shrink-0">Shop</button>
             <span className="shrink-0">→</span>
             <button onClick={() => navigate("/home")}
+              aria-label={`View ${product.category} products`}
               className="hover:text-stone-700 transition-colors shrink-0">
               {product.category}
             </button>
