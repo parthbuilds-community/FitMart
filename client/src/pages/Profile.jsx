@@ -123,6 +123,7 @@ export default function Profile() {
   const [toast, setToast] = useState(null);
   const [profile, setProfile] = useState({ name: "", phone: "", addresses: [], defaultAddressId: undefined });
   const [editingAddress, setEditingAddress] = useState(null);
+  const [savingAddress, setSavingAddress] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const fileInputRef = useRef();
   const [photoURL, setPhotoURL] = useState(null);
@@ -311,8 +312,13 @@ const [rewardsError, setRewardsError] = useState("");
     }));
   };
 
-  const saveEditingAddress = () => {
+  const saveEditingAddress = async () => {
     if (!editingAddress) return;
+    setSavingAddress(true);
+    
+    // Simulate async operation for consistency
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     setProfile((prev) => {
       const exists = prev.addresses.find((a) => a.id === editingAddress.id);
       const addresses = exists
@@ -322,6 +328,7 @@ const [rewardsError, setRewardsError] = useState("");
     });
     setEditingAddress(null);
     setToast(editingAddress ? "Address saved" : "Address added");
+    setSavingAddress(false);
   };
 
   const tabs = [
@@ -704,9 +711,10 @@ const [rewardsError, setRewardsError] = useState("");
               </button>
               <button
                 onClick={saveEditingAddress}
-                className="flex-1 bg-stone-900 text-white text-sm py-3 rounded-full hover:bg-stone-700 transition-colors"
+                disabled={savingAddress}
+                className="flex-1 bg-stone-900 text-white text-sm py-3 rounded-full hover:bg-stone-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Save address
+                {savingAddress ? "Saving..." : "Save address"}
               </button>
             </div>
           </div>
