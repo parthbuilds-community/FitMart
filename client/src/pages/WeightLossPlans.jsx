@@ -102,6 +102,7 @@ export default function WeightLossPlans() {
 
               <button
                 onClick={() => navigate("/home")}
+                aria-label="Navigate back to home"
                 className="text-xs tracking-[0.15em] uppercase text-stone-400
                            hover:text-stone-200 transition-colors inline-flex items-center
                            gap-2 self-start sm:self-auto min-h-11"
