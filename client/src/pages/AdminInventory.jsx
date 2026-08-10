@@ -121,21 +121,29 @@ export default function AdminInventory() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(null); // product being edited
   const [saving, setSaving] = useState(false);
-  const fetchProducts = async () => {
+  const fetchProducts = async (signal) => {
     setLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products`, { headers });
+      const res = await fetch(`${API_BASE}/products`, { headers, signal });
       const data = await res.json();
-      setProducts(data);
-      setLoading(false);
+      if (!signal.aborted) {
+        setProducts(data);
+        setLoading(false);
+      }
     } catch (err) {
-      setError('Failed to load inventory');
-      setLoading(false);
+      if (!signal.aborted) {
+        setError('Failed to load inventory');
+        setLoading(false);
+      }
     }
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    const abortController = new AbortController();
+    fetchProducts(abortController.signal);
+    return () => abortController.abort();
+  }, []);
 
   const stats = {
     total: products.length,
