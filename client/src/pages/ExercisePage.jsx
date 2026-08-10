@@ -29,6 +29,7 @@ export default function ExercisePage() {
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [imageErrors, setImageErrors] = useState(new Set());
+  const [addingExercise, setAddingExercise] = useState(false);
 
   // Get selected date from localStorage on mount
   useEffect(() => {
@@ -70,17 +71,20 @@ export default function ExercisePage() {
   };
 
   const handleExerciseSelect = async (exercise) => {
-    if (!selectedDate) {
-      alert("No date selected. Please go back and select a date first.");
-      return;
+    setAddingExercise(true);
+    try {
+      // Add exercise to the workout
+      await addExerciseToWorkout(selectedDate, exercise);
+
+      // Navigate back to notes page
+      localStorage.setItem("selectedDate", selectedDate);
+      navigate("/notes");
+    } catch (err) {
+      console.error("Failed to add exercise:", err);
+      setError("Failed to add exercise. Please try again.");
+    } finally {
+      setAddingExercise(false);
     }
-
-    // Add exercise to the workout
-    await addExerciseToWorkout(selectedDate, exercise);
-
-    // Navigate back to notes page
-    localStorage.setItem("selectedDate", selectedDate);
-    navigate("/notes");
   };
 
   const handleImageError = (exerciseId) => {
@@ -228,9 +232,10 @@ export default function ExercisePage() {
 
                   <button
                     onClick={() => handleExerciseSelect(exercise)}
-                    className="w-full bg-stone-900 text-white text-xs py-3 rounded-full hover:bg-stone-700 transition-all font-medium active:scale-95"
+                    disabled={addingExercise}
+                    className="w-full bg-stone-900 text-white text-xs py-3 rounded-full hover:bg-stone-700 transition-all font-medium active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Add to Workout →
+                    {addingExercise ? "Adding..." : "Add to Workout →"}
                   </button>
                 </div>
               </div>
