@@ -29,6 +29,7 @@ const CustomerAvatar = ({ name, photoURL, sizePx = 64 }) => (
       <img
         src={photoURL}
         alt={name || "avatar"}
+        loading="lazy"
         className="w-full h-full object-cover"
         referrerPolicy="no-referrer"
         onError={e => { e.currentTarget.style.display = "none"; }}

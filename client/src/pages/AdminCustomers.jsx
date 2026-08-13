@@ -17,7 +17,7 @@ const CustomerAvatar = ({ name, photoURL, size = 8 }) => (
   <div className={`w-${size} h-${size} rounded-full overflow-hidden shrink-0
                    bg-stone-200 flex items-center justify-center`}>
     {photoURL ? (
-      <img src={photoURL} alt={name || "avatar"}
+      <img src={photoURL} alt={name || "avatar"} loading="lazy"
         className="w-full h-full object-cover" referrerPolicy="no-referrer"
         onError={e => { e.currentTarget.style.display = "none"; }} />
     ) : (

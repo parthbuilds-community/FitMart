@@ -299,6 +299,7 @@ export default function ProductPage() {
                     ref={imgRef}
                     src={product.image}
                     alt={product.name}
+                    loading="lazy"
                     onLoad={() => setImgLoaded(true)}
                     className={`pd-fade-img w-full h-full object-cover ${imgLoaded ? "in" : ""}`}
                   />
@@ -636,7 +637,7 @@ export default function ProductPage() {
                     >
                       <div className="relative bg-stone-100 aspect-square overflow-hidden">
                         {rel.image ? (
-                          <img src={rel.image} alt={rel.name}
+                          <img src={rel.image} alt={rel.name} loading="lazy"
                             className="related-img w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center

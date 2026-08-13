@@ -367,7 +367,16 @@ export default function LandingPage() {
                   className="bg-white border border-stone-100 rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200">
                   <div className="relative bg-stone-100 aspect-square flex items-center justify-center overflow-hidden">
                     {p.image ? (
-                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />
+                      <img
+  src={p.image}
+  alt={p.name}
+  className="w-full h-full object-cover"
+  loading="lazy"
+  onError={e => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.style.display = 'none';
+  }}
+/>
                     ) : (
                       <div className="text-4xl opacity-20 select-none">
                         {p.category === "Nutrition" ? "🧴" : p.category === "Wearables" ? "⌚" : "🏋️"}

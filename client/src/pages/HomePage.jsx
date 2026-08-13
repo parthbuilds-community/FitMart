@@ -78,11 +78,16 @@ const ProductCard = memo(function ProductCard({ product, onAdd, cartItems = [], 
       >
         {product.image ? (
           <img
-            src={product.image} alt={product.name}
-            loading="lazy" decoding="async"
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = "none"; }}
-          />
+  src={product.image}
+  alt={product.name}
+  loading="lazy"
+  decoding="async"
+  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+  onError={e => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.style.display = "none";
+  }}
+/>
         ) : (
           <div className="text-4xl sm:text-5xl opacity-20 select-none group-hover:scale-110 transition-transform duration-500">
             {product.category === "Nutrition" ? "🧴" : product.category === "Wearables" ? "⌚" : "🏋️"}

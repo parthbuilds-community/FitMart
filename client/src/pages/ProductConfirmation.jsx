@@ -489,6 +489,7 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
                   <img
                     src="${product.image}"
                     alt="${product.name}"
+                    loading="lazy"
                     class="product-image"
                   />
 
@@ -569,6 +570,7 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
           ? `
             <img
               class="qr-code"
+              loading="lazy"
               src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${paymentId}"
               alt="Payment QR"
             />
@@ -667,6 +669,7 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
                   <img
                     src={product.image}
                     alt={product.name}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                     onError={e => { e.currentTarget.style.display = "none"; }}
                   />
