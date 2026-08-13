@@ -198,19 +198,27 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
  * @access  Private (Admin)
  */
 
-router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-  const productId = Number(req.params.id);
+router.delete('/:id', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        
+        // Capture the result
+        const deletedProduct = await Product.findOneAndDelete({ productId });
 
-  if (isNaN(productId)) {
-    return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
-  }
-  try {
-    const deleted = await Product.findOneAndDelete({ productId });
-    try { await cache.delPattern('products:'); } catch (e) { }
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
+        // If no product was found, return a 404 error
+        if (!deletedProduct) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Product not found' 
+            });
+        }
+
+        // Return 200 only if a product was successfully deleted
+        return res.status(200).json({ success: true });
+        
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 module.exports = router;
