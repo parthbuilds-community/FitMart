@@ -103,6 +103,8 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
                       alt={user.displayName || "Admin profile picture"}
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
+                      loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <span className="text-[11px] font-medium text-stone-600">

@@ -31,6 +31,8 @@ const CustomerAvatar = ({ name, photoURL, sizePx = 64 }) => (
         alt={name || "avatar"}
         className="w-full h-full object-cover"
         referrerPolicy="no-referrer"
+        loading="lazy"
+        decoding="async"
         onError={e => { e.currentTarget.style.display = "none"; }}
       />
     ) : (

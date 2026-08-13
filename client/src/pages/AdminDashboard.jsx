@@ -72,6 +72,7 @@ const CustomerAvatar = ({ name, photoURL }) => (
     {photoURL ? (
       <img src={photoURL} alt={name || "avatar"}
         className="w-full h-full object-cover" referrerPolicy="no-referrer"
+        loading="lazy" decoding="async"
         onError={e => { e.currentTarget.style.display = "none"; }} />
     ) : (
       <span className="text-[11px] font-medium text-stone-600">
