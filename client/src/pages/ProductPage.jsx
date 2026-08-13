@@ -1,11 +1,14 @@
 // src/pages/ProductPage.jsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
+import useProductDetails from "../hooks/useProductDetails";
+
+
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -47,11 +50,13 @@ export default function ProductPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
 
-  const [product, setProduct] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [related, setRelated] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    product,
+    products,
+    related,
+    loading,
+    error,
+  } = useProductDetails(productId);
   const [visible, setVisible] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
@@ -78,16 +83,29 @@ export default function ProductPage() {
   ];
   const busy = adding || buyingNow;
 
-  const refreshCart = async (productsList = products) => {
-    const user = auth.currentUser;
-    if (!user || !productsList.length) return;
-    try {
-      const cartDoc = await apiGetCart(user.uid);
-      setCart(enrichCart(cartDoc, productsList));
-    } catch (err) {
-      console.error("refreshCart error:", err);
-    }
-  };
+  const refreshCart = useCallback(
+    async (productsList = products) => {
+      const user = auth.currentUser;
+      if (!user || !productsList.length) return;
+
+      try {
+        const cartDoc = await apiGetCart(user.uid);
+        setCart(enrichCart(cartDoc, productsList));
+      } catch (err) {
+        console.error("refreshCart error:", err);
+      }
+    },
+    [products]
+  );
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user && products.length) {
+        refreshCart(products);
+      }
+    });
+
+    return unsubscribe;
+  }, [products, refreshCart]);
 
   useEffect(() => {
     setVisible(false);
@@ -96,39 +114,14 @@ export default function ProductPage() {
     setQuantity(1);
     window.scrollTo({ top: 0 });
 
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`${API}/api/products?all=true`);
-        if (!res.ok) throw new Error("Failed to load products");
-        const all = res.ok ? await res.json() : [];
-        const normalised = all.map(p => ({ ...p, id: p.productId }));
-        setProducts(normalised);
-        const found = normalised.find(p => String(p.productId) === String(productId));
-        if (!found) throw new Error("Product not found");
-        setProduct(found);
-        setRelated(
-          normalised
-            .filter(p => p.category === found.category && String(p.productId) !== String(productId))
-            .slice(0, 4)
-        );
-        const user = auth.currentUser;
-        if (user) {
-          const cartDoc = await apiGetCart(user.uid);
-          setCart(enrichCart(cartDoc, normalised));
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-        setTimeout(() => setVisible(true), 80);
-      }
-    })();
+    const timer = setTimeout(() => setVisible(true), 80);
+
+    return () => clearTimeout(timer);
   }, [productId]);
 
+
   useEffect(() => {
-    if (product) document.title = `${product.name} — FitMart`;
+    if (product) document.title = `${product.name} - FitMart`;
   }, [product]);
 
   const handleAddToCart = async () => {
