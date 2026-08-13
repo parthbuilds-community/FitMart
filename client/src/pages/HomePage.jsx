@@ -1,6 +1,6 @@
 
 // src/pages/HomePage.jsx
-import { useState, useEffect, useRef, useMemo, memo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { signOut } from "firebase/auth";
@@ -19,7 +19,7 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
-
+import useDebounce from '../hooks/useDebounce';
 
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -185,8 +185,7 @@ export default function HomePage() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const debounceRef = useRef(null);
+  const debouncedQuery = useDebounce(searchQuery, 300);
   const [menuOpen, setMenuOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState([]);
@@ -195,12 +194,6 @@ export default function HomePage() {
   const [showAll, setShowAll] = useState(false);
 
   const { showBanner, dismissBanner } = useWelcomeDiscount(user);
-
-  useEffect(() => {
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedQuery(searchQuery), 300);
-    return () => clearTimeout(debounceRef.current);
-  }, [searchQuery]);
 
   useEffect(() => { document.title = "FitMart - Fitness & Nutrition Store"; }, []);
 
@@ -221,7 +214,7 @@ export default function HomePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteProducts({ limit: 24 });
+  } = useInfiniteProducts({ limit: 24, search: debouncedQuery });
 
   useEffect(() => {
     setLoading(rqLoading);
