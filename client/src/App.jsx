@@ -29,6 +29,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import LegalTerms from "./pages/LegalTerms";
 import LegalPrivacy from "./pages/LegalPrivacy";
 import DevAdminLogin from "./components/DevAdminLogin";
+import ScrollToTopFAB from "./components/ScrollToTopFAB";
 
 export default function App() {
   const queryClient = new QueryClient();
@@ -119,6 +120,11 @@ export default function App() {
             {/* Redirect unknown routes to NotFound */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+
+          {/* Global scroll-to-top button — rendered outside <Routes> so it
+              appears on every page (public, admin, auth, plans, 404) without
+              depending on NonAdminRoute/AdminRoute guards. */}
+          <ScrollToTopFAB />
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
