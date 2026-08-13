@@ -4,6 +4,10 @@ const CartItemSchema = new mongoose.Schema(
   {
     productId: { type: Number, required: true },
     quantity: { type: Number, required: true, min: 1 },
+    reservedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { _id: false }
 );
