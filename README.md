@@ -1179,6 +1179,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 Made with ❤️ by [Parth Narkar](https://github.com/parthnarkar) and the [Parth Builds Community](https://www.instagram.com/parth.builds/)
 
-⭐ **Star this repo** if you find it useful — it helps a lot!
+⭐ **Star this repo** if you find it useful — it helps a lot or fork
 
 </div>
