@@ -1,6 +1,7 @@
 // src/pages/ProductPage.jsx
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { auth } from "../auth/firebase";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
@@ -127,9 +128,11 @@ export default function ProductPage() {
     })();
   }, [productId]);
 
-  useEffect(() => {
-    if (product) document.title = `${product.name} — FitMart`;
-  }, [product]);
+  const ogImage = product?.image || '';
+  const ogTitle = product?.name || 'FitMart';
+  const ogDescription = product?.description
+    ? product.description.slice(0, 160)
+    : `Shop ${product?.name || 'fitness products'} at FitMart — authentic ${product?.category?.toLowerCase() || 'fitness'} products with fast delivery.`;
 
   const handleAddToCart = async () => {
     const user = auth.currentUser;
@@ -241,6 +244,15 @@ export default function ProductPage() {
 
   return (
     <>
+      <Helmet>
+        <title>{ogTitle} — FitMart</title>
+        <meta name="description" content={ogDescription} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta property="og:type" content="product" />
+        <meta property="og:site_name" content="FitMart" />
+      </Helmet>
       <Shell cartCount={cartCount} onCartOpen={() => setCartOpen(true)}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
