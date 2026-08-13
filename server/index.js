@@ -1,5 +1,6 @@
 // server/index.js
 require("dotenv").config();
+const mongoose = require("mongoose");
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
 const cors = require("cors");
@@ -182,8 +183,28 @@ if (process.env.NODE_ENV !== 'production') {
 // Proxy GitHub stats to avoid client-side rate limits and CORS errors
 app.use("/api/github", require("./routes/github"));
 
-// ── Health check ─────────────────────────────────────────────────────────────
-app.get("/", (req, res) => res.send("FitMart server running"));
+// Legacy root — redirect to /health for backwards compatibility
+app.get("/", (req, res) => {
+  res.redirect(307, "/health");
+});
+
+// ── Health / readiness check ───────────────────────────────────────────────────
+// Returns 200 when MongoDB is connected, 503 when unavailable.
+// Used by Docker healthcheck and external uptime monitors.
+app.get("/health", (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  // readyState: 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+  const dbStatus = ["disconnected", "connected", "connecting", "disconnecting"][dbState] || "unknown";
+  const healthy = dbState === 1;
+
+  const payload = {
+    status: healthy ? "ok" : "unavailable",
+    db: dbStatus,
+    timestamp: new Date().toISOString(),
+  };
+
+  res.status(healthy ? 200 : 503).json(payload);
+});
 
 // ── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
