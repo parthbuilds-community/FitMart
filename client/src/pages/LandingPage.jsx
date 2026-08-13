@@ -169,6 +169,14 @@ export default function LandingPage() {
         .stat-card { transition: transform .25s ease; }
         .stat-card:hover { transform: translateY(-2px); }
         .gh-star-btn { transition: background .2s ease, color .2s ease, border-color .2s ease; }
+        .mobile-menu-enter {
+          animation: mobileMenuSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          transform-origin: top;
+        }
+        @keyframes mobileMenuSlide {
+          from { opacity: 0; transform: scaleY(0.95) translateY(-8px); }
+          to { opacity: 1; transform: scaleY(1) translateY(0); }
+        }
       `}</style>
 
       {/* ── NAVBAR ── */}
@@ -681,8 +689,61 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading
           >
             {authLoading ? '...' : 'Get Started'}
           </button>
+
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-expanded={menuOpen}
+            aria-label="Toggle navigation menu"
+            className={`sm:hidden p-2 rounded-full transition-colors min-w-9 min-h-9 flex items-center justify-center
+                          ${isOpaque
+                ? "text-stone-600 hover:bg-stone-100"
+                : "text-white/80 hover:bg-white/10"
+              }`}
+          >
+            {menuOpen ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {menuOpen && (
+        <div className={`sm:hidden border-t px-4 py-4 flex flex-col gap-3 shadow-md mobile-menu-enter
+                          ${isOpaque
+                            ? "bg-white/95 backdrop-blur-sm border-stone-200"
+                            : "bg-stone-900/95 backdrop-blur-sm border-stone-800"
+                          }`}
+        >
+          <a
+            href={GITHUB_REPO}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMenuOpen(false)}
+            className={`flex items-center justify-center gap-2 text-xs px-3 py-2.5 rounded-full
+                          border transition-all min-h-10 w-full font-medium
+                          ${isOpaque
+                ? "border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white hover:border-stone-900"
+                : "border-white/20 text-white/80 hover:bg-white/10"
+              }`}
+          >
+            <GithubIcon className="w-4 h-4" />
+            <StarIcon className="w-3.5 h-3.5" />
+            <span>Star on GitHub</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
+                                ${isOpaque ? "bg-stone-100 text-stone-700" : "bg-white/10 text-white/70"}`}>
+              {formatStat(ghStats.stars, ghLoading)}
+            </span>
+          </a>
+        </div>
+      )}
     </nav>
   );
 }
