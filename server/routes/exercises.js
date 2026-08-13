@@ -22,6 +22,7 @@ const CATEGORY_MAPPING = {
  * Fetches exercises from RapidAPI for a specific body part.
  */
 async function fetchExercisesFromAPI(bodyPart) {
+
   const response = await fetch(
     `https://${RAPIDAPI_HOST}/exercises/bodyPart/${encodeURIComponent(bodyPart)}`,
     {
@@ -30,11 +31,14 @@ async function fetchExercisesFromAPI(bodyPart) {
         "x-rapidapi-key": RAPIDAPI_KEY,
         "x-rapidapi-host": RAPIDAPI_HOST,
       },
+      signal: AbortSignal.timeout(10000),
     }
   );
 
   if (!response.ok) {
-    throw new Error(`RapidAPI returned status ${response.status} for bodyPart: ${bodyPart}`);
+    throw new Error(
+      `RapidAPI returned status ${response.status} for bodyPart: ${bodyPart}`
+    );
   }
 
   return response.json();
@@ -68,9 +72,9 @@ function normalizeExercise(ex, isFirstExercise = false) {
     console.log("  image:", ex.image ? "✅ Present" : "❌ Missing");
     console.log("  imageUrl:", ex.imageUrl ? "✅ Present" : "❌ Missing");
     console.log("  videoUrl:", ex.videoUrl ? "✅ Present" : "❌ Missing");
-    console.log("");
   }
-
+    
+  
   return {
     id: ex.id,
     name: ex.name || "",
@@ -128,19 +132,26 @@ router.get("/:category", async (req, res) => {
     const allExercises = [];
 
     // Fetch exercises for all mapped body parts
-    for (const bodyPart of bodyParts) {
-      try {
-        const exercises = await fetchExercisesFromAPI(bodyPart);
-        allExercises.push(...exercises);
-      } catch (error) {
-        console.warn(
-          `⚠️ Failed to fetch exercises for bodyPart "${bodyPart}": ${error.message}`
-        );
-        // Continue with other body parts even if one fails
-      }
+for (const bodyPart of bodyParts) {
+  try {
+    const exercises = await fetchExercisesFromAPI(bodyPart);
+    allExercises.push(...exercises);
+
+  } catch (error) {
+
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
+      console.warn(`ExerciseDB timeout for ${bodyPart}`);
+    } else {
+      console.warn(error);
     }
 
-    if (allExercises.length === 0) {
+    // Continue with other body parts even if one fails
+    continue;
+  }
+}
+    }
+
+     if(allExercises.length === 0) {
       console.warn(`No exercises found for category "${category}" (bodyParts: ${bodyParts.join(", ")})`);
       return res.json([]);
     }
