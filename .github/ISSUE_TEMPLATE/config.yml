@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Community Discussion
+    url: https://github.com/parthbuilds-community/FitMart/discussions
+    about: Ask questions, share ideas, or discuss the project with the community.
+  - name: 🔒 Security Issue
+    url: https://github.com/parthbuilds-community/FitMart/security/policy
+    about: Report security vulnerabilities confidentially — do not open a public issue.
+  - name: 📖 Documentation
+    url: https://github.com/parthbuilds-community/FitMart/blob/main/docs/CONTRIBUTING.md
+    about: Check the contributing guide before opening a new issue.
