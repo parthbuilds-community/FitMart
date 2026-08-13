@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../auth/useAuth';
 import { getBugs, patchBugStatus } from '../utils/api/bugs';
 import Toast from '../components/Toast';
 import BugScreenshot from '../components/BugScreenshot';
+import useDebounce from '../hooks/useDebounce';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -97,6 +98,12 @@ export default function AdminBugs() {
   const [toast, setToast] = useState(null);
   // Mobile status picker state: { id, status }
   const [mobilePicker, setMobilePicker] = useState(null);
+  // Search, filter & pagination
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
+  const debouncedSearch = useDebounce(searchInput, 300);
 
   const openMobilePicker = (bug) => {
     setMobilePicker({ id: bug._id, status: bug.status });
@@ -134,6 +141,12 @@ export default function AdminBugs() {
     }
   };
 
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
+
+  // Fetch bugs when dependencies change
   useEffect(() => {
     if (loading || !user) return;
     let mounted = true;
@@ -141,8 +154,16 @@ export default function AdminBugs() {
     (async () => {
       try {
         const token = await user.getIdToken();
-        const bugsData = await getBugs(token);
-        if (mounted) setBugs(bugsData);
+        const data = await getBugs(token, {
+          search: debouncedSearch || undefined,
+          status: statusFilter || undefined,
+          page,
+          limit: 20,
+        });
+        if (mounted) {
+          setBugs(data.bugs || []);
+          setPagination(data.pagination || { page: 1, limit: 20, total: 0 });
+        }
       } catch (err) {
         console.error(err);
         setError('Unable to load bug reports');
@@ -151,7 +172,15 @@ export default function AdminBugs() {
       }
     })();
     return () => { mounted = false; };
-  }, [loading, user]);
+  }, [loading, user, debouncedSearch, statusFilter, page]);
+
+  const handleSearchChange = useCallback((e) => {
+    setSearchInput(e.target.value);
+  }, []);
+
+  const handleStatusFilterChange = useCallback((e) => {
+    setStatusFilter(e.target.value);
+  }, []);
 
   // Derived metrics for visualizations
   const statusCounts = bugs.reduce((acc, bug) => {
@@ -198,7 +227,7 @@ export default function AdminBugs() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-5 mb-8 sm:mb-10">
           {[
-            { label: "Total Reports", value: bugs.length, icon: "◎" },
+            { label: "Total Reports", value: pagination.total, icon: "◎" },
             { label: "Open", value: bugs.filter(b => b.status === "open").length, icon: "⭑" },
             { label: "Resolved", value: bugs.filter(b => b.status === "resolved").length, icon: "✓" },
           ].map(({ label, value, icon }) => (
@@ -269,18 +298,63 @@ export default function AdminBugs() {
           </div>
         </div>
 
-        {/* Bug list card */}
+        {/* Search, filter & pagination toolbar */}
         <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden
                         hover:border-stone-300 transition-all duration-300">
-          <div className="px-4 sm:px-7 py-4 sm:py-5 border-b border-stone-100
-                          flex justify-between items-center">
-            <div>
-              <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">Directory</p>
-              <h2 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-xl text-stone-900">
-                All Reports
-              </h2>
+          <div className="px-4 sm:px-7 py-4 sm:py-5 border-b border-stone-100 space-y-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-0.5">Directory</p>
+                <h2 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-xl text-stone-900">
+                  All Reports
+                </h2>
+              </div>
+              {!loadingBugs && (
+                <p className="text-xs text-stone-400">
+                  {pagination.total} report{pagination.total !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
-            {!loadingBugs && <p className="text-xs text-stone-400">{bugs.length} reports</p>}
+
+            {/* Search + status filter row */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              {/* Search input */}
+              <div className="relative flex-1">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400 pointer-events-none"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={handleSearchChange}
+                  placeholder="Search by title or description..."
+                  aria-label="Search bug reports"
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-stone-50 border border-stone-200
+                             rounded-xl text-stone-700 placeholder:text-stone-400
+                             focus:outline-none focus:ring-2 focus:ring-stone-900 focus:border-transparent
+                             transition-all duration-200"
+                />
+              </div>
+
+              {/* Status filter */}
+              <select
+                value={statusFilter}
+                onChange={handleStatusFilterChange}
+                aria-label="Filter by status"
+                className="px-3 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl
+                           text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-900
+                           focus:border-transparent transition-all duration-200"
+              >
+                <option value="">All statuses</option>
+                <option value="open">Open</option>
+                <option value="in-progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
           </div>
 
           {/* Mobile card list */}
@@ -507,6 +581,73 @@ export default function AdminBugs() {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination bar */}
+            {!loadingBugs && pagination.total > pagination.limit && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100">
+                <p className="text-xs text-stone-400">
+                  Page {pagination.page} of {totalPages}
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => goToPage(page - 1)}
+                    disabled={page <= 1}
+                    aria-label="Previous page"
+                    className="px-3 py-1.5 text-xs rounded-lg border border-stone-200
+                               text-stone-600 hover:bg-stone-50 hover:border-stone-300
+                               disabled:opacity-30 disabled:cursor-not-allowed
+                               focus:outline-none focus:ring-2 focus:ring-stone-900 focus:ring-offset-1
+                               transition-all duration-200"
+                  >
+                    ← Prev
+                  </button>
+
+                  {/* Page number buttons */}
+                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 7) {
+                      pageNum = i + 1;
+                    } else if (page <= 4) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 3) {
+                      pageNum = totalPages - 6 + i;
+                    } else {
+                      pageNum = page - 3 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => goToPage(pageNum)}
+                        aria-label={`Go to page ${pageNum}`}
+                        aria-current={pageNum === page ? 'page' : undefined}
+                        className={`w-7 h-7 text-xs rounded-lg transition-all duration-200
+                                   focus:outline-none focus:ring-2 focus:ring-stone-900 focus:ring-offset-1
+                                   ${
+                          pageNum === page
+                            ? 'bg-stone-900 text-white'
+                            : 'text-stone-600 hover:bg-stone-50 border border-transparent'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => goToPage(page + 1)}
+                    disabled={page >= totalPages}
+                    aria-label="Next page"
+                    className="px-3 py-1.5 text-xs rounded-lg border border-stone-200
+                               text-stone-600 hover:bg-stone-50 hover:border-stone-300
+                               disabled:opacity-30 disabled:cursor-not-allowed
+                               focus:outline-none focus:ring-2 focus:ring-stone-900 focus:ring-offset-1
+                               transition-all duration-200"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
