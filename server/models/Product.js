@@ -29,5 +29,7 @@ ProductSchema.index({ category: 1 });
 ProductSchema.index({ name: 'text' });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ createdAt: -1 });
+ProductSchema.index({ category: 1, price: 1 });
+ProductSchema.index({ category: 1, rating: -1 });
 
 module.exports = mongoose.model('Product', ProductSchema);
