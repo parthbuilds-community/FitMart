@@ -1,8 +1,9 @@
 // src/pages/AdminInventory.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import useFocusTrap from "../hooks/useFocusTrap";
 
 const LOW_STOCK_THRESHOLD = 5;
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
@@ -101,11 +102,23 @@ const InventoryMobileCard = ({ p, onEdit }) => {
 
 // Simple modal component
 const Modal = ({ open, onClose, children }) => {
+  const modalRef = useRef(null);
+  // Trap keyboard focus inside the modal while open: Tab/Shift+Tab cycle
+  // within the panel, Escape closes it, focus moves to the close button
+  // on open and returns to the trigger on close.
+  useFocusTrap(modalRef, open, { onEscape: onClose });
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pb-6 sm:pb-0">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-lg max-h-[90vh] overflow-auto">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit product"
+        className="relative bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-lg max-h-[90vh] overflow-auto"
+      >
         {children}
       </div>
     </div>

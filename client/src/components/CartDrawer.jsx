@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { fmt } from "../utils/formatters";
 import { Link } from "react-router-dom";
+import useFocusTrap from "../hooks/useFocusTrap";
 
 function CartDrawer({
   isOpen,
@@ -15,75 +16,14 @@ function CartDrawer({
   // Refs for focus management
   const drawerRef = useRef(null);
   const closeButtonRef = useRef(null);
-  const triggerElementRef = useRef(null);
 
-  // Handle Escape key and focus trapping
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e) => {
-      // Close drawer on Escape
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-
-      // Focus trap: Tab and Shift+Tab cycle through focusable elements
-      if (e.key === "Tab") {
-        const focusableElements = drawerRef.current?.querySelectorAll(
-          "button, [href], input, [tabindex]:not([tabindex='-1'])"
-        );
-
-        if (!focusableElements || focusableElements.length === 0) return;
-
-        const focusableArray = Array.from(focusableElements);
-        const currentIndex = focusableArray.indexOf(document.activeElement);
-
-        if (e.shiftKey) {
-          // Shift+Tab: move focus backward
-          if (currentIndex <= 0) {
-            e.preventDefault();
-            focusableArray[focusableArray.length - 1].focus();
-          }
-        } else {
-          // Tab: move focus forward
-          if (currentIndex >= focusableArray.length - 1) {
-            e.preventDefault();
-            focusableArray[0].focus();
-          }
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Focus management: Save trigger element and manage focus on open/close
-  useEffect(() => {
-    if (isOpen) {
-      // Save the element that triggered the drawer (currently focused element)
-      triggerElementRef.current = document.activeElement;
-
-      // Move focus to close button or first focusable element in drawer
-      setTimeout(() => {
-        if (closeButtonRef.current) {
-          closeButtonRef.current.focus();
-        } else {
-          const firstFocusable = drawerRef.current?.querySelector(
-            "button, [href], input, [tabindex]:not([tabindex='-1'])"
-          );
-          firstFocusable?.focus();
-        }
-      }, 0);
-    } else {
-      // Restore focus to trigger element when drawer closes
-      if (triggerElementRef.current && typeof triggerElementRef.current.focus === "function") {
-        triggerElementRef.current.focus();
-      }
-    }
-  }, [isOpen]);
+  // Trap keyboard focus inside the drawer while it is open: Tab/Shift+Tab
+  // cycle within the drawer, Escape closes it, focus moves to the close
+  // button on open, and returns to the triggering element on close.
+  useFocusTrap(drawerRef, isOpen, {
+    initialFocusRef: closeButtonRef,
+    onEscape: onClose,
+  });
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -111,6 +51,7 @@ function CartDrawer({
         aria-modal="true"
         aria-labelledby="cart-drawer-title"
         aria-hidden={!isOpen}
+        inert={!isOpen ? true : undefined}
         className={`cart-slide fixed right-0 top-0 h-full z-50 shadow-2xl flex flex-col
                     bg-white w-full sm:max-w-sm ${isOpen ? "open" : ""}`}
       >
