@@ -88,3 +88,5 @@ router.use((err, req, res, next) => {
 });
 
 module.exports = router;
+// Named export for integration tests (server/tests/cart.reserved.test.js)
+module.exports.adjustReserved = cartService.adjustReserved;

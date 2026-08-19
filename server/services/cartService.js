@@ -160,6 +160,7 @@ async function clearCart(userId) {
 }
 
 module.exports = {
+  adjustReserved,
   getCart,
   addToCart,
   removeFromCart,
