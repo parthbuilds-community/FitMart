@@ -470,7 +470,8 @@ export default function PaymentPage() {
           100% secure · powered by Razorpay
         </p>
 
-        {/* Demo bypass */}
+        {/* Demo bypass — testing only, hidden in production */}
+        {!import.meta.env.PROD && (
         <div className="mt-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-stone-200" />
@@ -504,6 +505,7 @@ export default function PaymentPage() {
             Skips Razorpay · clears cart · goes to confirmation
           </p>
         </div>
+        )}
 
         {/* Back button */}
         <button
