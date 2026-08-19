@@ -752,6 +752,8 @@ cd server && npm start
 
 > All authenticated endpoints require an `Authorization: Bearer <firebase_id_token>` header.
 
+**API response contract:** Errors return `{ "success": false, "error": "<message>" }`. Success responses are `{ "success": true, ...data }` (the payload shape is per-endpoint). New endpoints use the `ok()`/`fail()` helpers in `server/utils/apiResponse.js`; legacy routes are being migrated incrementally.
+
 ### 🛍️ Products
 
 | Method | Endpoint | Auth | Description |

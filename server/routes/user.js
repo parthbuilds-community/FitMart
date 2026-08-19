@@ -6,6 +6,7 @@ const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const { fail } = require("../utils/apiResponse");
 const router = express.Router();
 
 // Use memory storage for serverless environments
@@ -20,6 +21,40 @@ const upload = multer({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Ownership + admin checks
+// A user may act on their own profile; admins may also read/write other users'
+// profiles (e.g. the admin customer-detail page). Mirrors verifyAdmin.js.
+// ─────────────────────────────────────────────────────────────────────────────
+const ADMIN_UID = process.env.ADMIN_UID || process.env.VITE_ADMIN_UID || '';
+const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
+const DEV_ADMIN_EMAIL = process.env.DEV_ADMIN_EMAIL || '';
+const isDev = process.env.NODE_ENV !== 'production';
+
+function isAdminUser(req) {
+  if (ADMIN_UID && req.user.uid === ADMIN_UID) return true;
+  if (SUPER_ADMIN_UID && req.user.uid === SUPER_ADMIN_UID) return true;
+  if (isDev) {
+    if (DEV_ADMIN_EMAIL && req.user.email && req.user.email === DEV_ADMIN_EMAIL) return true;
+    if (process.env.DEV_ADMIN_UID && req.user.uid === process.env.DEV_ADMIN_UID) return true;
+  }
+  return false;
+}
+
+// Reject unless the authenticated uid matches the userId in the request body.
+function checkBodyOwnership(req, res) {
+  if (req.user.uid === req.body.userId || isAdminUser(req)) return true;
+  fail(res, 'Forbidden — you can only access your own profile', 403);
+  return false;
+}
+
+// Reject unless the authenticated uid matches the userId in the route params.
+function checkParamOwnership(req, res) {
+  if (req.user.uid === req.params.userId || isAdminUser(req)) return true;
+  fail(res, 'Forbidden — you can only access your own profile', 403);
+  return false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/user/login
 // Body: { userId }
 // Called once after Firebase auth resolves.
@@ -28,10 +63,11 @@ const upload = multer({
 // - If profile exists and isFirstLogin is false → return showBanner: false
 // Also syncs user email from Firebase to the profile for email sending.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
+router.post("/login", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return fail(res, "userId required");
+    if (!checkBodyOwnership(req, res)) return;
 
     // Fetch Firebase user to get email and display name
     let firebaseEmail = null;
@@ -87,7 +123,7 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error("user/login error:", err);
-    res.status(500).json({ error: err.message });
+    fail(res, err.message, 500);
   }
 });
 
@@ -98,10 +134,11 @@ router.post("/login", async (req, res) => {
 // Called when user dismisses the welcome banner.
 // Flips isFirstLogin → false so it never shows again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/dismiss-banner", async (req, res) => {
+router.post("/dismiss-banner", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return fail(res, "userId required");
+    if (!checkBodyOwnership(req, res)) return;
 
     await UserProfile.findOneAndUpdate(
       { userId },
@@ -111,7 +148,7 @@ router.post("/dismiss-banner", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("user/dismiss-banner error:", err);
-    res.status(500).json({ error: err.message });
+    fail(res, err.message, 500);
   }
 });
 
@@ -122,10 +159,11 @@ router.post("/dismiss-banner", async (req, res) => {
 // Called after a successful first order.
 // Flips discountUsed → true so it can't be used again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/use-discount", async (req, res) => {
+router.post("/use-discount", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return fail(res, "userId required");
+    if (!checkBodyOwnership(req, res)) return;
 
     const profile = await UserProfile.findOneAndUpdate(
       { userId, discountUsed: false },   // only update if not already used
@@ -134,13 +172,13 @@ router.post("/use-discount", async (req, res) => {
     );
 
     if (!profile) {
-      return res.status(400).json({ error: "Discount already used or user not found" });
+      return fail(res, "Discount already used or user not found");
     }
 
     res.json({ success: true });
   } catch (err) {
     console.error("user/use-discount error:", err);
-    res.status(500).json({ error: err.message });
+    fail(res, err.message, 500);
   }
 });
 
@@ -150,8 +188,9 @@ router.post("/use-discount", async (req, res) => {
 // Returns current discount eligibility for a user.
 // Used by Checkout to decide whether to apply the 10% discount.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/discount-status/:userId", async (req, res) => {
+router.get("/discount-status/:userId", verifyFirebaseToken, async (req, res) => {
   try {
+    if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;
     const profile = await UserProfile.findOne({ userId });
 
@@ -166,7 +205,7 @@ router.get("/discount-status/:userId", async (req, res) => {
     });
   } catch (err) {
     console.error("user/discount-status error:", err);
-    res.status(500).json({ error: err.message });
+    fail(res, err.message, 500);
   }
 });
 
@@ -175,17 +214,18 @@ router.get("/discount-status/:userId", async (req, res) => {
 // GET /api/user/profile/:userId
 // Returns stored profile (including addresses) for a user
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/profile/:userId", async (req, res) => {
+router.get("/profile/:userId", verifyFirebaseToken, async (req, res) => {
   try {
+    if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return fail(res, "userId required");
 
     const profile = await UserProfile.findOne({ userId });
     if (!profile) return res.json({});
     res.json(profile);
   } catch (err) {
     console.error("user/profile GET error:", err);
-    res.status(500).json({ error: err.message });
+    fail(res, err.message, 500);
   }
 });
 
@@ -195,14 +235,15 @@ router.get("/profile/:userId", async (req, res) => {
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", async (req, res) => {
+router.put("/profile/:userId", verifyFirebaseToken, async (req, res) => {
   try {
+    if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return fail(res, "userId required");
 
     const phoneRegex = /^\+?[\d\s\-]{7,15}$/;
     if (req.body.phone && !phoneRegex.test(req.body.phone)) {
-      return res.status(400).json({ error: "Invalid phone number format" });
+      return fail(res, "Invalid phone number format");
     }
 
     const update = {};
@@ -220,7 +261,7 @@ router.put("/profile/:userId", async (req, res) => {
     res.json(profile);
   } catch (err) {
     console.error("user/profile PUT error:", err);
-    res.status(500).json({ error: err.message });
+    fail(res, err.message, 500);
   }
 });
 
@@ -231,11 +272,12 @@ router.put("/profile/:userId", async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo"), async (req, res) => {
   try {
+    if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!userId) return fail(res, "userId required");
 
     if (!req.file || !req.file.buffer) {
-      return res.status(400).json({ error: "Photo file is required" });
+      return fail(res, "Photo file is required");
     }
 
     // Upload to Cloudinary using stream
@@ -267,11 +309,11 @@ router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo")
       res.json({ success: true, photoURL, profile });
     } catch (uploadErr) {
       console.error("Cloudinary upload failed:", uploadErr);
-      return res.status(500).json({ error: "Failed to upload photo" });
+      return fail(res, "Failed to upload photo", 500);
     }
   } catch (err) {
     console.error("user/upload-photo error:", err);
-    res.status(500).json({ error: err.message });
+    fail(res, err.message, 500);
   }
 });
 
