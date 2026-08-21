@@ -49,7 +49,7 @@ router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), a
     const updatedLog = await WorkoutLog.findOneAndUpdate(
       { userId: req.user.uid, date },
       { $set: logData },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
 
     res.json(updatedLog);

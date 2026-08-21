@@ -105,7 +105,7 @@ Follow the [Quick Start guide in README.md](../README.md#-quick-start) to get bo
 You will need accounts or API keys for the following services:
 
 | Service | Required? | Purpose |
-|---|---|---|
+|---------|----------|---------|
 | MongoDB Atlas (or local) | ✅ Required | Primary database |
 | Firebase | ✅ Required | Authentication |
 | Razorpay | ⚠️ Optional | Payment processing |
@@ -151,17 +151,19 @@ Browse the [Issues tab](https://github.com/parthbuilds-community/FitMart/issues)
 
 > "Hey, I'd like to work on this! I'll have a PR ready by [rough timeline]."
 
-This prevents two people from working on the same thing. The maintainer will assign it to you.
+This prevents duplicate work. The maintainer will assign the issue to you.
 
 ### Good First Contributions
 
-If you're not sure where to start, here are some concrete areas that always benefit from attention:
+If you're not sure where to start, here are some areas that always need attention:
 
 - Replacing any hardcoded `http://localhost:5000` API URLs with `import.meta.env.VITE_API_URL`
 - Improving responsiveness of existing pages on mobile viewports
 - Adding JSDoc comments to utility functions in `client/src/utils/`
 - Writing more thorough input validation on form components
 - Improving accessibility (ARIA labels, keyboard navigation)
+- Adding tests for utility functions
+- Improving error handling in API services
 
 ### Want to Work on Something Not Listed?
 
@@ -184,6 +186,8 @@ git checkout -b feat/product-search
 git checkout -b docs/improve-contributing-guide
 git checkout -b refactor/api-url-standardize
 git checkout -b feat/workout-sync
+git checkout -b feat/rewards-integration
+git checkout -b feat/workout-tracking-enhancement
 ```
 
 | Prefix | Use For |
@@ -208,7 +212,7 @@ git checkout -b feat/workout-sync
 
 3. Test your changes locally — make sure everything still works.
 
-4. If you've added a new route to the server, verify it appears correctly in the API Reference section of the README, and update it if not.
+4. If you've added a new route to the server, verify it appears correctly in the [API Reference](#-api-reference) section of the README, and update it if needed.
 
 5. If you've added a new page or component, verify the [Project Structure](#-project-structure-reference) in the README accurately reflects it.
 
@@ -246,8 +250,8 @@ feat(cart): add quantity update button on cart page
 fix(auth): resolve Google sign-in redirect loop
 docs(readme): add environment variable instructions
 refactor(client): replace hardcoded API URLs with VITE_API_URL
-feat(exercises): add exercise browser with ExerciseDB integration
-fix(chatbot): add Gemini fallback responses for API unavailability
+feat(rewards): implement points earning system
+feat(workouts): add workout logging and history feature
 chore: update dependencies
 ```
 
@@ -271,7 +275,7 @@ chore: update dependencies
 
 Once your changes are pushed to your fork:
 
-1. Go to the original [FitMart repo](https://github.com/parthbuilds-community/FitMart).
+1. Go to the original [FitMart repo](https://github.com/parthbuilds-community/FitMart)
 2. You'll see a **"Compare & pull request"** banner — click it.
 3. Fill out the PR template completely (see below).
 4. Set the base branch to `main`.
@@ -281,10 +285,10 @@ Once your changes are pushed to your fork:
 
 Use the same convention as commits:
 
-```
+```bash
 feat(product): add product filter by category
 fix(payment): handle failed payment edge case
-docs(contributing): update env variable table
+docs(contributing): update env var table
 ```
 
 ### PR Description Template
@@ -334,27 +338,130 @@ After you open a PR:
 
 ## 📁 Project Structure Reference
 
+Here's how the FitMart project is organized:
+
 ```
 FitMart/
-├── client/                   # React + Vite Frontend
+├── client/                        # React + Vite Frontend
+│   ├── public/                    # Static assets (logo, icons)
 │   ├── src/
-│   │   ├── components/       # Reusable UI components (uses Framer Motion for animations)
-│   │   ├── auth/             # Firebase auth setup & hooks
-│   │   ├── pages/            # Route-level page components
-│   │   └── utils/            # Helper/utility functions
-│   └── .env.local            # ⚠️ Not committed — create manually
-│
-├── server/                   # Node.js + Express Backend
-│   ├── middleware/           # Express middleware (logger, auth verification)
-│   ├── models/               # Mongoose schemas
-│   ├── routes/               # Route handlers
-│   ├── services/             # Business logic services (email, etc.)
-│   ├── db.js                 # MongoDB connection
-│   ├── firebaseAdmin.js      # Firebase Admin SDK setup
-│   ├── index.js              # Server entry point (middleware, routes, error handler)
-│   ├── seed.js               # Product DB seed script
-│   └── seedFitnessCenters.js # Fitness center DB seed script
-│
+│   │   ├── auth/
+│   │   │   ├── firebase.js        # Firebase app initialization
+│   │   │   ├── useAuth.js         # Auth state hook
+│   │   │   └── useWelcomeDiscount.js  # First-order discount hook
+│   │   ├── components/
+│   │   │   ├── AdminNavbar.jsx    # Admin panel navigation bar
+│   │   │   ├── AdminRoute.jsx     # Admin-only route guard
+│   │   │   ├── AddressSelector.jsx  # Address selection widget
+│   │   │   ├── AdminKPIGrid.jsx   # Admin KPI grid component
+│   │   │   ├── BMICalculator.jsx  # BMI/TDEE calculator widget
+│   │   │   ├── BugScreenshot.jsx  # Bug screenshot display
+│   │   │   ├── CalorieCalculator.jsx  # Daily calorie target calculator
+│   │   │   ├── CartDrawer.jsx     # Slide-in cart panel
+│   │   │   ├── CategoryPillsSkeleton.jsx  # Category pills skeleton loader
+│   │   │   ├── DevAdminLogin.jsx  # Development admin login
+│   │   │   ├── ErrorBoundary.jsx  # Global error boundary
+│   │   │   ├── FitnessCenterDetail.jsx  # Fitness center detail modal
+│   │   │   ├── FitnessChatBot.jsx # Floating AI chatbot (Gemini)
+│   │   │   ├── Navbar.jsx         # Main navigation bar
+│   │   │   ├── NearbyFitnessCenters.jsx  # Nearby gym/studio discovery
+│   │   │   ├── NonAdminRoute.jsx  # Redirects admin away from customer pages
+│   │   │   ├── ProductCardSkeleton.jsx  # Product card skeleton loader
+│   │   │   ├── ReportBugButton.jsx  # Floating bug report widget
+│   │   │   ├── SkeletonItem.jsx   # Skeleton item loader
+│   │   │   ├── SkeletonSummary.jsx  # Skeleton summary loader
+│   │   │   ├── Stars.jsx          # Star rating component
+│   │   │   ├── Toast.jsx          # Toast notification component
+│   │   │   ├── WelcomeBanner.jsx  # First-visit discount banner
+│   │   │   └── WorkoutCalendar.jsx  # FullCalendar workout calendar
+│   │   ├── hooks/
+│   │   │   └── useInfiniteProducts.js  # Infinite product query hook
+│   │   ├── pages/
+│   │   │   ├── AdminBugs.jsx              # Admin bug tracker
+│   │   │   ├── AdminCustomerDetail.jsx
+│   │   │   ├── AdminCustomers.jsx
+│   │   │   ├── AdminDashboard.jsx
+│   │   │   ├── AdminInventory.jsx
+│   │   │   ├── AdminMarketing.jsx         # Marketing strategy panel
+│   │   │   ├── AdminReports.jsx
+│   │   │   ├── Authentication.jsx
+│   │   │   ├── Checkout.jsx
+│   │   │   ├── ExercisePage.jsx           # Browse exercises by muscle group
+│   │   │   ├── HomePage.jsx
+│   │   │   ├── LandingPage.jsx
+│   │   │   ├── LegalPrivacy.jsx          # Privacy policy page
+│   │   │   ├── LegalTerms.jsx            # Terms of service page
+│   │   │   ├── MobilityRecoveryPlans.jsx
+│   │   │   ├── MuscleBuildingPlans.jsx
+│   │   │   ├── NotFound.jsx
+│   │   │   ├── NotesPage.jsx              # Workout logging / notes
+│   │   │   ├── PaymentPage.jsx
+│   │   │   ├── ProductConfirmation.jsx
+│   │   │   ├── ProductPage.jsx
+│   │   │   ├── Profile.jsx                # User profile & addresses
+│   │   │   ├── TrackerPage.jsx            # Workout tracker (calendar view)
+│   │   │   └── WeightLossPlans.jsx
+│   │   ├── utils/
+│   │   │   ├── api/
+│   │   │   │   └── bugs.js        # Bug API utilities
+│   │   │   ├── formatters.js       # Currency formatter (INR)
+│   │   │   ├── getAuthHeaders.js   # Firebase token → Authorization header
+│   │   │   ├── healthUtils.js      # BMI, BMR, TDEE, calorie calculations
+│   │   │   ├── normalizeProduct.js # Normalizes productId/id field across responses
+│   │   │   ├── rewardsUtils.js     # Rewards utilities
+│   │   │   ├── useGithubStats.js   # GitHub stats hook
+│   │   │   └── workoutStorage.js   # LocalStorage helpers for workout data
+│   │   ├── App.jsx                # Root router
+│   │   ├── index.css              # Tailwind import
+│   │   └── main.jsx               # React entry point
+│   ├── .env.example
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── server/                        # Node.js + Express Backend
+│   ├── middleware/
+│   │   ├── logger.js              # Colored request/response logger
+│   │   ├── ownership.js         # Resource ownership middleware
+│   │   ├── validateRequest.js   # Request validation middleware
+│   │   ├── verifyAdmin.js         # Admin UID authorization middleware
+│   │   └── verifyFirebaseToken.js # Firebase Bearer token middleware
+│   ├── models/
+│   │   ├── Bug.js                 # Bug report schema
+│   │   ├── Cart.js                # Cart schema
+│   │   ├── FitnessCenter.js       # Fitness center schema
+│   │   ├── Order.js               # Order schema
+│   │   ├── Product.js             # Product schema
+│   │   ├── Rewards.js             # Rewards schema
+│   │   ├── UserProfile.js         # Extended user profile schema
+│   │   └── WorkoutLog.js          # Workout log schema
+│   ├── routes/
+│   │   ├── bugs.js                # Bug reporting & admin management
+│   │   ├── cart.js                # Cart management + stock reservation
+│   │   ├── chat.js                # Gemini AI chatbot endpoint
+│   │   ├── customers.js           # Customer management
+│   │   ├── dashboard.js           # Admin dashboard data
+│   │   ├── devAuth.js             # Development authentication endpoints
+│   │   ├── exercises.js           # ExerciseDB proxy (RapidAPI)
+│   │   ├── fitnessCenters.js      # Nearby fitness center discovery
+│   │   ├── github.js              # GitHub integration endpoints
+│   │   ├── orders.js              # Order creation and retrieval
+│   │   ├── payment.js             # Razorpay integration
+│   │   ├── products.js            # CRUD for products
+│   │   ├── reports.js             # Sales reports
+│   │   ├── rewards.js             # Rewards endpoints
+│   │   ├── user.js                # Profile, discount, address management
+│   │   └── workouts.js            # Workout tracking endpoints
+│   ├── services/
+│   │   ├── emailService.js              # Nodemailer SMTP transporter
+│   │   ├── emailTemplates.js            # HTML/text email templates
+│   │   ├── firstPurchaseEmailService.js # First-purchase welcome email logic
+│   │   ├── inactiveCustomerEmailService.js  # Re-engagement email service
+│   │   └── orderService.js              # Order processing service
+│   ├── db.js                      # MongoDB connection
+│   ├── firebaseAdmin.js           # Firebase Admin SDK setup
+│   ├── index.js                   # Server entry point
+│   ├── seed.js                    # Product DB seed script
+│   └── seedFitnessCenters.js      # Fitness center DB seed script
 └── docs/
     ├── CONTRIBUTING.md                 # This file
     ├── FIRST_PURCHASE_EMAIL_SETUP.md   # Email feature setup guide
@@ -383,7 +490,7 @@ FitMart/
 **Adding a new service (email, third-party API, etc.):**
 1. Create it in `server/services/your-service.js`
 2. Fail gracefully when env variables are missing — never crash the server
-3. Document the required env variables in `README.md` and `docs/FIRST_PURCHASE_EMAIL_SETUP.md` (or a new doc) if the setup is non-trivial
+3. Document the required env variables in `README.md` and relevant docs if the setup is non-trivial
 
 ---
 
@@ -402,151 +509,34 @@ FitMart/
 ### CSS / Tailwind
 
 - Use **Tailwind utility classes** wherever possible
-- Stick to the `stone-*` color palette only — no blue, green, or purple (see the Design System in `client/DesignSystem.md`)
-- Keep custom CSS to a minimum
-- Ensure UI is responsive and works on mobile
-- Use `rounded-full` for buttons, `rounded-2xl` for cards, and `rounded-lg` for inputs
-- Always precede major section headings with the eyebrow label pattern: `text-xs tracking-[0.2em] uppercase text-stone-400`
-- Use `DM Serif Display` for headings and `DM Sans` for body/UI text
+- Stick to the `stone-*` color palette
+- Borders: `stone-200`
+- Subtle backgrounds: `stone-100`
+- Main background: `stone-50`
+- Cards: `white`
 
-### Backend (Node/Express)
+### Component Patterns
 
-- Keep route files focused on a single resource
-- Put business logic and reusable logic in `server/services/` — not directly in routes
-- Always validate input (required fields, types) and return clear error messages
-- Always handle errors with try/catch and return a clean JSON error response
-- Use the `verifyFirebaseToken` middleware from `server/middleware/verifyFirebaseToken.js` for any endpoint that requires a logged-in user
-- Never log or expose sensitive values (API keys, passwords) — the request logger already redacts `password`, `token`, `secret`, and `apiKey` keys
-- New services that depend on env variables must fail gracefully (log a warning, return null, and allow the rest of the app to function) — do not call `process.exit()`
-
-### Animations (Framer Motion)
-
-- Use **Framer Motion** for all UI animations — page transitions, modal entrances, hover effects
-- Keep animations quick (150-300ms) and subtle — no distracting or overly complex movements
-- Prefer `motion` components over CSS transitions for interactive elements
-- Use `AnimatePresence` for exit animations on unmounting components
-- Example pattern:
-  ```jsx
-  import { motion, AnimatePresence } from 'framer-motion';
-  
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    transition={{ duration: 0.2 }}
-  >
-  ```
-
-### General
-
-- **No hardcoded URLs** — use `import.meta.env.VITE_API_URL` on the client and environment variables on the server
-- **No committed secrets** — `.env` files are gitignored for a reason
-- Delete commented-out code before submitting a PR
-- Write clear variable and function names — code should read like English
-- When touching `UserProfile`, remember it tracks `email`, `firstPurchaseEmailSentAt`, and `lastReminderEmailSentAt` for the email services — don't overwrite these fields unintentionally
-- **Animations** — Use **[Framer Motion](https://www.framer.com/motion/)** for all animations and transitions (page entrances, modals, hover effects, etc.). Keep animations subtle and performant — avoid over-animating.
+- **Buttons:** Always `rounded-full` (pill shape)
+- **Cards:** Always `rounded-2xl`
+- **Inputs:** `rounded-lg` with `focus:border-stone-900`
+- **Section headings:** Always preceded by a `text-xs tracking-[0.2em] uppercase text-stone-400` eyebrow label
 
 ---
 
-## 🆘 Need Help?
+## ❓ Need Help?
 
-Stuck? Don't worry — everyone was a beginner once.
+If you're stuck or have questions:
 
-- 💬 **Comment on the issue** you're working on with your question
-- 🐛 **Open a new issue** with the `question` label
-- 📖 **Re-read the README** — the setup steps cover most common problems
-- 🔐 **For security issues**, follow the responsible disclosure process in [`docs/SECURITY.md`](SECURITY.md) — do not open a public issue
+1. Check the [existing issues](https://github.com/parthbuilds-community/FitMart/issues) — your question might already be answered
+2. Open a new issue and label it `question`
+3. Tag the maintainer (@parthnarkar) in a comment if it's urgent
 
----
-
-## 🧪 Feature Setup Guides
-Below are two developer-facing setup guides added here for convenience: local development admin authentication (useful for contributors testing admin pages) and the first-purchase email feature setup. These are summarized from dedicated docs in `docs/` and include the most common setup steps and environment variables.
-
-### Local Development Admin (quick guide)
-Purpose: let contributors run and test admin pages locally without using production Firebase admin credentials.
-
-- When to use: `NODE_ENV=development` on the server and client.
-- Server-side: a development-only endpoint `POST /api/dev/login` is registered only in development and returns a lightweight token of the form `dev:<email>` when the provided email matches `DEV_ADMIN_EMAIL` in the server `.env`.
-- Client-side: a dev login page is available at `/dev-login` (development only). It calls the server endpoint and stores the returned token in `localStorage` as `dev_token`.
-- Middleware behavior: `verifyFirebaseToken` recognizes `dev:` tokens when not in production and sets `req.user`. `verifyAdmin` allows the dev admin when `DEV_ADMIN_EMAIL` or `DEV_ADMIN_UID` matches.
-
-Key environment variables (development)
-- Server: `DEV_ADMIN_EMAIL` (required), `DEV_ADMIN_UID` (optional), `NODE_ENV=development`, `MONGO_URI`.
-- Client: `VITE_DEV_ADMIN_EMAIL` (should match server setting), `VITE_API_URL`.
-
-Quick start (local)
-1. Create `server/.env` from `server/.env.example` and set `DEV_ADMIN_EMAIL` and `MONGO_URI`.
-2. Create `client/.env` from `client/.env.example` and set `VITE_DEV_ADMIN_EMAIL` and `VITE_API_URL`.
-3. Start MongoDB.
-4. Run server and client:
-```bash
-cd server
-npm install
-npm run dev
-cd ../client
-npm install
-npm run dev
-```
-5. Open `http://localhost:5173/dev-login`, enter `DEV_ADMIN_EMAIL`, and submit. You will be redirected to `/admin/dashboard` with a local dev session.
-
-Security notes
-- Dev tokens are local-only and NOT signed — they are for development and testing only.
-- Dev endpoints and token acceptance are disabled in production (`NODE_ENV=production`).
-- Never commit `.env` files with secrets.
-
-Files referenced (added/modified)
-- `server/routes/devAuth.js` (new) — development-only login endpoint
-- `server/middleware/verifyFirebaseToken.js` (modified) — accepts `dev:` tokens in development
-- `server/middleware/verifyAdmin.js` (modified) — allows `DEV_ADMIN_EMAIL`/`DEV_ADMIN_UID` in development
-- `client/src/components/DevAdminLogin.jsx` (new) — dev login UI
-- `client/src/utils/getAuthHeaders.js` (modified) — reads `dev_token` from `localStorage` in development
-
-For the full contributor guide and more details, see `docs/LOCAL_DEV_ADMIN_README.md`.
-
-### First-purchase Email Feature (quick guide)
-Purpose: send a welcome email to users after their first paid order. This guide summarizes setup, testing, and operational notes.
-
-Overview
-- The server contains a modular email pipeline: `emailService` (Nodemailer), `emailTemplates`, and `firstPurchaseEmailService` which is called after an order is marked paid.
-- Email sending is asynchronous and fails gracefully (does not block the payment flow).
-
-Required environment variables
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` (`true`/`false`), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `APP_BASE_URL` (client URL used in email CTAs).
-
-Quick start & testing
-1. Add SMTP vars to `server/.env` (see above). For Gmail use an App Password.
-2. Start server and client (see steps in Local Development Admin quick start).
-3. Run a demo payment flow or call the demo endpoint to simulate a paid order:
-```bash
-POST http://localhost:5000/api/payment/demo-success
-Content-Type: application/json
-
-{ "userId": "test-user-id-123" }
-```
-4. Verify server logs for email send confirmation and that `UserProfile.firstPurchaseEmailSentAt` was set.
-
-Testing scenarios to consider
-- First purchase success (email should be sent once).
-- Duplicate prevention (subsequent purchases should not re-send the email).
-- Missing SMTP config (email sending should be skipped and app should not crash).
-
-Files referenced (added/modified)
-- `server/services/emailService.js` (NEW) — Nodemailer wrapper and transporter management
-- `server/services/emailTemplates.js` (NEW) — HTML/text templates generator
-- `server/services/firstPurchaseEmailService.js` (NEW) — business logic to decide & send emails
-- `server/models/UserProfile.js` (modified) — `email` and `firstPurchaseEmailSentAt` fields
-- `server/routes/payment.js` (modified) — triggers email sending on payment verification and demo-success
-
-For the complete detailed guide, troubleshooting tips, and production recommendations, see `docs/FIRST_PURCHASE_EMAIL_SETUP.md`.
-
-> There are no dumb questions. Ask away! 🙌
+We're happy to help! Remember: there are no stupid questions when learning and contributing.
 
 ---
 
 <div align="center">
-
-**Happy coding! We're glad you're here.** 🚀
-
-Made with ❤️ by [Parth Narkar](https://github.com/parthnarkar) and the [Parth Builds Community](https://www.instagram.com/parth.builds/)
-
+  <p>Made with ❤️ by <a href="https://github.com/parthnarkar">Parth Narkar</a> and the <a href="https://www.instagram.com/parth.builds/">Parth Builds Community</a></p>
+  <p>⭐ Star this repo if you find it useful — it helps a lot!</p>
 </div>

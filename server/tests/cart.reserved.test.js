@@ -8,6 +8,7 @@
  * Run with: npm run test:cart
  */
 
+const fs = require('fs');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
@@ -23,7 +24,13 @@ beforeAll(async () => {
   // Start the in-memory MongoDB server
   // This downloads the MongoDB binary on first run (~10–30 seconds)
   // Subsequent runs use a cached binary and start in < 1 second
-  process.env.MONGOMS_SYSTEM_BINARY = 'C:\\Program Files\\MongoDB\\Server\\8.0\\bin\\mongod.exe';
+  // On Windows, prefer a locally-installed MongoDB binary if present.
+  // On Linux/CI this path does not exist — leave MONGOMS_SYSTEM_BINARY unset so
+  // mongodb-memory-server downloads its own binary (works in GitHub Actions).
+  const WINDOWS_MONGOD_PATH = 'C:\\Program Files\\MongoDB\\Server\\8.0\\bin\\mongod.exe';
+  if (process.platform === 'win32' && fs.existsSync(WINDOWS_MONGOD_PATH)) {
+    process.env.MONGOMS_SYSTEM_BINARY = WINDOWS_MONGOD_PATH;
+  }
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
 
@@ -110,7 +117,7 @@ describe('adjustReserved', () => {
     await createProduct({ productId: 3, stock: 5, reserved: 0 });
 
     // Act + Assert: removing 1 should throw
-    await expect(adjustReserved(3, -1)).rejects.toThrow('reserved already at 0');
+    await expect(adjustReserved(3, -1)).rejects.toThrow('reserved count cannot drop below zero');
 
     // Verify database was NOT modified
     const fresh = await Product.findOne({ productId: 3 });
@@ -219,7 +226,7 @@ describe('adjustReserved — edge cases', () => {
     // No product created — collection is empty
 
     await expect(adjustReserved(999, +1)).rejects.toThrow(
-      'adjustReserved failed for productId 999'
+      'product not found'
     );
   });
 
@@ -275,7 +282,7 @@ describe('adjustReserved — edge cases', () => {
     // reserved=2, trying to release 5 — should throw
     await createProduct({ productId: 10, stock: 10, reserved: 2 });
 
-    await expect(adjustReserved(10, -5)).rejects.toThrow('reserved already at 0');
+    await expect(adjustReserved(10, -5)).rejects.toThrow('reserved count cannot drop below zero');
 
     // reserved must be unchanged
     const fresh = await Product.findOne({ productId: 10 });
