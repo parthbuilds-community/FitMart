@@ -20,8 +20,11 @@ const chatLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-console.log("API Key exists:", !!process.env.GEMINI_API_KEY);
-console.log("API Key prefix:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 15) + "..." : "MISSING");
+if (process.env.GEMINI_API_KEY) {
+  console.log("Gemini AI: configured");
+} else {
+  console.error("Gemini AI: MISSING API KEY");
+}
 
 if (!process.env.GEMINI_API_KEY) {
   console.error("❌ GEMINI_API_KEY is not set in environment variables!");
