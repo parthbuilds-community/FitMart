@@ -80,7 +80,7 @@ services:
     networks:
       - fitmart-network
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:5000/"]
+      test: ["CMD", "wget", "--header=Origin: http://localhost", "-qO-", "http://localhost:5000/"]
       interval: 10s
       timeout: 5s
       retries: 5
