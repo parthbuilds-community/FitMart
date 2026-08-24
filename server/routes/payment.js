@@ -9,7 +9,7 @@ const router = express.Router();
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
-const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
+const { enqueueEmailJob } = require("../services/emailQueue");
 const { createOrder } = require("../services/orderService");
 
 const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
@@ -157,11 +157,11 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
       console.error("Reward earning failed:", rewardError.message);
     }
 
-    // STEP 4: Send first-purchase email (non-blocking)
-    // Email sending should not fail the payment flow
-    sendFirstPurchaseEmail(userId, order).catch((err) => {
-      console.error("First-purchase email service error:", err.message);
-      // Don't throw — email failure should not break payment success
+    // STEP 5: Enqueue first-purchase email via BullMQ (non-blocking)
+    // Enqueue failure must not break the already-successful payment
+    enqueueEmailJob("firstPurchaseEmail", { userId, orderData: order }).catch((err) => {
+      console.error("Failed to enqueue first-purchase email job:", err.message);
+      // Don't throw — queue failure should not break payment success
     });
 
     res.json({ success: true, order });
@@ -192,24 +192,27 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /demo-success   ← DEV / TEST ONLY — disabled in production
+// POST /demo-success   ← controlled by DEMO_PAYMENT env var
 // Body: { userId }
-// Skips Razorpay entirely, fakes a payment ID, clears cart, returns success.
-// NOTE: This route does NOT require Firebase authentication for testing purposes
+// Skips Razorpay entirely, fakes a payment ID, creates a real order using
+// existing order-creation logic, awards FitRewards, queues email via BullMQ,
+// and returns success.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * @route   POST /demo-success
- * @desc    Simulates a successful payment for testing only — skips Razorpay, clears cart,
- *          and returns success without creating an order
- * @access  Public (TESTING ONLY) - No authentication required
+ * @desc    Simulates a successful Razorpay payment — creates a real order,
+ *          awards FitRewards points, and queues a confirmation email.
+ *          Enabled only when DEMO_PAYMENT=true.
+ * @access  Private (Firebase auth required)
  */
-router.post("/demo-success", async (req, res) => {
-  // TEST-ONLY bypass — never register behavior in production. Returns 404 so the
-  // endpoint is inert outside of non-production environments (same gate as /api/dev).
-  if (process.env.NODE_ENV === "production") {
+router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
+  // Gate: only enabled when DEMO_PAYMENT=true (works regardless of NODE_ENV)
+  if (process.env.DEMO_PAYMENT !== "true") {
     return res.status(404).json({ error: "Not found" });
   }
+
+  console.log("[DEMO PAYMENT] Request received");
 
   try {
     const { userId } = req.body;
@@ -217,39 +220,90 @@ router.post("/demo-success", async (req, res) => {
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
-    
-    // Create an order from the user's cart using the shared service
+
+    // STEP 1: Create order from user's cart using the shared service
+    console.log("[DEMO PAYMENT] Creating order");
     const Order = require("../models/Order");
     let order;
     try {
       order = await createOrder(userId);
     } catch (createErr) {
       if (createErr.message === "Cart is empty") {
-         // Still clear any empty cart just in case
-         await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { returnDocument: 'after' });
+        // Still clear any empty cart just in case
+        await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } }, { returnDocument: 'after' });
       }
       return res.status(400).json({ error: createErr.message });
     }
 
-    // Attach paymentId to order
+    // STEP 2: Attach demo paymentId to order
     await Order.findByIdAndUpdate(order._id, {
       paymentId: fakePaymentId,
       status: "paid"
     });
-    
+
     order.paymentId = fakePaymentId;
     order.status = "paid";
+    console.log(`[DEMO PAYMENT] Order created: ${order._id}`);
 
-    // Send first-purchase email (non-blocking)
-    // Email sending should not fail the payment flow
-    sendFirstPurchaseEmail(userId, order).catch((err) => {
-      console.error("First-purchase email service error:", err.message);
-      // Don't throw — email failure should not break payment success
-    });
+    // STEP 3: Award FitRewards points (same logic as verify-payment)
+    try {
+      let rewards = await Rewards.findOne({ userId });
 
-    res.json({ success: true, paymentId: fakePaymentId, order });
+      if (!rewards) {
+        rewards = await Rewards.create({
+          userId,
+          pointsBalance: 0,
+          transactions: [],
+        });
+      }
+
+      const alreadyCredited = rewards.transactions.some(
+        (transaction) => transaction.orderId === String(order._id)
+      );
+
+      if (!alreadyCredited) {
+        const purchaseAmount =
+          order.totalAmount || order.total || order.amount || 0;
+
+        let points = Math.floor(
+          Number(purchaseAmount) * rewardsConfig.POINTS_PER_RUPEE
+        );
+
+        if (rewards.transactions.length === 0) {
+          points += rewardsConfig.FIRST_PURCHASE_BONUS;
+        }
+
+        rewards.transactions.push({
+          type: "earned",
+          points,
+          source: "purchase",
+          orderId: String(order._id),
+          description: "Points earned from demo purchase",
+          createdAt: new Date(),
+        });
+
+        rewards.pointsBalance += points;
+        await rewards.save();
+        console.log(`[DEMO PAYMENT] Awarded ${points} FitRewards points`);
+      }
+    } catch (rewardError) {
+      console.error("[DEMO PAYMENT] Reward earning failed:", rewardError.message);
+    }
+
+    // STEP 4: Enqueue first-purchase email via BullMQ (non-blocking)
+    let emailQueued = false;
+    try {
+      const emailJob = await enqueueEmailJob("firstPurchaseEmail", { userId, orderData: order });
+      emailQueued = true;
+      console.log(`[DEMO PAYMENT] Email job queued: ${emailJob.id}`);
+    } catch (err) {
+      console.error("[DEMO PAYMENT] Failed to enqueue email job:", err.message);
+      // Don't throw — queue failure should not break payment success
+    }
+
+    res.json({ success: true, paymentId: fakePaymentId, order, emailQueued });
   } catch (err) {
-    console.error("demo-success error:", err);
+    console.error("[DEMO PAYMENT] Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
