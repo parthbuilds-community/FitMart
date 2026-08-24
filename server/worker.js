@@ -50,7 +50,11 @@ const emailWorker = new Worker(
         };
       }
 
-      const result = await sendFirstPurchaseEmail(userId, orderData);
+      const result = await sendFirstPurchaseEmail(
+        userId,
+        orderData,
+        isFirstPurchase
+      );  
 
       if (!result || result.error) {
         throw new Error(

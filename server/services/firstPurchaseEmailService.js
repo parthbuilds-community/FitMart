@@ -50,22 +50,57 @@ async function resolveUserEmail(userId, existingProfile = null) {
 /**
  * Send first-purchase email to user.
  *
- * The caller/worker is responsible for determining whether this order
- * is the user's first purchase. This service intentionally does not
- * query paid orders because the job may be processed after subsequent
- * purchases have already been created.
+ * The first-purchase decision is made during the payment/order flow
+ * before the email job is added to BullMQ.
  *
- * - Only sends if the first-purchase decision was already made upstream
- * - Only sends if firstPurchaseEmailSentAt is not already set
+ * The worker passes that decision through as `isFirstPurchase`.
+ * This service intentionally does NOT count paid orders because the
+ * job may be processed after subsequent purchases have been created.
+ *
+ * - Only sends when isFirstPurchase === true
+ * - Skips when isFirstPurchase === false
+ * - Prevents duplicate emails using firstPurchaseEmailSentAt
  * - Gracefully handles email send failures
- * - Updates firstPurchaseEmailSentAt after successful send
+ * - Does not retry an email after successful delivery if the
+ *   database timestamp update fails
  *
  * @param {String} userId - Firebase UID
- * @param {Object} orderData - Order information (optional, for logging)
- * @returns {Promise<Object>} - { sent: boolean, message: string, error?: string }
+ * @param {Object} orderData - Order information
+ * @param {Boolean} isFirstPurchase - First-purchase decision made at payment time
+ * @returns {Promise<Object>}
  */
-async function sendFirstPurchaseEmail(userId, orderData = {}) {
+async function sendFirstPurchaseEmail(
+  userId,
+  orderData = {},
+  isFirstPurchase
+) {
   try {
+    // The payment flow must explicitly determine first-purchase status.
+    if (typeof isFirstPurchase !== "boolean") {
+      console.error(
+        `❌ Missing or invalid isFirstPurchase value for user ${userId}`
+      );
+
+      return {
+        sent: false,
+        message: "First-purchase status was not provided",
+        error: "isFirstPurchase must be a boolean",
+      };
+    }
+
+    // If the payment was not the user's first purchase, do nothing.
+    if (!isFirstPurchase) {
+      console.log(
+        `ℹ️ Not the first purchase for user ${userId}; skipping email`
+      );
+
+      return {
+        sent: false,
+        skipped: true,
+        message: "Not the first purchase",
+      };
+    }
+
     // Fetch user profile
     const profile = await UserProfile.findOne({ userId });
 
@@ -77,6 +112,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
 
       return {
         sent: false,
+        skipped: true,
         message: "Email already sent for this user",
       };
     }
@@ -116,6 +152,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
       text: textTemplate,
     });
 
+    // Email provider reported failure
     if (!result.success) {
       console.error(
         `❌ Failed to send first-purchase email to ${email}:`,
@@ -129,35 +166,35 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
       };
     }
 
-    // Mark first-purchase email as sent
-    // Mark first-purchase email as sent
-try {
-    await UserProfile.findOneAndUpdate(
-      { userId },
-      {
-        $set: {
-          firstPurchaseEmailSentAt: new Date(),
+    // Mark first-purchase email as sent.
+    // If this update fails, DO NOT return an error because the email
+    // has already been successfully delivered and BullMQ should not retry it.
+    try {
+      await UserProfile.findOneAndUpdate(
+        { userId },
+        {
+          $set: {
+            firstPurchaseEmailSentAt: new Date(),
+          },
         },
-      },
-      {
-        upsert: true,
-        returnDocument: "after",
-      }
-    );
-  } catch (err) {
-    // Email was already sent successfully.
-    // Do not return an error that would cause BullMQ to retry the email.
-    console.error(
-      `⚠️ Email sent successfully, but failed to update firstPurchaseEmailSentAt for ${userId}:`,
-      err.message
-    );
+        {
+          upsert: true,
+          returnDocument: "after",
+        }
+      );
+    } catch (err) {
+      console.error(
+        `⚠️ Email sent successfully, but failed to update firstPurchaseEmailSentAt for ${userId}:`,
+        err.message
+      );
 
-    return {
-      sent: true,
-      message: "Email sent successfully, but send-status update failed",
-      warning: err.message,
-    };
-  }
+      return {
+        sent: true,
+        message:
+          "Email sent successfully, but send-status update failed",
+        warning: err.message,
+      };
+    }
 
     console.log(
       `✅ First-purchase email sent successfully to ${email} for user ${userId}`
