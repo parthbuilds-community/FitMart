@@ -96,6 +96,13 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
       return res.json({ success: true, message: "Order already created" });
     }
 
+    // Determine first-purchase status before creating this order
+    const previousPaidOrder = await Order.findOne({
+      userId,
+      status: "paid",
+    }).select("_id").lean();
+
+    const isFirstPurchase = !previousPaidOrder; 
     // STEP 2: Create order using service logic
     let order;
     try {
@@ -159,7 +166,11 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
 
     // STEP 5: Enqueue first-purchase email via BullMQ (non-blocking)
     // Enqueue failure must not break the already-successful payment
-    enqueueEmailJob("firstPurchaseEmail", { userId, orderData: order }).catch((err) => {
+    enqueueEmailJob("firstPurchaseEmail", {
+  userId,
+  orderData: order,
+  isFirstPurchase,
+}).catch((err) => {
       console.error("Failed to enqueue first-purchase email job:", err.message);
       // Don't throw — queue failure should not break payment success
     });
@@ -230,10 +241,16 @@ router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
+    const Order = require("../models/Order");
+    // Determine first-purchase status before creating this order
+    const previousPaidOrder = await Order.findOne({
+      userId,
+      status: "paid",
+    }).select("_id").lean();
 
+    const isFirstPurchase = !previousPaidOrder;
     // STEP 1: Create order from user's cart using the shared service
     console.log("[DEMO PAYMENT] Creating order");
-    const Order = require("../models/Order");
     let order;
     try {
       order = await createOrder(userId);
@@ -303,7 +320,11 @@ router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
     // STEP 4: Enqueue first-purchase email via BullMQ (non-blocking)
     let emailQueued = false;
     try {
-      const emailJob = await enqueueEmailJob("firstPurchaseEmail", { userId, orderData: order });
+      const emailJob = await enqueueEmailJob("firstPurchaseEmail", {
+        userId,
+        orderData: order,
+        isFirstPurchase,
+      });
       emailQueued = true;
       console.log(`[DEMO PAYMENT] Email job queued: ${emailJob.id}`);
     } catch (err) {

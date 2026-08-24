@@ -26,7 +26,6 @@ console.log('👷 Starting BullMQ EmailWorker...');
 const emailWorker = new Worker(
   'EmailQueue',
   async (job) => {
-    // Connection/consumption test only
     console.log(`\n========================================`);
     console.log(`📥 Received Job ID: ${job.id}`);
     console.log(`🏷️  Job Name: ${job.name}`);
@@ -34,21 +33,43 @@ const emailWorker = new Worker(
     console.log(`========================================\n`);
 
     if (job.name === 'firstPurchaseEmail') {
-      const { userId, orderData } = job.data;
-      const result = await sendFirstPurchaseEmail(userId, orderData);
-      
-      // Only treat genuine failures (result.error present) as failed jobs.
-      // Idempotent skips (already sent, not first order) complete successfully.
-      if (!result || result.error) {
-        throw new Error(`Email failed to send: ${result?.message || 'Unknown error'} ${result?.error || ''}`);
+      const { userId, orderData, isFirstPurchase } = job.data;
+
+      // The first-purchase decision was made when the payment was completed.
+      // Do not recalculate it here because other purchases may have happened
+      // while this job was waiting in the queue.
+      if (!isFirstPurchase) {
+        console.log(
+          `ℹ️ Not the first purchase for user ${userId}; skipping email`
+        );
+
+        return {
+          success: true,
+          skipped: true,
+          message: 'Not the first purchase',
+        };
       }
+
+      const result = await sendFirstPurchaseEmail(userId, orderData);
+
+      if (!result || result.error) {
+        throw new Error(
+          `Email failed to send: ${result?.message || 'Unknown error'} ${
+            result?.error || ''
+          }`
+        );
+      }
+
       return result;
     }
-    
-    return { success: true, message: 'Test consumption successful' };
+
+    return {
+      success: true,
+      message: 'Test consumption successful',
+    };
   },
-  { 
-    connection 
+  {
+    connection,
   }
 );
 
@@ -63,6 +84,7 @@ emailWorker.on('failed', (job, err) => {
 // 4. Graceful Shutdown Handling
 async function gracefulShutdown(signal) {
   console.log(`\n🛑 Received ${signal}, closing worker gracefully...`);
+
   try {
     // await emailWorker.close() waits for currently processing jobs to finish before disconnecting
     await emailWorker.close();
