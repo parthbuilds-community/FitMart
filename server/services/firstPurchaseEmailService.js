@@ -130,6 +130,8 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     }
 
     // Mark first-purchase email as sent
+    // Mark first-purchase email as sent
+try {
     await UserProfile.findOneAndUpdate(
       { userId },
       {
@@ -142,6 +144,20 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
         returnDocument: "after",
       }
     );
+  } catch (err) {
+    // Email was already sent successfully.
+    // Do not return an error that would cause BullMQ to retry the email.
+    console.error(
+      `⚠️ Email sent successfully, but failed to update firstPurchaseEmailSentAt for ${userId}:`,
+      err.message
+    );
+
+    return {
+      sent: true,
+      message: "Email sent successfully, but send-status update failed",
+      warning: err.message,
+    };
+  }
 
     console.log(
       `✅ First-purchase email sent successfully to ${email} for user ${userId}`
