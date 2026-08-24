@@ -14,9 +14,9 @@ const { createOrder } = require("../services/orderService");
 
 const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
   ? new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    })
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  })
   : null;
 
 // ── Shared helper: release reserved stock for all cart items ───────────────
@@ -113,7 +113,7 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
     // Update local object to reflect changes
     order.paymentId = razorpay_payment_id;
     order.status = "paid";
-        // STEP 4: Award FitRewards points after successful payment
+    // STEP 4: Award FitRewards points after successful payment
     try {
       let rewards = await Rewards.findOne({ userId });
 
@@ -180,8 +180,13 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
  */
 router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId is required" });
+    const { userId: requestedUserId } = req.body;
+
+    if (requestedUserId && requestedUserId !== req.user.uid) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const userId = req.user.uid;
 
     await releaseAndClearCart(userId);
     res.json({ success: true });
@@ -215,8 +220,13 @@ router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
   console.log("[DEMO PAYMENT] Request received");
 
   try {
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId is required" });
+    const { userId: requestedUserId } = req.body;
+
+    if (requestedUserId && requestedUserId !== req.user.uid) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const userId = req.user.uid;
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
