@@ -20,17 +20,21 @@ jobs:
             const prAuthor = context.payload.pull_request.user.login;
             const prNumber = context.payload.pull_request.number;
 
+            const message = [
+              `Hey @${prAuthor},`,
+              '',
+              'Thank you for taking the time to contribute to FitMart!',
+              '',
+              'We are currently moving in a new direction with the project, so we are closing this pull request.',
+              '',
+              'Please check out the latest issues in the repository and feel free to contribute to those. We would love to see your contributions there!',
+              '',
+              'Thank you for your contribution and support.'
+            ].join('\n');
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body: `Hey @${prAuthor}👋
-
-Thank you for taking the time to contribute to FitMart!
-
-We are currently moving in a new direction with the project, so we are closing this pull request.
-
-Please check out the latest issues in the repository and feel free to contribute to those. We would love to see your contributions there!
-
-Thank you for your contribution and support.`
+              body: message
             });
