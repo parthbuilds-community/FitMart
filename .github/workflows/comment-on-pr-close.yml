@@ -21,7 +21,7 @@ jobs:
             const prNumber = context.payload.pull_request.number;
 
             const message = [
-              `Hey @${prAuthor}👋`,
+              `Hey @${prAuthor},`,
               '',
               'Thank you for taking the time to contribute to FitMart!',
               '',
