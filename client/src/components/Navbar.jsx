@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import { useAuth } from "../auth/useAuth";
@@ -179,19 +179,19 @@ export default function Navbar({
 
                         {isLimitedNavRoute ? (
                           <div className="border-t border-stone-100 mt-1">
-                            <button role="menuitem" onClick={() => { navigate('/profile'); if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className="w-full text-left text-xs text-stone-700 hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9">View Profile</button>
+                            <NavLink to="/profile" role="menuitem" onClick={() => { if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className={({ isActive }) => `block w-full text-left text-xs hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9 ${isActive ? 'font-semibold text-stone-900' : 'text-stone-500'}`}>View Profile</NavLink>
                             <button role="menuitem" onClick={handleSignOut} className="w-full text-left text-xs text-stone-500 hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9">Sign Out</button>
                           </div>
                         ) : (
                           <>
                             {isLanding && (
-                              <button role="menuitem" onClick={() => { navigate('/home'); if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className="w-full text-left text-xs text-stone-700 font-medium hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9">Go to Shop →</button>
+                              <NavLink to="/home" role="menuitem" onClick={() => { if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className={({ isActive }) => `block w-full text-left text-xs hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9 ${isActive ? 'font-semibold text-stone-900' : 'text-stone-500'}`}>Go to Shop →</NavLink>
                             )}
 
-                            <button role="menuitem" onClick={() => { navigate('/tracker'); if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className="w-full text-left text-xs text-stone-700 font-medium hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9">Track Fitness →</button>
+                            <NavLink to="/tracker" role="menuitem" onClick={() => { if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className={({ isActive }) => `block w-full text-left text-xs hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9 ${isActive ? 'font-semibold text-stone-900' : 'text-stone-500'}`}>Track Fitness →</NavLink>
 
                             <div className="border-t border-stone-100 mt-1">
-                              <button role="menuitem" onClick={() => { navigate('/profile'); if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className="w-full text-left text-xs text-stone-700 hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9">View Profile</button>
+                              <NavLink to="/profile" role="menuitem" onClick={() => { if (typeof setMenuOpen === 'function') setMenuOpen(false); else setLocalMenuOpen(false); }} className={({ isActive }) => `block w-full text-left text-xs hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9 ${isActive ? 'font-semibold text-stone-900' : 'text-stone-500'}`}>View Profile</NavLink>
                               <button role="menuitem" onClick={handleSignOut} className="w-full text-left text-xs text-stone-500 hover:bg-stone-50 px-4 py-2.5 transition-colors min-h-9">Sign Out</button>
                             </div>
                           </>
