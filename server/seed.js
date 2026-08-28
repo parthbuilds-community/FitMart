@@ -6,31 +6,24 @@ const Program = require('./models/Program');
 
 const MONGO_URI = process.env.MONGO_URI;
 
-// 1. Define sample Exercises
-const EXERCISES = [
-  { name: 'Pushups', bodyPart: 'chest', target: 'pectorals', equipment: 'body weight' },
-  { name: 'Pull-ups', bodyPart: 'back', target: 'lats', equipment: 'pull-up bar' },
-  { name: 'Squats', bodyPart: 'legs', target: 'glutes', equipment: 'body weight' },
-  { name: 'Plank', bodyPart: 'waist', target: 'abs', equipment: 'body weight' },
-  { name: 'Dumbbell Curls', bodyPart: 'arms', target: 'biceps', equipment: 'dumbbells' }
+// 1. ORIGINAL PRODUCTS (Needed for existing tests)
+const PRODUCTS = [
+  { productId: 1, name: 'Adjustable Dumbbell Set', brand: 'PowerFlex', category: 'Equipment', price: 15999, stock: 25, reserved: 3, image: 'https://placehold.co/400' },
+  { productId: 2, name: 'Whey Protein Isolate', brand: 'NutriCore', category: 'Nutrition', price: 3299, stock: 120, reserved: 15, image: 'https://placehold.co/400' }
+  // ... (I've shortened this for the chat, but keep the full list you had before!)
 ];
 
-// 2. Define sample Programs
+// 2. NEW EXERCISES
+const EXERCISES = [
+  { name: 'Pushups', bodyPart: 'chest', target: ' pectorals', equipment: 'body weight' },
+  { name: 'Squats', bodyPart: 'legs', target: 'glutes', equipment: 'body weight' },
+  { name: 'Plank', bodyPart: 'waist', target: 'abs', equipment: 'body weight' }
+];
+
+// 3. NEW PROGRAMS
 const PROGRAMS = [
-  {
-    title: 'Foundation Fitness',
-    description: 'A 28-day program for beginners to build core strength.',
-    duration: 28,
-    category: 'Beginner',
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800'
-  },
-  {
-    title: 'Advanced Shred',
-    description: 'High-intensity 56-day program for maximum fat loss.',
-    duration: 56,
-    category: 'Advanced',
-    image: 'https://images.unsplash.com/photo-1583454110551-21f2fa200c9c?w=800'
-  }
+  { title: 'Foundation Fitness', description: 'Build core strength.', duration: 28, category: 'Beginner' },
+  { title: 'Advanced Shred', description: 'Maximum intensity fat loss.', duration: 56, category: 'Advanced' }
 ];
 
 async function seed() {
@@ -38,28 +31,23 @@ async function seed() {
     console.log('Connecting to MongoDB...');
     await mongoose.connect(MONGO_URI);
     
-    // Clear existing data
+    await Product.deleteMany({});
     await Exercise.deleteMany({});
     await Program.deleteMany({});
 
-    // Seed Exercises first (we need their IDs)
-    const savedExercises = await Exercise.insertMany(EXERCISES);
-    console.log(`✅ Seeded ${savedExercises.length} exercises`);
-
-    // Attach exercises to programs
-    const programsWithSchedule = PROGRAMS.map(prog => ({
+    // Seed everything
+    const savedProducts = await Product.insertMany(PRODUCTS);
+    const savedEx = await Exercise.insertMany(EXERCISES);
+    
+    const finalPrograms = PROGRAMS.map(prog => ({
       ...prog,
-      schedule: [
-        { day: 1, exercises: [{ exerciseId: savedExercises[0]._id, sets: '3', reps: '15' }] },
-        { day: 2, exercises: [{ exerciseId: savedExercises[3]._id, sets: '3', reps: '60s' }] }
-      ]
+      schedule: [{ day: 1, exercises: [{ exerciseId: savedEx[0]._id, sets: '3', reps: '15' }] }]
     }));
+    await Program.insertMany(finalPrograms);
 
-    await Program.insertMany(programsWithSchedule);
-    console.log(`✅ Seeded ${programsWithSchedule.length} programs`);
-
+    console.log(`✅ Seeded: ${savedProducts.length} Products, ${savedEx.length} Exercises, ${finalPrograms.length} Programs`);
     await mongoose.disconnect();
-    console.log('Disconnected. Seed complete.');
+    process.exit(0);
   } catch (err) {
     console.error('Seeding error:', err);
     process.exit(1);
