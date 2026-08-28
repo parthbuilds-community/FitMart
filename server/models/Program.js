@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+/**
+ * Defines an exercise entry inside a program day.
+ */
 const programExerciseSchema = new mongoose.Schema({
   exerciseId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -11,6 +14,9 @@ const programExerciseSchema = new mongoose.Schema({
   notes: String
 }, { _id: false });
 
+/**
+ * Defines a single day in a workout program.
+ */
 const programDaySchema = new mongoose.Schema({
   dayNumber: Number,
   focus: String,
@@ -20,6 +26,9 @@ const programDaySchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+/**
+ * Defines the main workout program structure.
+ */
 const programSchema = new mongoose.Schema({
   goal: String,
   difficulty: String,
