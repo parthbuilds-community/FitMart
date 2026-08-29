@@ -33,8 +33,11 @@ mongoose.set("strictQuery", true);
 
 async function connect() {
     try {
-        await mongoose.connect(MONGO_URI);
+        await mongoose.connect(MONGO_URI, {
+            dbName: process.env.MONGO_DB,
+        });
         console.log("MongoDB connected successfully");
+        console.log("MongoDB database:", mongoose.connection.name);
     } catch (err) {
         console.error("MongoDB connection failed:", err.message);
         process.exit(1);

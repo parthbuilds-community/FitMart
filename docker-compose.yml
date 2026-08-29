@@ -1,5 +1,3 @@
-version: "3.8"
-
 # ──────────────────────────────────────────────────────────────────────────────
 # FitMart — Full-Stack Docker Compose
 #
@@ -17,6 +15,25 @@ version: "3.8"
 # ──────────────────────────────────────────────────────────────────────────────
 
 services:
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: fitmart-worker
+    restart: on-failure
+    command: node worker.js
+    env_file:
+      - ./server/.env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fitmart-network
 
   # ── MongoDB ────────────────────────────────────────────────────────────────
   mongodb:
@@ -53,8 +70,6 @@ services:
       - MONGO_URI=mongodb://mongodb:27017
       - NODE_ENV=production
       - PORT=5000
-      # CORS: allow requests from the Nginx client container
-      - ALLOWED_ORIGIN=http://localhost
       # Use the Redis service in this compose network for product-list caching
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -65,7 +80,7 @@ services:
     networks:
       - fitmart-network
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:5000/"]
+      test: ["CMD", "wget", "--header=Origin: http://localhost:5173", "-qO-", "http://localhost:5000/"]
       interval: 10s
       timeout: 5s
       retries: 5
