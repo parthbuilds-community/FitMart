@@ -13,27 +13,27 @@
         "@fullcalendar/daygrid": "^6.1.21",
         "@fullcalendar/interaction": "^6.1.21",
         "@fullcalendar/react": "^6.1.20",
-        "@tanstack/react-query": "^5.101.4",
+        "@tanstack/react-query": "^5.102.8",
         "@tailwindcss/vite": "^4.0.0",
-        "dompurify": "^3.4.12",
-        "firebase": "^12.16.0",
+        "dompurify": "^3.4.14",
+        "firebase": "^12.18.0",
         "framer-motion": "^12.42.2",
-        "marked": "^18.0.7",
+        "marked": "^18.0.11",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
-        "react-router-dom": "^7.18.1",
-        "recharts": "^3.10.0",
+        "react-router-dom": "^7.18.2",
+        "recharts": "^3.10.1",
         "tailwindcss": "^4.0.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.1",
-        "@types/react": "^19.2.17",
-        "@types/react-dom": "^19.2.3",
-        "@vitejs/plugin-react": "^6.0.3",
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.5",
+        "@vitejs/plugin-react": "^6.1.0",
         "eslint": "^9.39.1",
         "eslint-plugin-react-hooks": "^5.2.0",
-        "eslint-plugin-react-refresh": "^0.5.3",
+        "eslint-plugin-react-refresh": "^0.5.5",
         "globals": "^15.15.0",
-        "vite": "^8.1.5"
+        "vite": "^8.2.2"
     }
 }
