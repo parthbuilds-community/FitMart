@@ -270,37 +270,41 @@ function CartDrawer({
         </div>
 
         {/* ── Footer ── */}
-        {cart.length > 0 && (
-          <div className="border-t border-stone-200 px-5 sm:px-7 py-5 sm:py-6
-                          space-y-3 sm:space-y-4 shrink-0">
-            <div className="flex items-center justify-between">
-              <p className="text-xs tracking-[0.2em] uppercase text-stone-400">
-                Subtotal
-              </p>
-              <p className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900">
-                {fmt(cartTotal)}
-              </p>
-            </div>
-            <p className="text-[10px] text-stone-400 -mt-1 sm:-mt-2">
-              Taxes and shipping calculated at checkout
-            </p>
-            <Link to="/checkout" onClick={onClose}>
-              <button className="w-full bg-stone-900 text-white text-sm py-4 rounded-full
-                                 hover:bg-stone-700 transition-colors min-h-13
-                                 active:scale-[0.98]">
-                Checkout →
-              </button>
-            </Link>
-            <button
-              onClick={onClose}
-              className="w-full border border-stone-300 text-stone-700 text-sm py-3.5
-                         rounded-full hover:bg-stone-100 transition-colors min-h-12
-                         active:scale-[0.98]"
-            >
-              Continue Shopping
-            </button>
-          </div>
-        )}
+{cart.length > 0 && (
+  <div className="border-t border-stone-200 px-5 sm:px-7 py-5 sm:py-6
+                  space-y-3 sm:space-y-4 shrink-0">
+    <div className="flex items-center justify-between">
+      <p className="text-xs tracking-[0.2em] uppercase text-stone-400">
+        Subtotal
+      </p>
+      <p className="font-['DM_Serif_Display'] text-xl sm:text-2xl text-stone-900">
+        {fmt(cartTotal)}
+      </p>
+    </div>
+    <p className="text-[10px] text-stone-400 -mt-1 sm:-mt-2">
+      Taxes and shipping calculated at checkout
+    </p>
+
+    {/* Buttons grouped with explicit gap */}
+    <div className="flex flex-col gap-3 sm:gap-4">
+      <Link to="/checkout" onClick={onClose}>
+        <button className="w-full bg-stone-900 text-white text-sm py-4 rounded-full
+                           hover:bg-stone-700 transition-colors min-h-13
+                           active:scale-[0.98]">
+          Checkout →
+        </button>
+      </Link>
+      <button
+        onClick={onClose}
+        className="w-full border border-stone-300 text-stone-700 text-sm py-3.5
+                   rounded-full hover:bg-stone-100 transition-colors min-h-12
+                   active:scale-[0.98]"
+      >
+        Continue Shopping
+      </button>
+    </div>
+  </div>
+)}
       </aside>
     </>
   );
