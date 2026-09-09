@@ -10,7 +10,7 @@
 <br/>
 
 [![React](https://img.shields.io/badge/React-v19-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-v16+-339933?style=flat-square&logo=node.js)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-v20+-339933?style=flat-square&logo=node.js)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb)](https://www.mongodb.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-Payments-0C2A5E?style=flat-square)](https://razorpay.com/)
@@ -400,7 +400,7 @@ React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin 
 
 Make sure you have the following installed:
 
-- [Node.js](https://nodejs.org/) v16+
+- [Node.js](https://nodejs.org/) v20.19+ (see `.nvmrc` — run `nvm use`)
 - [Redis](https://redis.io/) (optional) — for product API caching
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - A [MongoDB](https://www.mongodb.com/atlas) connection (Atlas or local)
