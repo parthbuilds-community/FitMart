@@ -161,6 +161,9 @@ app.use("/api/user", require("./routes/user"));
 app.use("/api/customers", require("./routes/customers"));
 app.use("/api/exercises", require("./routes/exercises"));
 app.use("/api/workouts", require("./routes/workouts"));
+// Program catalog (public). Distinct prefix, so it cannot collide with the
+// existing product/exercise/workout routes above.
+app.use("/api/programs", require("./routes/programs"));
 app.use("/api/bugs", require("./routes/bugs"));
 
 // ── // Razorpay / payment routes (prefixed with /api/payment) ─────────────────

@@ -74,6 +74,40 @@ const workoutLogBodySchema = z.object({
   exercises: z.array(workoutExerciseSchema).optional()
 }).strict();
 
+// ── Programs ────────────────────────────────────────────────────────────────
+
+const objectIdSchema = z
+  .string()
+  .regex(/^[0-9a-f]{24}$/i, 'must be a 24-character hexadecimal id');
+
+const programIdParamsSchema = z.object({
+  id: objectIdSchema,
+});
+
+// Sort accepts one of the documented fields, optionally prefixed with "-" to
+// reverse the order (for example `-lengthDays`). Unknown fields are rejected so
+// a caller cannot ask MongoDB to sort on an unindexed/arbitrary path.
+const programSortSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^-?(createdAt|goal|difficulty|lengthDays)$/,
+    'sort must be one of createdAt, goal, difficulty, lengthDays (prefix with - to reverse)'
+  )
+  .default('-createdAt');
+
+// Unknown query params are stripped rather than rejected, so cache-busting
+// params and future additions do not turn into 400s for existing clients.
+const listProgramsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1, 'page must be 1 or greater').default(1),
+  limit: z.coerce.number().int().min(1).max(50, 'limit cannot exceed 50').default(10),
+  difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  tag: z.string().trim().min(1, 'tag cannot be empty').optional(),
+  search: z.string().trim().min(1, 'search cannot be empty').optional(),
+  sort: programSortSchema,
+  fields: z.string().trim().min(1, 'fields cannot be empty').optional(),
+});
+
 module.exports = {
   cartAddSchema: {
     params: userIdParamsSchema,
@@ -98,5 +132,11 @@ module.exports = {
   },
   updateWorkoutLogSchema: {
     body: workoutLogBodySchema,
+  },
+  listProgramsSchema: {
+    query: listProgramsQuerySchema,
+  },
+  programDetailSchema: {
+    params: programIdParamsSchema,
   },
 };
