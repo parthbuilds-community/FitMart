@@ -74,6 +74,22 @@ const workoutLogBodySchema = z.object({
   exercises: z.array(workoutExerciseSchema).optional()
 }).strict();
 
+// Shared 24-character hexadecimal ObjectId validator.
+const objectIdSchema = z
+  .string()
+  .regex(/^[0-9a-f]{24}$/i, 'must be a 24-character hexadecimal id');
+
+// ── Memberships ─────────────────────────────────────────────────────────────
+
+// Only `planId` is required. `userId` is the admin-only escape hatch for
+// enrolling somebody else, so omitting it means "the authenticated user".
+const createMembershipBodySchema = z
+  .object({
+    planId: objectIdSchema,
+    userId: z.string().trim().min(1, 'userId cannot be empty').optional(),
+  })
+  .strict();
+
 module.exports = {
   cartAddSchema: {
     params: userIdParamsSchema,
@@ -95,6 +111,9 @@ module.exports = {
   updateProductSchema: {
     params: productIdParamSchema,
     body: productUpdateBodySchema,
+  },
+  createMembershipSchema: {
+    body: createMembershipBodySchema,
   },
   updateWorkoutLogSchema: {
     body: workoutLogBodySchema,
