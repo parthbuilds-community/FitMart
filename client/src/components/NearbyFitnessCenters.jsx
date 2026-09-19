@@ -93,7 +93,13 @@ export default function NearbyFitnessCenters({ visible = true }) {
 
               <div className="flex gap-3">
                 <div className="w-20 h-20 bg-stone-100 rounded-xl overflow-hidden shrink-0">
-                  <img src={c.imageUrl} alt={c.name} className="w-full h-full object-cover" onError={e => e.currentTarget.style.display = 'none'} />
+                 <img
+                          src={user.photoURL}
+                          alt={user.displayName || "User profile picture"}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-start justify-between gap-2">

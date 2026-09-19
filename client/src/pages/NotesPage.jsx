@@ -183,6 +183,7 @@ export default function NotesPage() {
                           <img
                             src={exercise.gifUrl}
                             alt={exercise.name}
+                            loading="lazy"
                             className="w-full h-full object-cover"
                             onError={() => handleImageError(exercise.id)}
                           />

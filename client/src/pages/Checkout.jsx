@@ -272,6 +272,7 @@ export default function Checkout() {
                     <img
                       src={product.image}
                       alt={product.name ? `${product.name} product image` : 'Product image'}
+                      loading="lazy"
                       onError={e => { e.currentTarget.src = PLACEHOLDER_IMG; }}
                       className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl shrink-0 bg-stone-100"
                     />

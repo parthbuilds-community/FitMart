@@ -53,6 +53,7 @@ const InventoryMobileCard = ({ p, onEdit }) => {
       {p.image && (
         <div className="w-12 h-12 rounded-xl bg-stone-100 overflow-hidden shrink-0">
           <img src={p.image} alt={p.name}
+             loading="lazy"
             className="w-full h-full object-cover"
             onError={e => { e.currentTarget.style.display = "none"; }} />
         </div>
@@ -371,7 +372,7 @@ export default function AdminInventory() {
                         <div className="flex items-center gap-3">
                           {p.image && (
                             <div className="w-9 h-9 rounded-xl bg-stone-100 overflow-hidden shrink-0">
-                              <img src={p.image} alt={p.name}
+                              <img src={p.image} alt={p.name} loading="lazy"
                                 className="w-full h-full object-cover"
                                 onError={e => { e.currentTarget.style.display = "none"; }} />
                             </div>

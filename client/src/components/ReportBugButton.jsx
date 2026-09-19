@@ -472,6 +472,7 @@ export default function ReportBugButton() {
                       <img
                         src={screenshot.preview}
                         alt="Screenshot preview"
+                        loading="lazy"
                         className="w-full max-h-40 object-cover"
                       />
                       <button
