@@ -1,4 +1,4 @@
-// src/pages/AdminDashboard.jsx
+
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminNavbar from "../components/AdminNavbar";
@@ -269,11 +269,15 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        <AdminKPIGrid
+          stats={data?.kpis}
+          loading={loading}
+        />
+
         {!loading && data && (
           <div className="fade-in space-y-4 sm:space-y-5">
 
-            {/* KPI row — 2×2 on mobile, 4-col on md+ */}
-            <AdminKPIGrid stats={data.kpis} />
+          {/* Charts */}
 
             {/* Charts — stacked on mobile, side-by-side on md+ */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
