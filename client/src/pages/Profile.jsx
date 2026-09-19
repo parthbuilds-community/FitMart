@@ -46,7 +46,8 @@ function Avatar({ name, photoURL, size = 96 }) {
       style={{ width: size, height: size, minWidth: size }}
     >
       {photoURL ? (
-        <img src={photoURL} alt={name} className="w-full h-full object-cover" />
+        <img src={photoURL} alt={name} className="w-full h-full object-cover" 
+        loading="lazy" decoing="async" />
       ) : (
         <span
           style={{ fontFamily: "'DM Serif Display', serif", fontSize: size * 0.36 }}

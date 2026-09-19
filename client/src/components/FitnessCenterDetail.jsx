@@ -25,7 +25,7 @@ export default function FitnessCenterDetail({ center }) {
     <div className="bg-white rounded-2xl p-6 flex flex-col md:flex-row gap-6">
       <div className="w-full md:w-1/3 rounded-xl overflow-hidden bg-stone-100 flex items-center justify-center">
         {center.imageUrl ? (
-          <img src={center.imageUrl} alt={center.name} className="w-full h-48 object-cover" onError={e => e.currentTarget.style.display = 'none'} />
+          <img src={center.imageUrl} alt={center.name} className="w-full h-48 object-cover" loading="lazy" decoding="async" onError={e => e.currentTarget.style.display = 'none'} />
         ) : (
           <div className="text-4xl opacity-20">🏋️</div>
         )}
