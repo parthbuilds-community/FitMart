@@ -50,8 +50,44 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
 router.get('/:userId', verifyFirebaseToken, ensureOrderOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
-    res.json(orders);
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 10, 1),
+      100
+    );
+    const skip = (page - 1) * limit;
+
+    const [orders, totalOrders] = await Promise.all([
+      Order.find({ userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      Order.countDocuments({ userId }),
+    ]);
+
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    res.json({
+      data: orders,
+      meta: {
+        page,
+        limit,
+        total: totalOrders,
+        totalPages,
+      },
+      links: {
+        next:
+          page < totalPages
+            ? `/api/orders/${userId}?page=${page + 1}&limit=${limit}`
+            : null,
+        prev:
+          page > 1
+            ? `/api/orders/${userId}?page=${page - 1}&limit=${limit}`
+            : null,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
