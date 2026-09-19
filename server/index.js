@@ -105,7 +105,20 @@ app.use(
   }),
 );
 
-app.use(helmet());
+// Enforce HTTPS with HSTS: browsers will only connect over a secure
+// connection for a full year (including subdomains), preventing MITM
+// downgrade attacks. The preload flag opts this domain into the HSTS
+// preload list (requires prior submission to hstspreload.org).
+// Browsers ignore the header over plain HTTP, so this is safe in dev too.
+app.use(
+  helmet({
+    strictTransportSecurity: {
+      maxAge: 31536000, // 1 year in seconds
+      includeSubDomains: true,
+      preload: true,
+    },
+  }),
+);
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses
