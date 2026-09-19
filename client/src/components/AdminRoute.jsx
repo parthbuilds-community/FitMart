@@ -12,10 +12,15 @@ export default function AdminRoute({ children }) {
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
   // In development allow a local dev admin session
-  if (import.meta.env.MODE === 'development') {
-    const isDevLocal = localStorage.getItem('dev_token') && (DEV_ADMIN_EMAIL ? true : true);
-    if (isDevLocal) return children;
-  }
+  // In development allow access only to the configured dev admin email
+if (import.meta.env.MODE === "development") {
+  const isDevLocal =
+    localStorage.getItem("dev_token") &&
+    DEV_ADMIN_EMAIL &&
+    user?.email === DEV_ADMIN_EMAIL;
+
+  if (isDevLocal) return children;
+}
 
   if (user.uid !== ADMIN_UID && user.uid !== SUPER_ADMIN_UID) return <Navigate to="/home" replace />;
   return children;
