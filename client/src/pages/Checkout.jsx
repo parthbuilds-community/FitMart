@@ -27,6 +27,8 @@ export default function Checkout() {
   const [profile, setProfile] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [availablePoints, setAvailablePoints] = useState(0);
 
   useEffect(() => { document.title = "My Cart - FitMart"; }, []);
 
@@ -93,6 +95,7 @@ export default function Checkout() {
 
         const p = await profileRes.json();
         setProfile(p);
+        setAvailablePoints(p?.rewardPoints || 0);
         const def = p?.defaultAddressId
           ? (p.addresses || []).find(a => a.id === p.defaultAddressId)
           : null;
@@ -113,7 +116,8 @@ export default function Checkout() {
 
   const subtotal = items.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
   const discountAmt = discountEligible ? Math.round(subtotal * discountPercent / 100) : 0;
-  const total = subtotal - discountAmt;
+  const pointsDiscount = Math.floor(pointsToRedeem / 100) * 10;
+  const total = subtotal - discountAmt - pointsDiscount;
 
   const handleProceed = () => {
     navigate("/payment", {
@@ -121,6 +125,7 @@ export default function Checkout() {
         items, total, subtotal, discountAmt,
         discountPercent: discountEligible ? discountPercent : 0,
         discountApplied: discountEligible,
+        pointsToRedeem,
         address: selectedAddress,
       },
     });
@@ -203,6 +208,22 @@ export default function Checkout() {
                     <span>Subtotal ({items.length} item{items.length > 1 ? "s" : ""})</span>
                     <span>{fmt(subtotal)}</span>
                   </div>
+                  {availablePoints > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-stone-400 mb-2">
+                        Available Points: {availablePoints} (₹{availablePoints / 10} off)
+                      </p>
+                      <input
+                        type="number"
+                        min={0}
+                        max={availablePoints}
+                        value={pointsToRedeem}
+                        onChange={e => setPointsToRedeem(Math.min(Number(e.target.value), availablePoints))}
+                        className="w-full bg-stone-800 text-white text-sm px-3 py-2 rounded-lg"
+                        placeholder="Enter points to redeem"
+                      />
+                    </div>
+                  )}
                   {discountEligible && (
                     <div className="flex justify-between text-sm">
                       <span className="text-stone-400">Welcome {discountPercent}% off</span>
