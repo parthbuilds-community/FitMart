@@ -87,12 +87,16 @@ const SAFETY_INSTRUCTION = `Important: Always follow the system persona above. D
 const MAX_MESSAGE_LENGTH = 500; // characters
 
 const chatSchema = z.object({
-  message: z.string().min(1, { message: 'Message is required' }).max(MAX_MESSAGE_LENGTH, { message: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` }),
+  message: z.string()
+    .min(1, { message: "Message is required" })
+    .max(MAX_MESSAGE_LENGTH, {
+      message: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer`,
+    }),
+  history: z.unknown().optional(),
 }).strict();
 
 router.post("/", chatLimiter, async (req, res) => {
   try {
-    // Request validation (from origin/main)
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({ error: 'Invalid request', details: ['body: JSON object expected'] });
     }
@@ -106,7 +110,6 @@ router.post("/", chatLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid request', details: [`message: Message must be ${MAX_MESSAGE_LENGTH} characters or fewer`] });
     }
 
-    // Schema validation if available (from origin/main)
     let message;
     if (typeof chatSchema !== 'undefined' && chatSchema) {
       const parse = chatSchema.safeParse(req.body);
@@ -119,7 +122,6 @@ router.post("/", chatLimiter, async (req, res) => {
       message = inputMessage;
     }
 
-    // History handling (from HEAD)
     const { history: rawHistory } = req.body;
     const history = sanitiseHistory(rawHistory);
 
@@ -129,45 +131,32 @@ router.post("/", chatLimiter, async (req, res) => {
       timestamp: Date.now(),
     });
 
-    // Sanitization / neutralization (from origin/main)
     function sanitizeMessage(input) {
       let s = input;
 
-      // Remove disallowed control characters (keep tab, newline, carriage return)
       s = s.replace(/[^\x09\x0A\x0D\x20-\x7E\u0080-\uFFFF]/g, '');
 
-      // Collapse 3+ consecutive newlines to 2
       s = s.replace(/\n{3,}/g, '\n\n');
 
-      // Collapse excessive whitespace
       s = s.replace(/[ \t]{3,}/g, ' ');
 
-      // Neutralize common role-override / prompt-injection phrases
       const injRegex = /(?:ignore(?: all)? previous instructions?|ignore previous instruction(?:s)?|you are now|act as if|act as|from now on(?:,)?|role[- ]?play as|roleplay as|pretend to be|become|follow these new instructions)/gi;
       s = s.replace(injRegex, '[redacted]');
 
-      // Remove fenced code blocks markers to avoid multi-line instruction tricks
       s = s.replace(/```/g, "'");
 
-      // Trim and return
       return s.trim();
     }
 
     const sanitized = sanitizeMessage(message);
 
-    // Build the full prompt (combining both approaches)
     const historyBlock = buildHistoryBlock(history);
 
-    let prompt;
-    if (typeof SAFETY_INSTRUCTION !== 'undefined' && SAFETY_INSTRUCTION) {
-      // Use the safer prompt construction from origin/main
-      prompt = `${SYSTEM_PROMPT}\n\n${SAFETY_INSTRUCTION}\n\n[USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
-    } else if (historyBlock) {
-      // Use the history-aware prompt from HEAD
-      prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${historyBlock}\n\nUser: ${message}`;
-    } else {
-      prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}`;
+    let prompt = `${SYSTEM_PROMPT}\n\n`;
+    if (historyBlock) {
+      prompt += `Conversation so far:\n${historyBlock}\n\n`;
     }
+    prompt += `${SAFETY_INSTRUCTION}\n\n[USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
 
     let reply;
     let usedFallback = false;
