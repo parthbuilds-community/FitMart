@@ -27,6 +27,21 @@ const KPICard = ({ label, value, sub, icon }) => (
   </div>
 );
 
+
+export function AdminKPIGridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+      {[...Array(4)].map((_, i) => (
+        <div
+          key={i}
+          className="bg-stone-100 rounded-2xl animate-pulse h-28 sm:h-36"
+        />
+      ))}
+    </div>
+  );
+}
+
+
 export default function AdminKPIGrid({ stats }) {
   if (!stats) return null;
 
