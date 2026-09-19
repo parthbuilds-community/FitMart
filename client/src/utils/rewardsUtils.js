@@ -1,3 +1,7 @@
+/**
+ * Array of reward tier definitions with minimum point requirements.
+ * @type {Array<{name: string, min: number}>}
+ */
 export const REWARD_TIERS = [
   { name: "Bronze", min: 0 },
   { name: "Silver", min: 500 },
@@ -5,6 +9,11 @@ export const REWARD_TIERS = [
   { name: "Platinum", min: 3000 },
 ];
 
+/**
+ * Determines the current and next reward tier based on points.
+ * @param {number} points - The user's current points (default: 0)
+ * @returns {{currentTier: {name: string, min: number}, nextTier: {name: string, min: number}|null}}
+ */
 export const getRewardTier = (points = 0) => {
   let currentTier = REWARD_TIERS[0];
   let nextTier = null;
@@ -22,6 +31,11 @@ export const getRewardTier = (points = 0) => {
   };
 };
 
+/**
+ * Calculates progress towards the next reward tier.
+ * @param {number} points - The user's current points (default: 0)
+ * @returns {{progress: number, pointsToNextTier: number, label: string}} Progress percentage and info
+ */
 export const getTierProgress = (points = 0) => {
   const { currentTier, nextTier } = getRewardTier(points);
 
@@ -45,6 +59,11 @@ export const getTierProgress = (points = 0) => {
   };
 };
 
+/**
+ * Formats a date as a relative time string (e.g., "Today", "Yesterday", "5 days ago").
+ * @param {string|Date} dateValue - The date to format
+ * @returns {string} Relative time string
+ */
 export const formatRelativeDate = (dateValue) => {
   if (!dateValue) return "";
 
@@ -59,6 +78,11 @@ export const formatRelativeDate = (dateValue) => {
   return `${diffDays} days ago`;
 };
 
+/**
+ * Returns a human-readable label for a transaction based on its type.
+ * @param {Object} transaction - Transaction object with type/sourceType properties
+ * @returns {string} Human-readable transaction label
+ */
 export const getTransactionLabel = (transaction) => {
   const type = transaction?.sourceType || transaction?.type || "reward";
 
@@ -69,6 +93,11 @@ export const getTransactionLabel = (transaction) => {
   return transaction?.description || "FitRewards points";
 };
 
+/**
+ * Returns an emoji icon for a transaction based on its type.
+ * @param {Object} transaction - Transaction object with type/sourceType properties
+ * @returns {string} Emoji icon representing the transaction type
+ */
 export const getTransactionIcon = (transaction) => {
   const type = transaction?.sourceType || transaction?.type || "reward";
 
