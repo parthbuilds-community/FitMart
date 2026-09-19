@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import useFocusTrap from "../hooks/useFocusTrap";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -49,6 +50,7 @@ export default function FitnessChatBot() {
   const inputRef = useRef(null);
   const historyRef = useRef([]);
   const fabRef = useRef(null);
+  const chatWindowRef = useRef(null);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 120);
@@ -67,10 +69,6 @@ export default function FitnessChatBot() {
       `Fitness assistant: ${latestMessage.text.replace(/\*\*|__/g, "")}`,
     );
   }, [msgs]);
-
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 200);
-  }, [open]);
 
   // Prevent body scroll on mobile when chat is open
   useEffect(() => {
@@ -182,12 +180,13 @@ export default function FitnessChatBot() {
     window.requestAnimationFrame(() => fabRef.current?.focus());
   };
 
-  const onChatKeyDown = (e) => {
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      closeChat();
-    }
-  };
+  // Trap keyboard focus inside the chat window while open: Tab/Shift+Tab
+  // cycle within the dialog, Escape closes it (closeChat restores focus to
+  // the FAB), and focus moves to the message input on open.
+  useFocusTrap(chatWindowRef, open, {
+    initialFocusRef: inputRef,
+    onEscape: closeChat,
+  });
 
   return (
     <>
@@ -281,12 +280,12 @@ export default function FitnessChatBot() {
       {/* ── Chat Window ── */}
       {/* Full-screen on mobile, fixed-size floating window on sm+ */}
       <div
+        ref={chatWindowRef}
         id="fitness-chatbot-dialog"
         role="dialog"
         aria-labelledby="fitness-chatbot-title"
         aria-hidden={!open}
         inert={!open ? true : undefined}
-        onKeyDown={onChatKeyDown}
         className={`fm-chat-window fixed z-50 bg-white border border-stone-200
                   shadow-2xl flex flex-col overflow-hidden
                   /* Mobile: full screen minus FAB area */
