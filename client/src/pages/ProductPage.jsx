@@ -1,6 +1,7 @@
 // src/pages/ProductPage.jsx
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { auth } from "../auth/firebase";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
@@ -139,10 +140,11 @@ export default function ProductPage() {
       const cartDoc = await apiAddToCart(user.uid, product.productId, quantity);
       setCart(enrichCart(cartDoc, products));
       setAdded(true);
+      toast.success("Added to cart!");
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
       console.error("Add to cart failed:", err);
-      alert(err.message);
+      toast.error(err.message || "Failed to add to cart");
     } finally {
       setAdding(false);
     }
@@ -157,7 +159,7 @@ export default function ProductPage() {
       navigate("/checkout");
     } catch (err) {
       console.error("Buy Now failed:", err);
-      alert(err.message);
+      toast.error(err.message || "Buy Now failed");
       setBuyingNow(false);
     }
   };
@@ -180,7 +182,7 @@ export default function ProductPage() {
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("removeFromCart error:", err);
-      alert(err.message);
+      toast.error(err.message || "Failed to remove item");
     }
   };
 
@@ -202,7 +204,7 @@ export default function ProductPage() {
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("updateQty error:", err);
-      alert(err.message);
+      toast.error(err.message || "Failed to update quantity");
     }
   };
 
