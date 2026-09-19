@@ -15,9 +15,22 @@ const FEATURE_MAP = {
   Wearables: ["1-year warranty", "Water resistant", "Free shipping", "Returns within 15 days"],
 };
 
+const CART_FETCH_TIMEOUT_MS = 15000;
+
+async function fetchWithTimeout(url, options, timeoutMs = CART_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function apiAddToCart(userId, productId, quantity) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}/add`, {
+  const res = await fetchWithTimeout(`${API}/api/cart/${userId}/add`, {
     method: "POST", headers, credentials: "include",
     body: JSON.stringify({ productId, quantity }),
   });
@@ -30,7 +43,7 @@ async function apiAddToCart(userId, productId, quantity) {
 
 async function apiGetCart(userId) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" });
+  const res = await fetchWithTimeout(`${API}/api/cart/${userId}`, { headers, credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch cart");
   return res.json();
 }
@@ -66,6 +79,8 @@ export default function ProductPage() {
 
   const imgRef = useRef(null);
   const stickyRef = useRef(null);
+  const cartLoadRef = useRef(0); // monotonic counter to prevent stale cart overwrites
+  const cartVersionRef = useRef(0);
 
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -115,8 +130,13 @@ export default function ProductPage() {
         );
         const user = auth.currentUser;
         if (user) {
+          const loadId = ++cartLoadRef.current;
           const cartDoc = await apiGetCart(user.uid);
-          setCart(enrichCart(cartDoc, normalised));
+          // Only apply initial cart data if the user hasn't modified the cart
+          // since this load started (prevents stale overwrites from race conditions)
+          if (loadId > cartVersionRef.current) {
+            setCart(enrichCart(cartDoc, normalised));
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -136,6 +156,7 @@ export default function ProductPage() {
     if (!user) { navigate("/auth"); return; }
     setAdding(true);
     try {
+      cartVersionRef.current = ++cartLoadRef.current;
       const cartDoc = await apiAddToCart(user.uid, product.productId, quantity);
       setCart(enrichCart(cartDoc, products));
       setAdded(true);
@@ -153,6 +174,7 @@ export default function ProductPage() {
     if (!user) { navigate("/auth"); return; }
     setBuyingNow(true);
     try {
+      cartVersionRef.current = ++cartLoadRef.current;
       await apiAddToCart(user.uid, product.productId, quantity);
       navigate("/checkout");
     } catch (err) {
@@ -166,9 +188,10 @@ export default function ProductPage() {
     const user = auth.currentUser;
     if (!user) return;
     try {
+      cartVersionRef.current = ++cartLoadRef.current;
       const existing = cart.find(i => i.id === id);
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
+      const res = await fetchWithTimeout(`${API}/api/cart/${user.uid}/remove`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
@@ -188,9 +211,10 @@ export default function ProductPage() {
     const user = auth.currentUser;
     if (!user) return;
     try {
+      cartVersionRef.current = ++cartLoadRef.current;
       const url = delta > 0 ? "add" : "remove";
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
+      const res = await fetchWithTimeout(`${API}/api/cart/${user.uid}/${url}`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });

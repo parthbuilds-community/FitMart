@@ -24,6 +24,19 @@ import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+const CART_FETCH_TIMEOUT_MS = 15000;
+
+async function fetchWithTimeout(url, options, timeoutMs = CART_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const CATEGORIES = [
   { name: "All", value: "all" },
   { name: "Equipment", value: "Equipment" },
@@ -187,6 +200,9 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounceRef = useRef(null);
+  const cartLoadRef = useRef(0);
+  const cartVersionRef = useRef(0);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState([]);
@@ -242,11 +258,14 @@ export default function HomePage() {
     if (!user || !products.length) return;
     (async () => {
       try {
+        const loadId = ++cartLoadRef.current;
         const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
+        const res = await fetchWithTimeout(`${API}/api/cart/${user.uid}`, { headers, credentials: "include" });
         if (!res.ok) return;
         const cartDoc = await res.json();
-        setCart(mapCart(cartDoc, products));
+        if (loadId > cartVersionRef.current) {
+          setCart(mapCart(cartDoc, products));
+        }
       } catch (err) {
         console.error("Error loading cart:", err);
       }
@@ -265,8 +284,9 @@ export default function HomePage() {
   const addToCart = async (product) => {
     if (!user) return;
     try {
+      cartVersionRef.current = ++cartLoadRef.current;
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/add`, {
+      const res = await fetchWithTimeout(`${API}/api/cart/${user.uid}/add`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: product.productId || product.id, quantity: 1 }),
       });
@@ -285,9 +305,10 @@ export default function HomePage() {
   const removeFromCart = async (id) => {
     if (!user) return;
     try {
+      cartVersionRef.current = ++cartLoadRef.current;
       const existing = cart.find(i => i.id === id);
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/remove`, {
+      const res = await fetchWithTimeout(`${API}/api/cart/${user.uid}/remove`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: existing?.qty || 1 }),
       });
@@ -306,9 +327,10 @@ export default function HomePage() {
   const updateQty = async (id, delta) => {
     if (!user) return;
     try {
+      cartVersionRef.current = ++cartLoadRef.current;
       const url = delta > 0 ? "add" : "remove";
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API}/api/cart/${user.uid}/${url}`, {
+      const res = await fetchWithTimeout(`${API}/api/cart/${user.uid}/${url}`, {
         method: "POST", headers, credentials: "include",
         body: JSON.stringify({ productId: id, quantity: Math.abs(delta) }),
       });
