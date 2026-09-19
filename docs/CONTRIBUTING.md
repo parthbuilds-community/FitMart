@@ -269,6 +269,33 @@ chore: update dependencies
 
 > 💡 Keep the subject line under **72 characters** and in **lowercase**.
 
+### Automated Enforcement
+
+This project uses **commitlint** + **husky** to enforce the Conventional Commits format automatically:
+
+- **Locally**: A `commit-msg` git hook (managed by husky) runs commitlint on every commit. If your message doesn't match the format, the commit is blocked with a clear error message.
+- **In CI**: A GitHub Actions workflow lintss all commits in a Pull Request. The PR check will fail if any commit does not conform.
+
+To set up the local hooks after cloning:
+
+```bash
+npm install
+```
+
+This runs the `prepare` script which initializes husky automatically. If you already have the repo cloned, run:
+
+```bash
+npm install
+```
+
+> ⚠️ The hooks only apply to commits made on this machine. If you bypass husky with `git commit --no-verify`, the CI check will still catch non-conforming messages on the PR.
+
+To manually check a message against commitlint:
+
+```bash
+echo "feat: add new feature" | npx commitlint
+```
+
 ---
 
 ## 🔃 Submitting a Pull Request

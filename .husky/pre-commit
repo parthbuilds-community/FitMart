@@ -1,0 +1,2 @@
+# No-op — only the commit-msg hook enforces commitlint
+exit 0
