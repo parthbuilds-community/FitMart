@@ -6,6 +6,7 @@ import { getAuthHeaders } from "../utils/getAuthHeaders";
 import { fmt } from "../utils/formatters";
 import CartDrawer from "../components/CartDrawer";
 import Stars from "../components/Stars";
+import Toast from "../components/Toast";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -48,6 +49,7 @@ export default function ProductPage() {
   const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
+  const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
   const [products, setProducts] = useState([]);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +144,8 @@ export default function ProductPage() {
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
       console.error("Add to cart failed:", err);
-      alert(err.message);
+      setToast({ message: err.message || 'Failed to add to cart', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
     } finally {
       setAdding(false);
     }
@@ -157,7 +160,8 @@ export default function ProductPage() {
       navigate("/checkout");
     } catch (err) {
       console.error("Buy Now failed:", err);
-      alert(err.message);
+      setToast({ message: err.message || 'Failed to add to cart', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
       setBuyingNow(false);
     }
   };
@@ -180,7 +184,8 @@ export default function ProductPage() {
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("removeFromCart error:", err);
-      alert(err.message);
+      setToast({ message: err.message || 'Failed to remove from cart', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
     }
   };
 
@@ -202,7 +207,8 @@ export default function ProductPage() {
       setCart(enrichCart(cartDoc, products));
     } catch (err) {
       console.error("updateQty error:", err);
-      alert(err.message);
+      setToast({ message: err.message || 'Failed to update quantity', type: 'error', visible: true });
+      setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
     }
   };
 
@@ -692,6 +698,13 @@ export default function ProductPage() {
         updateQty={updateQty}
         removeFromCart={removeFromCart}
       />
+      {toast.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+        />
+      )}
     </>
   );
 }
