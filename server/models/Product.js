@@ -19,7 +19,17 @@ const ProductSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, 'reserved cannot be negative'],
-    },
+    },stock: {
+  type: Number,
+  default: 0,
+  min: 0,
+},
+
+reserved: {
+  type: Number,
+  default: 0,
+  min: 0,
+},
   },
   { timestamps: true }
 );
