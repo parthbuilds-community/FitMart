@@ -204,9 +204,18 @@ router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
   if (isNaN(productId)) {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
+
   try {
     const deleted = await Product.findOneAndDelete({ productId });
-    try { await cache.delPattern('products:'); } catch (e) { }
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    try {
+      await cache.delPattern('products:');
+    } catch (e) {}
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
