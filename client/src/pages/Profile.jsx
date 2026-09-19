@@ -12,6 +12,7 @@ import {
   getTransactionIcon,
 } from "../utils/rewardsUtils";
 import Navbar from "../components/Navbar";
+import PullToRefresh from "../components/PullToRefresh";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -193,30 +194,30 @@ const [rewardsError, setRewardsError] = useState("");
     }
   }, [activeTab]);
 
+  const fetchOrders = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    setLoadingOrders(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load orders");
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+      setOrders([]);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
   // Fetch orders when orders tab is active
   useEffect(() => {
-    if (activeTab !== "orders") return;
-    
-    const fetchOrders = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      
-      setLoadingOrders(true);
-      try {
-        const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load orders");
-        const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message);
-        setOrders([]);
-      } finally {
-        setLoadingOrders(false);
-      }
-    };
-
-    fetchOrders();
+    if (activeTab === "orders") {
+      fetchOrders();
+    }
   }, [activeTab]);
 
   const handleSaveProfile = async () => {
@@ -525,72 +526,74 @@ const [rewardsError, setRewardsError] = useState("");
 
         {/* ── ORDERS TAB ── */}
         {activeTab === "orders" && (
-          <div>
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5">Order history</p>
+          <PullToRefresh onRefresh={fetchOrders}>
+            <div>
+              <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-5">Order history</p>
 
-            {loadingOrders ? (
-              <div className="flex items-center justify-center py-10">
-                <span className="text-sm text-stone-400">Loading orders…</span>
-              </div>
-            ) : orders.length === 0 ? (
-              <div className="bg-white border border-stone-200 rounded-2xl p-10 text-center">
-                <p className="text-2xl mb-3">📦</p>
-                <p className="text-sm text-stone-500 mb-1">No orders yet.</p>
-                <p className="text-xs text-stone-400 mb-5">Start shopping to see your order history here.</p>
-                <button
-                  onClick={() => navigate("/home")}
-                  className="bg-stone-900 text-white text-sm px-6 py-2.5 rounded-full hover:bg-stone-700 transition-colors"
-                >
-                  Shop now
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {orders.map((order) => (
-                  <div key={order._id} className="bg-white border border-stone-200 rounded-2xl p-5 hover:border-stone-300 hover:shadow-sm transition-all">
-                    <div className="flex justify-between items-start gap-4 mb-3">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-stone-900">
-                          {new Date(order.createdAt).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}
-                        </p>
-                        <p className="text-xs text-stone-400 mt-0.5">
-                          {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-stone-900">₹{order.total.toFixed(2)}</p>
-                          <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full ${
-                            order.status === 'paid' 
-                              ? 'bg-green-50 text-green-700' 
-                              : order.status === 'failed'
-                              ? 'bg-red-50 text-red-700'
-                              : 'bg-stone-100 text-stone-600'
-                          }`}>
-                            {order.status}
-                          </span>
+              {loadingOrders ? (
+                <div className="flex items-center justify-center py-10">
+                  <span className="text-sm text-stone-400">Loading orders…</span>
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="bg-white border border-stone-200 rounded-2xl p-10 text-center">
+                  <p className="text-2xl mb-3">📦</p>
+                  <p className="text-sm text-stone-500 mb-1">No orders yet.</p>
+                  <p className="text-xs text-stone-400 mb-5">Start shopping to see your order history here.</p>
+                  <button
+                    onClick={() => navigate("/home")}
+                    className="bg-stone-900 text-white text-sm px-6 py-2.5 rounded-full hover:bg-stone-700 transition-colors"
+                  >
+                    Shop now
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {orders.map((order) => (
+                    <div key={order._id} className="bg-white border border-stone-200 rounded-2xl p-5 hover:border-stone-300 hover:shadow-sm transition-all">
+                      <div className="flex justify-between items-start gap-4 mb-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-stone-900">
+                            {new Date(order.createdAt).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                          <p className="text-xs text-stone-400 mt-0.5">
+                            {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-stone-900">₹{order.total.toFixed(2)}</p>
+                            <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full ${
+                              order.status === 'paid' 
+                                ? 'bg-green-50 text-green-700' 
+                                : order.status === 'failed'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-stone-100 text-stone-600'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Order items list */}
-                    <div className="pt-3 border-t border-stone-100 space-y-1.5">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-xs text-stone-600">
-                          <span>Product ID {item.productId} × {item.quantity}</span>
-                          <span className="text-stone-900">₹{(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                      ))}
+                      {/* Order items list */}
+                      <div className="pt-3 border-t border-stone-100 space-y-1.5">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex justify-between text-xs text-stone-600">
+                            <span>Product ID {item.productId} × {item.quantity}</span>
+                            <span className="text-stone-900">₹{(item.price * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </PullToRefresh>
         )}
       </div>
 
