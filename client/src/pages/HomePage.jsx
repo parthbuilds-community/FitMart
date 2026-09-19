@@ -19,6 +19,7 @@ import Stars from "../components/Stars";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import useInfiniteProducts from "../hooks/useInfiniteProducts";
 import CategoryPillsSkeleton from "../components/CategoryPillsSkeleton";
+import ScrollToTopFAB from "../components/ScrollToTopFAB";
 
 
 
@@ -276,8 +277,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Add to cart failed:", err); 
+    } catch (err) {
+      console.error("Add to cart failed:", err);
       alert(err.message);
     }
   };
@@ -297,8 +298,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Remove from cart failed:", err); 
+    } catch (err) {
+      console.error("Remove from cart failed:", err);
       alert(err.message);
     }
   };
@@ -318,8 +319,8 @@ export default function HomePage() {
       }
       const cartDoc = await res.json();
       setCart(mapCart(cartDoc, products));
-    } catch (err) { 
-      console.error("Update qty failed:", err); 
+    } catch (err) {
+      console.error("Update qty failed:", err);
       alert(err.message);
     }
   };
@@ -693,6 +694,7 @@ export default function HomePage() {
       }>
         <FitnessChatBot />
       </ErrorBoundary>
+      <ScrollToTopFAB bottomOffset="bottom-24" />
     </div>
   );
 }
