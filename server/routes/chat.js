@@ -106,18 +106,14 @@ router.post("/", chatLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid request', details: [`message: Message must be ${MAX_MESSAGE_LENGTH} characters or fewer`] });
     }
 
-    // Schema validation if available (from origin/main)
+    // Schema validation
     let message;
-    if (typeof chatSchema !== 'undefined' && chatSchema) {
-      const parse = chatSchema.safeParse(req.body);
-      if (!parse.success) {
-        const issues = parse.error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
-        return res.status(400).json({ error: 'Invalid request', details: issues });
-      }
-      message = parse.data.message;
-    } else {
-      message = inputMessage;
+    const parse = chatSchema.safeParse(req.body);
+    if (!parse.success) {
+      const issues = parse.error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
+      return res.status(400).json({ error: 'Invalid request', details: issues });
     }
+    message = parse.data.message;
 
     // History handling (from HEAD)
     const { history: rawHistory } = req.body;
@@ -155,19 +151,17 @@ router.post("/", chatLimiter, async (req, res) => {
 
     const sanitized = sanitizeMessage(message);
 
-    // Build the full prompt (combining both approaches)
+    // Build the full prompt — always include safety instruction and history when present
     const historyBlock = buildHistoryBlock(history);
 
-    let prompt;
-    if (typeof SAFETY_INSTRUCTION !== 'undefined' && SAFETY_INSTRUCTION) {
-      // Use the safer prompt construction from origin/main
-      prompt = `${SYSTEM_PROMPT}\n\n${SAFETY_INSTRUCTION}\n\n[USER INPUT START]\n${sanitized}\n[USER INPUT END]`;
-    } else if (historyBlock) {
-      // Use the history-aware prompt from HEAD
-      prompt = `${SYSTEM_PROMPT}\n\nConversation so far:\n${historyBlock}\n\nUser: ${message}`;
-    } else {
-      prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}`;
-    }
+    const prompt = [
+      SYSTEM_PROMPT,
+      SAFETY_INSTRUCTION,
+      historyBlock ? `Conversation so far:\n${historyBlock}` : "",
+      `[USER INPUT START]\n${sanitized}\n[USER INPUT END]`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
     let reply;
     let usedFallback = false;
