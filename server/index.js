@@ -16,7 +16,7 @@ const allowedOrigins = allowedOrigin
 
 const isDev = process.env.NODE_ENV !== "production";
 const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === "true" || isDev;
-
+const releaseExpiredReservations = require('./jobs/releaseExpiredReservations');
 
 
 if (isDev) {

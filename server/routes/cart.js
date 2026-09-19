@@ -154,7 +154,17 @@ router.post('/:userId/remove', verifyFirebaseToken,validateRequest(cartRemoveSch
     if (!cart) return fail(res, 'Cart not found', 404);
 
     const itemIdx = cart.items.findIndex(i => i.productId === Number(productId));
-    if (itemIdx === -1) return res.status(404).json({ error: 'Item not in cart' });
+
+    if (itemIdx >= 0) {
+  cart.items[itemIdx].quantity += qty;
+  cart.items[itemIdx].reservedAt = new Date();
+    } else {
+       cart.items.push({
+       productId: Number(productId),
+       quantity: qty,
+       reservedAt: new Date(),
+     });
+    }
 
     const removeQty = Math.min(cart.items[itemIdx].quantity, qty);
     cart.items[itemIdx].quantity -= removeQty;

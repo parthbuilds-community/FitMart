@@ -56,19 +56,29 @@ async function createOrder(userId, items = null) {
       // Safely calculate new reserved to avoid negative values
       const currentReserved = Number(p.reserved || 0);
       const newReserved = Math.max(0, currentReserved - it.quantity);
-      
+      //
       await Product.findOneAndUpdate(
         { productId: p.productId },
         { 
-          $inc: { stock: -it.quantity },
-          $set: { reserved: newReserved }
-        }
+          $inc: {
+      stock: -it.quantity,
+      reserved: -it.quantity
+        }}
       );
     }
   }
 
   // Clear the user's cart (purchasing finalizes reservation)
-  await Cart.findOneAndUpdate({ userId }, { items: [] });
+ const cart = await Cart.findOne({ userId });
+
+if (cart) {
+  for (const item of cart.items) {
+    await adjustReserved(item.productId, -item.quantity);
+  }
+
+  cart.items = [];
+  await cart.save();
+}
 
   return order;
 }
