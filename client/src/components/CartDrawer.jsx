@@ -196,14 +196,15 @@ function CartDrawer({
                                   border border-stone-200">
                     {item.image ? (
                       <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
+  src={item.image}
+  alt={item.name}
+  loading="lazy"
+  className="w-full h-full object-cover"
+  onError={(e) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.style.display = "none";
+  }}
+/>
                     ) : (
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="#d6d3d1" strokeWidth="1.5"
