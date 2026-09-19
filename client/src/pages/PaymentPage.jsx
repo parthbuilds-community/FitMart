@@ -79,6 +79,8 @@ export default function PaymentPage() {
     discountPercent = 0,
     discountApplied = false,
     address = null,
+    pointsToRedeem = 0,
+    rewardsDiscount = 0,
   } = location.state || {};
 
   const busy = paying || bypassing;
@@ -137,6 +139,8 @@ export default function PaymentPage() {
         discountApplied,
         paymentId,
         address,
+        pointsToRedeem,
+        rewardsDiscount,
       },
     });
   };
@@ -205,6 +209,7 @@ export default function PaymentPage() {
           amount: total,
           currency: "INR",
           userId,
+          pointsToRedeem,
         }),
       });
 
@@ -214,6 +219,12 @@ export default function PaymentPage() {
       }
 
       const order = await orderRes.json();
+
+      // If entire order is covered by points, skip Razorpay
+      if (order.status === "paid_by_points") {
+        await finishOrder(userId, order.id);
+        return;
+      }
 
       const options = {
         key: RAZORPAY_KEY,
@@ -392,6 +403,13 @@ export default function PaymentPage() {
               <div className="flex justify-between text-sm text-stone-500">
                 <span>Welcome {discountPercent}% off</span>
                 <span>−{fmt(discountAmt)}</span>
+              </div>
+            )}
+
+            {rewardsDiscount > 0 && (
+              <div className="flex justify-between text-sm text-stone-500">
+                <span>⭐ FitRewards ({pointsToRedeem} pts)</span>
+                <span>−{fmt(rewardsDiscount)}</span>
               </div>
             )}
 

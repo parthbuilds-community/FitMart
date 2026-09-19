@@ -39,14 +39,70 @@ async function releaseAndClearCart(userId) {
 
 /**
  * @route   POST /create-order
- * @desc    Creates a Razorpay payment order; body: { amount (₹), currency, userId }
+ * @desc    Creates a Razorpay payment order; body: { amount (₹), currency, userId, pointsToRedeem }
  * @access  Private
  */
 router.post("/create-order", verifyFirebaseToken, async (req, res) => {
   try {
-    const { amount, currency = "INR", userId } = req.body;
+    const { amount, currency = "INR", userId, pointsToRedeem = 0 } = req.body;
     if (!amount || !userId)
       return res.status(400).json({ error: "amount and userId are required" });
+
+    let finalAmount = Number(amount);
+    let pointsRedeemed = 0;
+    let rewardsDiscount = 0;
+
+    // If user wants to redeem points, validate and deduct
+    if (pointsToRedeem > 0) {
+      const rewards = await Rewards.findOne({ userId });
+
+      if (!rewards || rewards.pointsBalance < pointsToRedeem) {
+        return res.status(400).json({ error: "Insufficient points balance" });
+      }
+
+      // Calculate discount from points
+      rewardsDiscount = Math.floor(pointsToRedeem * rewardsConfig.RUPEES_PER_POINT);
+      const maxDiscount = Math.floor(finalAmount * rewardsConfig.MAX_REDEMPTION_PERCENT / 100);
+      rewardsDiscount = Math.min(rewardsDiscount, maxDiscount);
+      pointsRedeemed = Math.ceil(rewardsDiscount / rewardsConfig.RUPEES_PER_POINT);
+
+      // Deduct points atomically
+      const updated = await Rewards.findOneAndUpdate(
+        { userId, pointsBalance: { $gte: pointsRedeemed } },
+        {
+          $inc: { pointsBalance: -pointsRedeemed },
+          $push: {
+            transactions: {
+              type: "redeemed",
+              points: pointsRedeemed,
+              source: "purchase",
+              orderId: null, // will be set after order creation if needed
+              description: `Redeemed ${pointsRedeemed} points for ₹${rewardsDiscount} discount`,
+              createdAt: new Date(),
+            },
+          },
+        },
+        { new: true }
+      );
+
+      if (!updated) {
+        return res.status(400).json({ error: "Insufficient points balance" });
+      }
+
+      finalAmount = Math.max(finalAmount - rewardsDiscount, 0);
+    }
+
+    // If entire amount is covered by points, skip Razorpay
+    if (finalAmount <= 0) {
+      return res.json({
+        id: `pts_${Date.now()}`,
+        amount: 0,
+        currency,
+        status: "paid_by_points",
+        pointsRedeemed,
+        rewardsDiscount,
+      });
+    }
 
     // receipt must be ≤ 40 chars
     const shortId = userId.slice(-8);
@@ -54,12 +110,12 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
     const receipt = `r_${shortId}_${shortTs}`;   // always 18 chars
 
     const order = await razorpay.orders.create({
-      amount: Math.round(amount * 100),   // ₹ → paise
+      amount: Math.round(finalAmount * 100),   // ₹ → paise
       currency,
       receipt,
     });
 
-    res.json(order);
+    res.json({ ...order, pointsRedeemed, rewardsDiscount });
   } catch (err) {
     console.error("Razorpay create-order error:", err);
     res.status(500).json({ error: err.message });

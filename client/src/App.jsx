@@ -30,8 +30,19 @@ import LegalTerms from "./pages/LegalTerms";
 import LegalPrivacy from "./pages/LegalPrivacy";
 import DevAdminLogin from "./components/DevAdminLogin";
 
+// Stable QueryClient instance at module scope — survives re-renders so
+// React Query's cache, deduplication, and background refetching work correctly.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes before data is considered stale
+      retry: 1,                  // retry failed queries once
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 export default function App() {
-  const queryClient = new QueryClient();
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

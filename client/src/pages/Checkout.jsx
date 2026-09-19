@@ -28,6 +28,11 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // FitRewards redemption state
+  const [rewardsBalance, setRewardsBalance] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [redeemEnabled, setRedeemEnabled] = useState(false);
+
   useEffect(() => { document.title = "My Cart - FitMart"; }, []);
 
   useEffect(() => {
@@ -103,6 +108,21 @@ export default function Checkout() {
       } finally {
         setLoadingProfile(false);
       }
+
+      // ── Fetch FitRewards balance ──
+      try {
+        const headers = await getAuthHeaders();
+        const rewardsRes = await fetch(`${API}/api/rewards/${userId}`, {
+          headers, credentials: "include", signal,
+        });
+        if (rewardsRes.ok) {
+          const r = await rewardsRes.json();
+          setRewardsBalance(r.pointsBalance || 0);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        // Non-critical — just won't show redemption option
+      }
     });
 
     return () => {
@@ -113,7 +133,20 @@ export default function Checkout() {
 
   const subtotal = items.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
   const discountAmt = discountEligible ? Math.round(subtotal * discountPercent / 100) : 0;
-  const total = subtotal - discountAmt;
+
+  // FitRewards redemption calculations
+  const RUPEES_PER_POINT = 0.1;  // 10 points = ₹1
+  const MIN_POINTS_TO_REDEEM = 100;
+  const MAX_REDEMPTION_PERCENT = 50;
+  const afterWelcomeDiscount = subtotal - discountAmt;
+  const maxRedeemableDiscount = Math.floor(afterWelcomeDiscount * MAX_REDEMPTION_PERCENT / 100);
+  const maxRedeemablePoints = Math.min(
+    rewardsBalance,
+    Math.ceil(maxRedeemableDiscount / RUPEES_PER_POINT)
+  );
+  const canRedeem = rewardsBalance >= MIN_POINTS_TO_REDEEM;
+  const rewardsDiscountAmt = redeemEnabled ? Math.floor(pointsToRedeem * RUPEES_PER_POINT) : 0;
+  const total = afterWelcomeDiscount - rewardsDiscountAmt;
 
   const handleProceed = () => {
     navigate("/payment", {
@@ -122,6 +155,8 @@ export default function Checkout() {
         discountPercent: discountEligible ? discountPercent : 0,
         discountApplied: discountEligible,
         address: selectedAddress,
+        pointsToRedeem: redeemEnabled ? pointsToRedeem : 0,
+        rewardsDiscount: rewardsDiscountAmt,
       },
     });
   };
@@ -209,6 +244,64 @@ export default function Checkout() {
                       <span className="text-stone-300">−{fmt(discountAmt)}</span>
                     </div>
                   )}
+
+                  {/* FitRewards redemption */}
+                  {canRedeem && (
+                    <div className="bg-stone-800 border border-stone-700 rounded-xl p-3 mt-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm" aria-hidden="true">⭐</span>
+                          <span className="text-xs text-stone-300 font-medium">FitRewards</span>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <span className="text-xs text-stone-400">
+                            {rewardsBalance} pts
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={redeemEnabled}
+                            onChange={(e) => {
+                              setRedeemEnabled(e.target.checked);
+                              if (!e.target.checked) setPointsToRedeem(0);
+                              else setPointsToRedeem(maxRedeemablePoints);
+                            }}
+                            className="w-4 h-4 rounded border-stone-600 bg-stone-700 text-white
+                                       focus:ring-white focus:ring-offset-stone-900 cursor-pointer"
+                            aria-label="Use FitRewards points for discount"
+                          />
+                        </label>
+                      </div>
+                      {redeemEnabled && (
+                        <div className="space-y-2">
+                          <input
+                            type="range"
+                            min={MIN_POINTS_TO_REDEEM}
+                            max={maxRedeemablePoints}
+                            step={10}
+                            value={pointsToRedeem}
+                            onChange={(e) => setPointsToRedeem(Number(e.target.value))}
+                            className="w-full h-1.5 bg-stone-600 rounded-full appearance-none cursor-pointer
+                                       [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4
+                                       [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white
+                                       [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+                            aria-label={`Redeem ${pointsToRedeem} points for ₹${rewardsDiscountAmt} discount`}
+                          />
+                          <div className="flex justify-between text-xs text-stone-400">
+                            <span>{pointsToRedeem} pts</span>
+                            <span className="text-stone-300">−{fmt(rewardsDiscountAmt)}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {redeemEnabled && rewardsDiscountAmt > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-400">Points discount</span>
+                      <span className="text-stone-300">−{fmt(rewardsDiscountAmt)}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-sm text-stone-300">
                     <span>Shipping</span>
                     <span className="text-stone-400">Free</span>
