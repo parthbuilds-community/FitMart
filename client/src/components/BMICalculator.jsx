@@ -19,6 +19,7 @@ const BMICalculator = () => {
 
   const [result, setResult] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
@@ -27,11 +28,27 @@ const BMICalculator = () => {
 
   const handleCalculate = (e) => {
     e.preventDefault();
+    setError("");
+    
     const w = parseFloat(formData.weight);
     const h = parseFloat(formData.height);
     const a = parseInt(formData.age);
     const activity = parseFloat(formData.activityLevel);
-    if (!w || !h || !a) return;
+    
+    // Validation with reasonable bounds
+    if (!w || w < 20 || w > 300) {
+      setError("Please enter a valid weight between 20kg and 300kg.");
+      return;
+    }
+    if (!h || h < 50 || h > 250) {
+      setError("Please enter a valid height between 50cm and 250cm.");
+      return;
+    }
+    if (!a || a < 10 || a > 100) {
+      setError("Please enter a valid age between 10 and 100 years.");
+      return;
+    }
+    
     setResult({
       bmi: calculateBMI(w, h),
       category: getBMICategory(calculateBMI(w, h)),
@@ -69,6 +86,11 @@ const BMICalculator = () => {
             }`}
         >
           <form onSubmit={handleCalculate} className="space-y-6 sm:space-y-8">
+            {error && (
+              <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
 
             {/* Gender Selection */}
             <div>
@@ -82,6 +104,8 @@ const BMICalculator = () => {
                     key={g}
                     type="button"
                     onClick={() => setFormData({ ...formData, gender: g })}
+                    aria-label={`Select ${g}`}
+                    aria-pressed={formData.gender === g}
                     className={`flex-1 py-3 px-4 sm:px-8 rounded-full text-xs tracking-widest
                                 uppercase transition-all duration-300 border min-h-11
                                 active:scale-[0.98]
@@ -170,6 +194,7 @@ const BMICalculator = () => {
 
             <button
               type="submit"
+              aria-label="Calculate BMI and generate analysis"
               className="w-full bg-stone-900 text-white text-sm tracking-widest uppercase
                          py-4 rounded-full hover:bg-stone-700 transition-colors shadow-sm
                          min-h-13 active:scale-[0.98]"

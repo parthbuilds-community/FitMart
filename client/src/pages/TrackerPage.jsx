@@ -51,6 +51,7 @@ export default function TrackerPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/home")}
+              aria-label="Navigate back to shop"
               className="text-xs tracking-[0.2em] uppercase text-stone-500 hover:text-stone-900 transition-all duration-300 mb-6 flex items-center gap-2 group px-4 py-2 border border-stone-200 hover:border-stone-400 rounded-full w-fit bg-white"
             >
               <Motion.span
