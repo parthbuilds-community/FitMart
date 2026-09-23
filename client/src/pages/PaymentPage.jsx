@@ -99,18 +99,6 @@ export default function PaymentPage() {
   };
 
   const finishOrder = async (userId, paymentId) => {
-    try {
-      const headers = await getAuthHeaders();
-
-      await fetch(`${API}/api/payment/clear-cart`, {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({ userId }),
-      });
-    } catch (err) {
-      console.error("clear-cart failed:", err);
-    }
 
     if (discountApplied) {
       try {
@@ -201,11 +189,6 @@ export default function PaymentPage() {
         method: "POST",
         headers,
         credentials: "include",
-        body: JSON.stringify({
-          amount: total,
-          currency: "INR",
-          userId,
-        }),
       });
 
       if (!orderRes.ok) {
@@ -243,8 +226,9 @@ export default function PaymentPage() {
                 headers,
                 credentials: "include",
                 body: JSON.stringify({
-                  ...response,
-                  userId,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
                 }),
               }
             );
