@@ -161,6 +161,9 @@ app.use("/api/user", require("./routes/user"));
 app.use("/api/customers", require("./routes/customers"));
 app.use("/api/exercises", require("./routes/exercises"));
 app.use("/api/workouts", require("./routes/workouts"));
+// Membership enrolment (authenticated). As with the program catalog, the
+// prefix is distinct, so it cannot collide with an existing route.
+app.use("/api/memberships", require("./routes/memberships"));
 app.use("/api/bugs", require("./routes/bugs"));
 
 // ── // Razorpay / payment routes (prefixed with /api/payment) ─────────────────
