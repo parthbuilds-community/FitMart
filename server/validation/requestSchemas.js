@@ -58,6 +58,11 @@ const productUpdateBodySchema = productFieldsSchema
     message: 'At least one product field is required',
   });
 
+// Shared 24-character hexadecimal ObjectId validator.
+const objectIdSchema = z
+  .string()
+  .regex(/^[0-9a-f]{24}$/i, 'must be a 24-character hexadecimal id');
+
 const workoutExerciseSchema = z.object({
   id: z.string().min(1, 'id is required'),
   name: z.string().min(1, 'name is required'),
@@ -67,12 +72,50 @@ const workoutExerciseSchema = z.object({
   gifUrl: z.string().optional()
 }).strict();
 
+// `programId` and `dayIndex` are the optional program-context fields added for
+// #997. Existing clients that only send `{ date, title?, notes?, exercises? }`
+// keep working; the handler falls back to the caller's active membership.
 const workoutLogBodySchema = z.object({
   date: z.string().min(1, 'date is required'),
   title: z.string().optional(),
   notes: z.string().optional(),
-  exercises: z.array(workoutExerciseSchema).optional()
+  exercises: z.array(workoutExerciseSchema).optional(),
+  programId: objectIdSchema.optional(),
+  dayIndex: nonNegativeIntegerSchema.optional()
 }).strict();
+
+// ── Memberships ─────────────────────────────────────────────────────────────
+
+// Only `planId` is required. `userId` is the admin-only escape hatch for
+// enrolling somebody else, so omitting it means "the authenticated user".
+const createMembershipBodySchema = z
+  .object({
+    planId: objectIdSchema,
+    userId: z.string().trim().min(1, 'userId cannot be empty').optional(),
+  })
+  .strict();
+
+// Sort accepts one of the documented membership fields, optionally prefixed with
+// "-" to reverse the order (for example `-renewCount`). Unknown fields are
+// rejected so a caller cannot ask MongoDB to sort on an arbitrary/unindexed
+// path. Default ordering is newest first.
+const membershipSortSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^-?(createdAt|status|renewCount|expiresAt)$/,
+    'sort must be one of createdAt, status, renewCount, expiresAt (prefix with - to reverse)'
+  )
+  .default('-createdAt');
+
+// Unknown query params are stripped rather than rejected so cache-busting params
+// and future additions do not turn into 400s for existing clients.
+const listMembershipsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1, 'page must be 1 or greater').default(1),
+  limit: z.coerce.number().int().min(1).max(50, 'limit cannot exceed 50').default(10),
+  status: z.enum(['active', 'paused', 'cancelled', 'expired', 'trialing']).optional(),
+  sort: membershipSortSchema,
+});
 
 module.exports = {
   cartAddSchema: {
@@ -95,6 +138,12 @@ module.exports = {
   updateProductSchema: {
     params: productIdParamSchema,
     body: productUpdateBodySchema,
+  },
+  createMembershipSchema: {
+    body: createMembershipBodySchema,
+  },
+  listMembershipsSchema: {
+    query: listMembershipsQuerySchema,
   },
   updateWorkoutLogSchema: {
     body: workoutLogBodySchema,

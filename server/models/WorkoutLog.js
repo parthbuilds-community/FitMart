@@ -22,7 +22,21 @@ const workoutLogSchema = new mongoose.Schema({
   },
   title: { type: String, default: 'Logged Workout' },
   notes: { type: String, default: '' },
-  exercises: { type: [exerciseSchema], default: [] }
+  exercises: { type: [exerciseSchema], default: [] },
+
+  // Optional program context, stamped when a log is recorded against a Program
+  // (see #997). All three stay optional so logs written before program-aware
+  // logging — and logs from users with no membership — remain valid.
+  programId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Program'
+  },
+  // 0-based index of the program day this workout fulfilled.
+  dayIndex: { type: Number, min: 0 },
+  membershipId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Membership'
+  }
 }, {
   timestamps: true
 });
