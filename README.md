@@ -873,19 +873,72 @@ Supported `category` values: `chest`, `back`, `shoulders`, `cardio`, `abs`, `arm
 |--------|----------|------|-------------|
 | `GET` | `/api/github/stats` | — | Get GitHub repository statistics (stars, forks, etc.) |
 
+### 🏋️ Programs & 🎫 Memberships
+
+The Program + Membership spine. A **Program** is a progressive training plan; a **Membership** links a user to a program and tracks their progress through it. Full reference: [`docs/PROGRAM_MODEL.md`](docs/PROGRAM_MODEL.md) · [`docs/MEMBERSHIP_MODEL.md`](docs/MEMBERSHIP_MODEL.md) · [`docs/USAGE_GUIDE.md`](docs/USAGE_GUIDE.md).
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/programs` | — | Paginated program catalogue. Query: `page`, `limit` (max 50), `difficulty`, `tag`, `search`, `sort`, `fields`. Returns `{ data: { programs, pagination } }`. |
+| `GET` | `/api/programs/:id` | — | Program detail with `day[].exercises[].exerciseId` populated (`name`, `muscleGroup`, `equipment`, `image`); days sorted by `dayNumber`. Returns `{ data: { program } }`. `404` if the id is unknown. |
+| `POST` | `/api/memberships` | ✅ | Enrol in a program — body `{ planId }` (admins may pass `userId` to enrol someone else). `201` returns `{ data: { membership } }` with `planId` populated. `409` if an active membership already exists. |
+| `GET` | `/api/memberships` | ✅ | List memberships — users see their own, admins see all. Query: `page`, `limit` (max 50), `status`, `sort`. Returns `{ data: { memberships, pagination } }`. |
+| `DELETE` | `/api/memberships/:id` | ✅ Owner/Admin | **Planned** ([#996](https://github.com/parthbuilds-community/FitMart/issues/996)) — cancel a membership. Soft delete: sets `status: "cancelled"` and `cancelledAt`. `409` if already cancelled/expired. |
+| `POST` | `/api/workouts` | ✅ | Log a workout. **Planned** ([#997](https://github.com/parthbuilds-community/FitMart/issues/997)): logging against an active membership advances its `currentDayIndex` (capped at `lengthDays`) and returns `{ currentDayIndex, totalDays, progressPercent, programGoal }`. |
+
+**Request / response shapes**
+
+```js
+// POST /api/memberships — request body
+{ "planId": "664e0a1bb8e4d3f0a1b2c3d0" }   // + optional "userId" for admins
+
+// GET /api/programs — list
+{ "success": true, "data": { "programs": [ /* Program[] */ ], "pagination": { "page": 1, "limit": 10, "total": 1, "totalPages": 1 } } }
+
+// GET /api/programs/:id — detail
+{ "success": true, "data": { "program": { /* Program with populated exercises */ } } }
+
+// POST /api/memberships — 201
+{ "success": true, "data": { "membership": { /* Membership with populated planId */ } } }
+
+// GET /api/memberships — list
+{ "success": true, "data": { "memberships": [ /* Membership[] */ ], "pagination": { "page": 1, "limit": 10, "total": 1, "totalPages": 1 } } }
+
+// DELETE /api/memberships/:id (planned) / POST /api/workouts
+{ "success": true, "data": { "membership": { /* ... */ } } }
+
+// Errors from every endpoint
+{ "success": false, "error": "<message>" }
+```
+
+See [`docs/USAGE_GUIDE.md`](docs/USAGE_GUIDE.md) for runnable enrolment, workout-logging and cancellation examples, and [`docs/PROGRAM_MODEL.md`](docs/PROGRAM_MODEL.md#programs-api) / [`docs/MEMBERSHIP_MODEL.md`](docs/MEMBERSHIP_MODEL.md#memberships-api) for full field-by-field payloads.
+
 ### 🏋️‍♂️ Workouts
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/api/workouts` | — | Get user's workout logs |
-| `POST` | `/api/workouts` | — | Create a new workout log |
-| `GET` | `/api/workouts/:id` | — | Get a specific workout log |
-| `PUT` | `/api/workouts/:id` | ✅ | Update a workout log |
-| `DELETE` | `/api/workouts/:id` | ✅ | Delete a workout log |
+| `GET` | `/api/workouts` | ✅ | Get the user's workout logs as a date-keyed map |
+| `POST` | `/api/workouts` | ✅ | Upsert a workout log for a date — body: `{ date, title?, notes?, exercises? }` |
+| `DELETE` | `/api/workouts/:date` | ✅ | Delete the workout log for a date |
 
 ---
 
 ## 🗃️ Data Models
+
+Overview of every Mongoose model. Collection names are pluralised from the model name.
+
+| Model | Collection | Purpose |
+|-------|------------|---------|
+| [Product](#product) | `products` | Store catalogue (gear, nutrition, wearables). |
+| [Cart](#cart) | `carts` | Per-user cart items with stock reservation. |
+| [Order](#order) | `orders` | Completed purchases with price snapshots. |
+| [UserProfile](#userprofile) | `userprofiles` | Profile, addresses and discount state (Firebase UID). |
+| [Bug](#bug) | `bugs` | User-submitted bug reports. |
+| [FitnessCenter](#fitnesscenter) | `fitnesscenters` | Nearby gyms / studios. |
+| [Rewards](#rewards) | `rewards` | Loyalty points and tier. |
+| [Program](#program) | `programs` | Progressive training plans members enrol into. |
+| [Membership](#membership) | `memberships` | Links a user to a program and tracks their progress. |
+| [WorkoutLog](#workoutlog) | `workoutlogs` | Per-date workout entries for a user. |
 
 ### Product
 
@@ -1017,6 +1070,65 @@ Supported `category` values: `chest`, `back`, `shoulders`, `cardio`, `abs`, `arm
   }]
 }
 ```
+
+### Program
+
+```js
+{
+  goal:       String  (required, trimmed, 5–120 chars),
+  difficulty: String  (required, "beginner" | "intermediate" | "advanced"),
+  lengthDays: Number  (required, 1–90, must equal day.length),
+  day: [{
+    dayNumber: Number  (required, unique within day),
+    focus:     String,
+    exercises: [{
+      exerciseId:  ObjectId  (ref "Exercise", required, 24-char hex),
+      sets:        Number,
+      reps:        Number,
+      restSeconds: Number,
+      notes:       String
+    }]
+  }],
+  tags:  [String],   // max 10, trimmed + lower-cased
+  image: String,
+  price: {           // optional; a program needs a price to be enrolable
+    amount:     Number (required),
+    currency:   String (required),
+    interval:   String (required),
+    periodDays: Number (required)
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+Indexes: `{ difficulty, createdAt }` · `{ tags }` · `{ goal }` · **unique** `{ goal, difficulty }`. See [`docs/PROGRAM_MODEL.md`](docs/PROGRAM_MODEL.md).
+
+### Membership
+
+```js
+{
+  userId:      String   (required, Firebase UID),
+  planId:      ObjectId (ref "Program", required),
+  status:      String   (required, "active" | "paused" | "cancelled" | "expired" | "trialing"),
+  renewCount:  Number   (default: 0),
+  priceSnapshot: {      // copied from the program's price at enrolment
+    amount:     Number (required),
+    currency:   String (required),
+    interval:   String (required),
+    periodDays: Number (required)
+  },
+  currentDayIndex: Number  (default: 0),
+  startedAt:       Date,
+  enrolledAt:      Date,
+  cancelledAt:     Date,   // set when cancelled (soft delete)
+  expiresAt:       Date,   // startedAt + lengthDays * 24h
+  createdAt:       Date,
+  updatedAt:       Date
+}
+```
+
+Status lifecycle, price snapshot and the planned unique-active constraint + indexes are documented in [`docs/MEMBERSHIP_MODEL.md`](docs/MEMBERSHIP_MODEL.md).
 
 ### WorkoutLog
 
