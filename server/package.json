@@ -7,6 +7,7 @@
     "dev": "nodemon index.js",
     "seed": "node seed.js",
     "seed:fitness": "node seedFitnessCenters.js",
+    "seed:programs": "node seedProgram.js",
     "test:cart": "jest tests/cart.reserved.test.js --forceExit",
     "test": "jest --runInBand --forceExit"
   },
