@@ -11,14 +11,18 @@ const { LOW_STOCK_THRESHOLD } = require('../config/constants');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const validateRequest = require('../middleware/validateRequest');
-const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
+const {
+  createProductSchema,
+  updateProductSchema,
+  productQuerySchema,
+} = require('../validation/requestSchemas');
 
 /**
  * @route   GET /api/products
  * @desc    Returns all products sorted by productId in ascending order
  * @access  Public
  */
-router.get('/', async (req, res) => {
+router.get('/', validateRequest(productQuerySchema), async (req, res) => {
   try {
     // Query parameters
     const all = req.query.all === 'true';

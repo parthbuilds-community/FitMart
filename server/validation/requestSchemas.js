@@ -74,6 +74,17 @@ const workoutLogBodySchema = z.object({
   exercises: z.array(workoutExerciseSchema).optional()
 }).strict();
 
+const productQuerySchema = z.object({
+  page: z.coerce.number().finite().int().positive().optional(),
+  limit: z.coerce.number().finite().int().positive().optional(),
+  category: z.string().optional(),
+  search: z.string().optional(),
+  sort: z.string().optional(),
+  fields: z.string().optional(),
+  all: z.enum(['true', 'false']).optional(),
+}).strict();
+
+
 module.exports = {
   cartAddSchema: {
     params: userIdParamsSchema,
@@ -91,6 +102,9 @@ module.exports = {
   },
   createProductSchema: {
     body: productFieldsSchema,
+  },
+    productQuerySchema: {
+    query: productQuerySchema,
   },
   updateProductSchema: {
     params: productIdParamSchema,

@@ -1,10 +1,13 @@
+
 const {
   cartAddSchema,
   cartRemoveSchema,
   createOrderSchema,
   createProductSchema,
   updateProductSchema,
+  productQuerySchema,
 } = require('../validation/requestSchemas');
+
 
 describe('requestSchemas - cartAddSchema', () => {
   describe('params validation (userIdParamsSchema)', () => {
@@ -502,5 +505,54 @@ describe('requestSchemas - updateProductSchema', () => {
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Updated Name');
     });
+  });
+});
+
+
+describe('requestSchemas - productQuerySchema', () => {
+  test('should pass with valid query parameters', () => {
+    const result = productQuerySchema.query.safeParse({
+      page: '2',
+      limit: '10',
+      category: 'Fitness',
+      search: 'dumbbell',
+      sort: 'price',
+      fields: 'name,price',
+      all: 'true',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data.page).toBe(2);
+    expect(result.data.limit).toBe(10);
+  });
+
+  test('should pass when query parameters are empty', () => {
+    const result = productQuerySchema.query.safeParse({});
+    expect(result.success).toBe(true);
+  });
+
+  test('should fail with a zero page number', () => {
+    const result = productQuerySchema.query.safeParse({ page: '0' });
+    expect(result.success).toBe(false);
+  });
+
+  test('should fail with a negative limit', () => {
+    const result = productQuerySchema.query.safeParse({ limit: '-5' });
+    expect(result.success).toBe(false);
+  });
+
+  test('should fail with a non-numeric page number', () => {
+    const result = productQuerySchema.query.safeParse({ page: 'abc' });
+    expect(result.success).toBe(false);
+  });
+
+  test('should fail with an invalid all parameter', () => {
+    const result = productQuerySchema.query.safeParse({ all: 'yes' });
+    expect(result.success).toBe(false);
+  });
+
+  test('should fail with an unknown query parameter', () => {
+    const result = productQuerySchema.query.safeParse({ unexpected: 'value' });
+    expect(result.success).toBe(false);
   });
 });
