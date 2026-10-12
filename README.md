@@ -282,7 +282,7 @@ FitMart/
     │   ├── dashboard.js           # Admin dashboard data
     │   ├── devAuth.js             # Development authentication endpoints
     │   ├── exercises.js           # ExerciseDB proxy (RapidAPI)
-    │   │   ├── fitnessCenters.js      # Nearby fitness center discovery
+    │   ├── fitnessCenters.js      # Nearby fitness center discovery
     │   ├── github.js              # GitHub integration endpoints
     │   ├── orders.js              # Order creation and retrieval
     │   ├── payment.js             # Razorpay integration
