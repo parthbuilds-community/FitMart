@@ -1,6 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Product = require('./models/Product');
+const seedPrograms = require('./seedPrograms');
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
@@ -315,6 +316,8 @@ async function seed() {
     await Product.deleteMany({});
     const res = await Product.insertMany(PRODUCTS);
     console.log(`Inserted ${res.length} products`);
+
+    await seedPrograms();
 
     await mongoose.disconnect();
     console.log('Disconnected. Seed complete.');
