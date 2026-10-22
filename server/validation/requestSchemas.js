@@ -74,16 +74,57 @@ const workoutLogBodySchema = z.object({
   exercises: z.array(workoutExerciseSchema).optional()
 }).strict();
 
+const productSortValues = [
+  'productId_asc', 'productId_desc',
+  'name_asc', 'name_desc',
+  'brand_asc', 'brand_desc',
+  'category_asc', 'category_desc',
+  'price_asc', 'price_desc',
+  'originalPrice_asc', 'originalPrice_desc',
+  'rating_asc', 'rating_desc',
+  'reviews_asc', 'reviews_desc',
+  'badge_asc', 'badge_desc',
+  'image_asc', 'image_desc',
+  'stock_asc', 'stock_desc',
+  'reserved_asc', 'reserved_desc',
+  'createdAt_asc', 'createdAt_desc',
+  'updatedAt_asc', 'updatedAt_desc',
+];
+
+const productProjectionFields = new Set([
+  '_id', '__v', 'productId', 'name', 'brand', 'category', 'price',
+  'originalPrice', 'rating', 'reviews', 'badge', 'image', 'stock',
+  'reserved', 'createdAt', 'updatedAt',
+]);
+
+const emptyQueryValueToUndefined = value => value === '' ? undefined : value;
 const productQuerySchema = z.object({
-  page: z.coerce.number().finite().int().positive().optional(),
-  limit: z.coerce.number().finite().int().positive().optional(),
+  page: z.preprocess(
+    emptyQueryValueToUndefined,
+    z.coerce.number().finite().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+  ),
+  limit: z.preprocess(
+    emptyQueryValueToUndefined,
+    z.coerce.number().finite().int().min(1).max(100).optional(),
+  ),
   category: z.string().optional(),
   search: z.string().optional(),
-  sort: z.string().optional(),
-  fields: z.string().optional(),
-  all: z.enum(['true', 'false']).optional(),
-}).strict();
-
+  sort: z.preprocess(
+    emptyQueryValueToUndefined,
+    z.enum(productSortValues).optional(),
+  ),
+  fields: z.preprocess(
+    emptyQueryValueToUndefined,
+    z.string().refine(
+      value => value.split(',').every(field => productProjectionFields.has(field.trim())),
+      'fields must contain supported product fields',
+    ).optional(),
+  ),
+  all: z.preprocess(
+    emptyQueryValueToUndefined,
+    z.enum(['true', 'false']).optional(),
+  ),
+});
 
 module.exports = {
   cartAddSchema: {
@@ -103,7 +144,7 @@ module.exports = {
   createProductSchema: {
     body: productFieldsSchema,
   },
-    productQuerySchema: {
+  productQuerySchema: {
     query: productQuerySchema,
   },
   updateProductSchema: {
