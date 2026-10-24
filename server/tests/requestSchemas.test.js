@@ -4,6 +4,7 @@ const {
   createOrderSchema,
   createProductSchema,
   updateProductSchema,
+  productQuerySchema,
 } = require('../validation/requestSchemas');
 
 describe('requestSchemas - cartAddSchema', () => {
@@ -502,5 +503,89 @@ describe('requestSchemas - updateProductSchema', () => {
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Updated Name');
     });
+  });
+});
+
+describe('requestSchemas - productQuerySchema', () => {
+  test('should pass with valid query parameters', () => {
+    const result = productQuerySchema.query.safeParse({
+      page: '2',
+      limit: '10',
+      category: 'Fitness',
+      search: 'dumbbell',
+      sort: 'price_asc',
+      fields: 'name,price',
+      all: 'true',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data.page).toBe(2);
+    expect(result.data.limit).toBe(10);
+  });
+
+  test('should pass when query parameters are empty', () => {
+    const result = productQuerySchema.query.safeParse({});
+    expect(result.success).toBe(true);
+  });
+
+  test('should treat empty values as omitted to preserve defaults', () => {
+    const result = productQuerySchema.query.safeParse({
+      page: '',
+      limit: '',
+      sort: '',
+      fields: '',
+      all: '',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      page: undefined,
+      limit: undefined,
+      sort: undefined,
+      fields: undefined,
+      all: undefined,
+    });
+  });
+
+  test('should reject invalid page numbers', () => {
+    for (const page of ['0', '-1', '1.5', 'abc', '9007199254740992']) {
+      expect(productQuerySchema.query.safeParse({ page }).success).toBe(false);
+    }
+  });
+
+  test('should reject invalid limits and limits over 100', () => {
+    for (const limit of ['0', '-5', '1.5', '101']) {
+      expect(productQuerySchema.query.safeParse({ limit }).success).toBe(false);
+    }
+
+    expect(productQuerySchema.query.safeParse({ limit: '100' }).success).toBe(true);
+  });
+
+  test('should reject unsupported sort values', () => {
+    expect(productQuerySchema.query.safeParse({ sort: 'price_asc' }).success).toBe(true);
+
+    for (const sort of ['price', 'price_random', 'password_asc']) {
+      expect(productQuerySchema.query.safeParse({ sort }).success).toBe(false);
+    }
+  });
+
+  test('should only allow known product projection fields', () => {
+    expect(productQuerySchema.query.safeParse({ fields: 'name,price,_id' }).success).toBe(true);
+
+    for (const fields of ['name,unknown', 'name,,price', '$where']) {
+      expect(productQuerySchema.query.safeParse({ fields }).success).toBe(false);
+    }
+  });
+
+  test('should fail with an invalid all parameter', () => {
+    const result = productQuerySchema.query.safeParse({ all: 'yes' });
+    expect(result.success).toBe(false);
+  });
+
+  test('should ignore unknown query parameters for backwards compatibility', () => {
+    const result = productQuerySchema.query.safeParse({ unexpected: 'value' });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({});
   });
 });
