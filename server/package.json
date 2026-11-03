@@ -26,7 +26,7 @@
     "razorpay": "^2.9.8",
     "redis": "^6.2.1",
     "streamifier": "^0.1.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "jest": "^30.4.2",
