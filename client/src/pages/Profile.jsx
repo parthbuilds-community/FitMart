@@ -374,6 +374,7 @@ const [rewardsError, setRewardsError] = useState("");
             </div>
             <button
               onClick={() => navigate("/home")}
+              aria-label="Navigate to shop"
               className="self-start sm:self-auto border border-stone-200 text-stone-700 text-sm px-5 py-2 rounded-full hover:bg-stone-100 transition-colors shrink-0"
             >
               ← Shop
