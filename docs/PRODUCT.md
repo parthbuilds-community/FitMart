@@ -1,7 +1,7 @@
 # FitMart Product Definition
 
 > **Status:** Phase 0 proposal — awaiting maintainer approval  
-> **Last updated:** 2026-11-10  
+> **Last updated:** 2026-11-11  
 > **Source of truth for implementation:** [`ROADMAP.md`](../ROADMAP.md)  
 > **Supersedes:** `docs/NEW_PLAN.md` ("Fitness Membership OS") — that plan is retired and must not be executed.
 
@@ -129,8 +129,8 @@ FitMart offers five things that a typical MERN demo does not:
 4. **Honest administration.**
    Admin views are backed by the same orders and payments customers see. The dashboard reports what the database contains, not a decorative approximation.
 
-5. **A small, teachable codebase.**
-   One storefront, one admin surface, one payment provider, one currency, and explicit architecture decisions. The interesting complexity is in the correct places.
+5. **A small, typed, teachable codebase.**
+   One storefront, one admin surface, one payment provider, one currency, and explicit architecture decisions. TypeScript encodes the quote, payment, and order states so illegal transitions are harder to write, while Zod still validates everything at runtime. The interesting complexity is in the correct places.
 
 ---
 
@@ -182,6 +182,7 @@ FitMart offers five things that a typical MERN demo does not:
 - Order creation, immutable order snapshots, and customer order history.
 - Admin authentication, catalog management, inventory management, order/payment inspection, customer summaries, and sales reports.
 - A small design system, responsive storefront, and accessible core flows.
+- A TypeScript codebase (server and client) with strict compilation at release, shared API types inferred from Zod schemas, and no untyped money-path code.
 - Docker-based local environment, deterministic seed data, CI, tests, and documentation.
 
 ### Explicitly out of scope for v1.0
@@ -226,6 +227,10 @@ Any operation that can be retried — quote creation, payment capture, webhook h
 ### Atomicity where the business requires it
 
 Operations that must not partially succeed use a MongoDB transaction. Operations that do not need a transaction are not wrapped in one for appearance.
+
+### Types at the boundary, validation at runtime
+
+TypeScript describes the shapes the system intends to handle; Zod proves that untrusted input actually has those shapes. Both are required. Types are inferred from the same schemas so there is one contract, not two.
 
 ### No fake surfaces
 
@@ -276,7 +281,10 @@ FitMart v1.0 is successful when all of the following are true.
 
 - Server tests cover the money-path invariants, concurrency, idempotency, expiry, and authorization.
 - Client tests cover critical rendering and state transitions.
-- Lint, tests, production build, Docker build, and dependency checks run in CI and block failures.
+- Server and client are TypeScript in strict mode; `tsc --noEmit` passes for both packages.
+- Shared API types are inferred from Zod schemas and used by both the server and the client.
+- The money path contains no `any`, unchecked casts, or unjustified `@ts-ignore`.
+- Lint, typecheck, tests, production build, Docker build, and dependency checks run in CI and block failures.
 - The application starts from a clean clone using documented commands.
 - Local MongoDB supports transactions.
 - Health and readiness endpoints, request IDs, structured logs, and graceful shutdown are present.
@@ -297,6 +305,7 @@ FitMart v1.0 is successful when all of the following are true.
 - `docs/SCOPE.md` is the source of truth for what is in and out of v1.0.
 - Any proposal outside the v1.0 scope is deferred, not quietly added.
 - Changes to the money path require tests that demonstrate the invariant being preserved.
+- New and rewritten source files are TypeScript; no new `.js` or `.jsx` source files are accepted after Phase 0.
 - Removing a feature requires removing its code, data model, configuration, navigation, tests, and documentation together.
 - v1.0 is frozen before release. After the release criteria are met, the project enters maintenance mode defined in `ROADMAP.md`.
 

@@ -1,7 +1,7 @@
 # FitMart v1.0 Scope
 
 > **Status:** Phase 0 proposal — awaiting maintainer approval  
-> **Last updated:** 2026-11-10  
+> **Last updated:** 2026-11-11  
 > **Product definition:** [`docs/PRODUCT.md`](./PRODUCT.md)  
 > **Implementation sequence:** [`ROADMAP.md`](../ROADMAP.md)  
 > **Supersedes:** `docs/NEW_PLAN.md` — retired; not part of v1.0.
@@ -14,9 +14,9 @@ This document is decisive. A feature is retained only if it supports the commerc
 
 FitMart v1.0 is:
 
-> One storefront, one admin surface, one currency, one payment provider, one transactional money path.
+> One storefront, one admin surface, one currency, one payment provider, one transactional money path — written in TypeScript.
 
-The store sells seeded fitness equipment, nutrition, and wearable products. Customers authenticate with Firebase, build a cart, receive a server-issued checkout quote, pay through Razorpay in test mode, and receive an immutable order. Administrators manage products and stock, inspect orders and payments, and read sales/customer summaries.
+The store sells seeded fitness equipment, nutrition, and wearable products. Customers authenticate with Firebase, build a cart, receive a server-issued checkout quote, pay through Razorpay in test mode, and receive an immutable order. Administrators manage products and stock, inspect orders and payments, and read sales/customer summaries. The server and client are both TypeScript, with shared API types inferred from Zod schemas.
 
 Everything else is removed.
 
@@ -46,6 +46,7 @@ These capabilities stay, but most are hardened rather than preserved as-is.
 | Order-confirmation email | Sent after a paid order, env-gated, best effort | Not a correctness dependency; delivery is not guaranteed |
 | Seed data | Deterministic catalog and demo state | No fake reservations or fake orders |
 | Docker/CI | Reproducible local run and quality gates | Mongo replica set required |
+| TypeScript | Server and client typechecked with `tsc`; client bundled by Vite | Strict mode at release; migrated incrementally; no new JS source |
 
 ---
 
@@ -71,7 +72,7 @@ These stay in concept but must be rebuilt around the new invariants.
 | Product cache | Cache public catalog reads only; invalidate on admin writes | Stock/quote decisions must never rely on stale cache |
 | Logger | Structured, redacted, request-scoped | Current logger logs request bodies and has no request ID |
 | Error handling | One error envelope with codes and status mapping | Current routes mix `{error}`, `{success}`, `{message}` |
-| API client | One authenticated client with typed error handling | Current pages use ad hoc `fetch` everywhere |
+| API client | One authenticated, typed client with normalized errors | Current pages use ad hoc `fetch` everywhere |
 | Frontend guards | Redirect based on verified token claims and server responses | Current guard trusts local storage and a hardcoded UID |
 
 ---
@@ -185,7 +186,7 @@ No `/payment` route that depends on React Router navigation state. Payment is a 
 | `/api/admin/customers` | Admin customer summary |
 | `/api/admin/reports` | Admin sales reports |
 
-The exact contract is defined in Phase 3. User IDs are never accepted from the client for ownership decisions; the server derives identity from the verified token.
+The exact contract is defined in Phase 3 and expressed as TypeScript types inferred from Zod schemas, shared between the server and client. User IDs are never accepted from the client for ownership decisions; the server derives identity from the verified token.
 
 ### 5.4 Data entities
 
@@ -255,6 +256,7 @@ The final product must visibly demonstrate all of the following.
 ### 6.5 API contracts and errors
 
 - Request bodies, params, and query strings are validated at the HTTP boundary.
+- API request and response types are inferred from the same Zod schemas and shared between server and client.
 - Errors use one documented envelope with a stable code, HTTP status, message, and request ID.
 - Validation failures, conflicts, insufficient stock, expired quotes, unauthorized access, and provider failures are distinguishable.
 - List endpoints define pagination and filtering semantics.
@@ -302,6 +304,18 @@ The final product must visibly demonstrate all of the following.
 - README, architecture, data model, API, operations, security, and contribution documents agree.
 - ADRs record why alternatives were rejected.
 
+### 6.10 Type safety
+
+- All server and client source is TypeScript (`.ts`/`.tsx`); no `.js`/`.jsx` source files remain.
+- `tsc --noEmit` passes for both packages and runs in CI.
+- `strict` is enabled for both packages at release, including `noImplicitAny` and `strictNullChecks`.
+- Money-path modules define discriminated unions for quote, payment, and order states.
+- Domain types (`Money`, `QuoteStatus`, `PaymentStatus`, `OrderStatus`, API envelopes) live in one root `shared/` module consumed by both packages.
+- No `any`, unchecked `as` casts, or `@ts-ignore` appear in the money path; any exception is documented and reviewed.
+- Zod remains the runtime validator; TypeScript types are inferred from it rather than duplicated by hand.
+- PropTypes are removed because TypeScript covers component props.
+- Mongoose models, Express handlers, React Query hooks, and provider payloads have usable types without leaking provider SDK types into the domain.
+
 ---
 
 ## 7. Definition of done for scope
@@ -312,8 +326,9 @@ The scope is complete when:
 2. Every removed capability has no code, route, model, page, navigation entry, environment variable, dependency, test, or documentation reference.
 3. The money-path invariants in Section 6 are covered by automated tests.
 4. The admin surface reads the same order/payment data as the customer surface.
-5. The README describes only behavior that exists.
-6. The repository passes the v1.0 release criteria in `ROADMAP.md`.
+5. The repository is fully TypeScript, strict, and typechecked in CI.
+6. The README describes only behavior that exists.
+7. The repository passes the v1.0 release criteria in `ROADMAP.md`.
 
 ---
 

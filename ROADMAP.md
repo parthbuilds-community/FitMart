@@ -1,7 +1,7 @@
 # FitMart Implementation Roadmap
 
 > **Status:** Phase 0 proposal — awaiting maintainer approval  
-> **Last updated:** 2026-11-10  
+> **Last updated:** 2026-11-11  
 > **Product definition:** [`docs/PRODUCT.md`](./docs/PRODUCT.md)  
 > **v1.0 scope:** [`docs/SCOPE.md`](./docs/SCOPE.md)  
 > **This document is the single source of truth for implementation order.**  
@@ -16,6 +16,7 @@
 - No application code changes begin until the maintainer approves Phase 0.
 - No feature work outside `docs/SCOPE.md` is accepted before v1.0.
 - Every task that changes the money path must add or update tests that prove the invariant.
+- TypeScript is the required language for new and rewritten code. Do not add new `.js`/`.jsx` source files after Phase 0.
 - Removing a feature includes removing its model, route, page, component, navigation, environment variables, dependencies, seed data, tests, and documentation.
 - If a task reveals a correctness issue that invalidates a later phase, stop and update the roadmap before proceeding.
 
@@ -44,6 +45,7 @@ The audit was performed against the repository at commit `f77dac4` on 2026-11-10
 | Mongoose models | 8 |
 | Client pages | 24 |
 | Client components | 24 |
+| Language | JavaScript (`.js`/`.jsx`); v1.0 target is TypeScript |
 | Approximate source size | ~19,300 lines across 114 JS/JSX files |
 
 These numbers are the comparison point for v1.0. The target is not a specific line count; it is a smaller surface with stronger guarantees.
@@ -176,15 +178,20 @@ These are the decisions that shape every phase. Each records the choice, the rea
 
 ---
 
-### ADR-09 — Keep JavaScript, validate with Zod, document with JSDoc
+### ADR-09 — Migrate the codebase to TypeScript during v1.0
 
-**Decision:** Do not rewrite the project in TypeScript for v1.0. Use Zod schemas at every HTTP boundary, JSDoc typedefs for important service contracts, and tests to enforce behavior.
+**Decision:** FitMart v1.0 ships as a TypeScript codebase. The migration is incremental and follows the rewrite boundaries in this roadmap: new and rewritten server modules are TypeScript from Phase 1; retained server files are converted while features are deleted in Phase 2; the client becomes TSX during the Phase 3 rebuild; and `strict` is enforced in Phase 4. No `.js`/`.jsx` source files remain at release.
 
-**Why:** Runtime validation is what protects the API. A TypeScript migration would consume the entire roadmap and add little to the money-path guarantees. The codebase is already JavaScript and can be made explicit without a rewrite.
+**Why:** The money path is already being rewritten, so typing it now costs little extra and avoids writing the same code twice. Discriminated unions for quote, payment, and order states make illegal transitions harder to represent; typed API contracts reduce client/server drift; and Mongoose, Firebase, and Razorpay payloads become explicit instead of discovered at runtime. Zod remains the runtime boundary, and TypeScript types are inferred from those schemas (`z.infer`) so there is one contract, not two.
 
-**Alternatives considered:** full TypeScript migration, shared generated client/server types, OpenAPI code generation.
+**Alternatives considered:**
 
-**Trade-off accepted:** Less compile-time safety and more discipline required. If the project later grows, a TypeScript migration can be considered as a v2 decision, not a v1.0 detour.
+1. Stay on JavaScript with JSDoc typedefs (the previous plan).
+2. Migrate after v1.0 as a separate release.
+3. A big-bang rewrite before any commerce work.
+4. Generate types from OpenAPI instead of Zod.
+
+**Trade-off accepted:** Phase 1 and Phase 3 carry extra work: toolchain setup, `tsconfig`, test transforms, and type definitions for Mongoose, Express, Firebase, and Razorpay. A compile step and source maps add build/operational surface. Migration churn is real, but it is concentrated where the code is already being rewritten. Staying on JSDoc would avoid the toolchain but leave the money path without compile-time guarantees; a post-v1.0 migration would touch every file twice and is rejected.
 
 ---
 
@@ -272,6 +279,8 @@ These are the decisions that shape every phase. Each records the choice, the rea
 | 5 | Documentation and release evidence complete | v1.0 criteria met; tag published |
 | 6 | Project enters maintenance mode | Support policy and stop conditions active |
 
+**TypeScript is a cross-cutting requirement, not a separate phase.** Phase 1 introduces the toolchain and types the new money-path modules; Phase 2 completes the server migration while features are deleted; Phase 3 completes the client migration during the rebuild; Phase 4 enables strict mode and blocks merges on typecheck. See ADR-09.
+
 ---
 
 ## 4. Phase 0 — Decision freeze and baseline
@@ -320,17 +329,17 @@ The repository's biggest historical problem is uncontrolled scope. A written, mu
 - **Objective:** Establish FitMart as a correctness-first commerce reference.
 - **What to do:** Review and approve `docs/PRODUCT.md`.
 - **Why it matters:** Every later trade-off depends on this identity.
-- **Technical considerations:** The product must remain a single-store reference, not a live store or membership platform.
-- **Acceptance criteria:** Maintainer approval recorded; no unresolved product-direction questions.
+- **Technical considerations:** The product must remain a single-store reference, not a live store or membership platform. The TypeScript direction is part of the identity: the reference is typed, not a JavaScript project with type annotations bolted on.
+- **Acceptance criteria:** Maintainer approval recorded, including ADR-09 (TypeScript migration); no unresolved product-direction questions.
 - **Dependencies:** Audit complete.
 
 #### 0.2 — Approve the v1.0 scope
 
 - **Objective:** Freeze what is in and out.
-- **What to do:** Review and approve `docs/SCOPE.md`, including retained, refactored, and removed capabilities.
+- **What to do:** Review and approve `docs/SCOPE.md`, including retained, refactored, and removed capabilities, and the requirement that v1.0 ships as TypeScript.
 - **Why it matters:** Prevents feature PRs from re-expanding the surface.
-- **Technical considerations:** Removed features must include their data models, dependencies, and documentation.
-- **Acceptance criteria:** Maintainer approval; removal list accepted; non-goals accepted.
+- **Technical considerations:** Removed features must include their data models, dependencies, and documentation. The TypeScript migration is in scope; a different language or framework is not.
+- **Acceptance criteria:** Maintainer approval; removal list accepted; non-goals accepted; TypeScript scope accepted.
 - **Dependencies:** 0.1.
 
 #### 0.3 — Approve the roadmap and retire the old plan
@@ -377,7 +386,7 @@ Make catalog → cart → quote → payment → order → admin state server-aut
 
 ### What to do
 
-Replace the existing cart reservation and payment/order flow with a quote-based checkout, a reservation lifecycle, a payment attempt state machine, a shared capture handler, and a transactional order commit. Replace admin auth bypasses with claims.
+Replace the existing cart reservation and payment/order flow with a quote-based checkout, a reservation lifecycle, a payment attempt state machine, a shared capture handler, and a transactional order commit. Replace admin auth bypasses with claims. Introduce the TypeScript toolchain and write every new server module in TypeScript.
 
 ### Why it matters
 
@@ -390,6 +399,8 @@ This is the project's reason to exist. A beautiful storefront on top of a client
 - Do not expose provider errors directly to clients.
 - Do not merge payment work with UI work. The server invariants must be testable independently.
 - The existing `demo-success` and dev-token paths are removed, not merely environment-gated.
+- TypeScript runs with `allowJs: true` and `checkJs: false` during migration so legacy files compile without a flag day; new files are `.ts` and are typechecked.
+- Domain types for quote, payment, order, and money live in one module and are inferred from Zod schemas where the schema defines a boundary.
 
 ### Acceptance criteria
 
@@ -404,13 +415,23 @@ This is the project's reason to exist. A beautiful storefront on top of a client
 - Admin access requires a verified custom claim.
 - No unsafe auth/payment bypass exists.
 - The money-path invariant suite passes.
+- All new money-path modules are TypeScript, and `npm run typecheck` is part of the server workflow.
 
 ### Dependencies
 
 - Phase 0.
-- Approval of ADR-02 through ADR-06 and ADR-14.
+- Approval of ADR-02 through ADR-06, ADR-09, and ADR-14.
 
 ### Tasks
+
+#### 1.0 — Establish the TypeScript toolchain and domain types
+
+- **Objective:** Make TypeScript the default for all new server code without blocking the money-path rewrite.
+- **What to do:** Add `typescript`, a TypeScript runner and test transform (for example `tsx` and `ts-jest`), and the relevant `@types` packages. Create a server `tsconfig.json` with `allowJs: true`, `checkJs: false`, `strict: true`, and `noEmit` for typechecking. Add `npm run typecheck`. Define shared domain types: `Money` (integer paise), `QuoteStatus`, `PaymentStatus`, `OrderStatus`, API error envelope, and the request/response types inferred from Zod schemas. Add a typed app factory that tests can import.
+- **Why it matters:** The money-path modules are about to be rewritten. Writing them once in TypeScript is cheaper than writing them in JavaScript and migrating later, and the state unions prevent accidental invalid transitions.
+- **Technical considerations:** Keep `allowJs` on until the legacy files are gone. Do not enable `checkJs` globally; it would surface hundreds of unrelated errors and obscure the money-path work. Type Mongoose documents explicitly rather than relying on inferred `any`. Avoid leaking Razorpay SDK types into domain services; map provider payloads to local types at the adapter boundary. Put shared domain types and Zod schemas in a root `shared/` directory referenced by both `server` and `client` through tsconfig/Vite path aliases; no package publishing or workspace tooling is required. Ensure Jest can execute `.ts` tests and that stack traces still point at source.
+- **Acceptance criteria:** `npm run typecheck` passes on the mixed codebase; new money-path files are `.ts`; `Money` is a branded or documented integer type; state unions exist for quote, payment, and order; Jest runs at least one TypeScript test; the app factory is typed and importable without side effects.
+- **Dependencies:** Phase 0; ADR-09.
 
 #### 1.1 — Remove auth and payment bypasses; establish admin claims
 
@@ -426,8 +447,8 @@ This is the project's reason to exist. A beautiful storefront on top of a client
 - **Objective:** Make the server the only author of prices and totals.
 - **What to do:** Add `CheckoutQuote` with line snapshots, subtotal, shipping, total, currency, address snapshot, status, expiry, and idempotency key. Convert product prices and order amounts to integer paise (`priceMinor`, `totalMinor`, `lineTotalMinor`). Add a quote service that validates the cart, address ownership, product activity, and stock before persisting. Remove discounts from v1.0.
 - **Why it matters:** The current checkout computes totals in the browser and sends `amount` to the server. That is the root cause of amount tampering and quote/order drift.
-- **Technical considerations:** Use integer arithmetic only. Freeze line names, unit prices, quantities, and totals at quote time. Store the address as a snapshot on the quote and later on the order. Quote creation should be idempotent by client key so a retry does not create two reservations. Do not add a promotion engine; v1.0 has no discounts.
-- **Acceptance criteria:** Quote totals are computed from database products; a client-supplied amount is ignored or rejected; a quote cannot be created for another user's address; expired quotes cannot be paid; money fields are integers; tests cover rounding, tampering, and address ownership.
+- **Technical considerations:** Use integer arithmetic only. Freeze line names, unit prices, quantities, and totals at quote time. Store the address as a snapshot on the quote and later on the order. Quote creation should be idempotent by client key so a retry does not create two reservations. Do not add a promotion engine; v1.0 has no discounts. Model the quote lifecycle as a discriminated union so an expired or consumed quote cannot be paid.
+- **Acceptance criteria:** Quote totals are computed from database products; a client-supplied amount is ignored or rejected; a quote cannot be created for another user's address; expired quotes cannot be paid; money fields are integers; quote types are exported from the shared domain module; tests cover rounding, tampering, and address ownership.
 - **Dependencies:** 1.1; ADR-03.
 
 #### 1.3 — Implement the reservation lifecycle
@@ -444,7 +465,7 @@ This is the project's reason to exist. A beautiful storefront on top of a client
 - **Objective:** Make provider order creation traceable, idempotent, and testable.
 - **What to do:** Add a `PaymentAttempt` model with quote reference, provider order ID, amount/currency, status, provider payment ID, refund reference, and timestamps. Introduce a small gateway adapter (`createOrder`, `fetchPayment`, `refund`) with a Razorpay implementation and a fake implementation for tests. Create provider orders only from an active quote; the client sends a quote ID, not an amount or user ID.
 - **Why it matters:** The current `create-order` trusts the client and has no link between the quote, provider order, and eventual local order.
-- **Technical considerations:** Enforce one active payment attempt per quote with a unique index or atomic state transition. Provider receipts are limited to 40 characters. Store amounts in paise. Do not log provider secrets or full payloads. Keep the adapter small; it exists for testability and PSP isolation, not as a plugin framework.
+- **Technical considerations:** Enforce one active payment attempt per quote with a unique index or atomic state transition. Provider receipts are limited to 40 characters. Store amounts in paise. Do not log provider secrets or full payloads. Keep the adapter small; it exists for testability and PSP isolation, not as a plugin framework. The adapter interface is typed and returns local domain types, not raw Razorpay objects.
 - **Acceptance criteria:** Client-supplied amount is ignored; duplicate create-payment calls return the same attempt or a documented conflict; payment attempt records the quote amount and currency; fake gateway tests cover success, failure, and refund; no live provider call in tests.
 - **Dependencies:** 1.2, 1.3; ADR-05.
 
@@ -501,7 +522,7 @@ Remove the fitness-management, loyalty, growth, support, and mock surfaces so th
 
 ### What to do
 
-Delete the workout/calendar/notes/exercise/plans/calculators/chatbot/nearby-centers vertical; remove rewards, marketing, re-engagement email, bug reporting, GitHub stats, Cloudinary/profile upload, PWA claims, fake testimonials/stats, and unverified ratings. Remove their models, routes, pages, components, dependencies, environment variables, tests, navigation, and documentation.
+Delete the workout/calendar/notes/exercise/plans/calculators/chatbot/nearby-centers vertical; remove rewards, marketing, re-engagement email, bug reporting, GitHub stats, Cloudinary/profile upload, PWA claims, fake testimonials/stats, and unverified ratings. Remove their models, routes, pages, components, dependencies, environment variables, tests, navigation, and documentation. Convert the retained server modules to TypeScript while the deletions happen; deleted modules are not migrated.
 
 ### Why it matters
 
@@ -520,6 +541,8 @@ Every retained-but-unused feature is a maintenance cost, an attack surface, and 
 - No removed feature has a route, model, page, component, navigation entry, environment variable, dependency, test, or README mention.
 - The server boots with only the retained route set.
 - The client builds with only the retained routes.
+- No removed feature has a route, model, page, component, navigation entry, environment variable, dependency, test, or README mention.
+- No removed feature leaves behind a TypeScript type, schema, or shared contract.
 - No fake testimonials, fallback GitHub stats, mock distances, PWA claims, or unverified ratings remain.
 - Seed data contains only products, profiles, and legitimate demo records.
 
@@ -584,6 +607,15 @@ Every retained-but-unused feature is a maintenance cost, an attack surface, and 
 - **Acceptance criteria:** Clean database + `npm run seed` produces a usable catalog; the full purchase flow succeeds; no removed route is reachable; no fake data appears.
 - **Dependencies:** 2.5, Phase 1.
 
+#### 2.7 — Complete the server TypeScript migration
+
+- **Objective:** Finish converting retained server code so the backend is TypeScript-only before the architecture phase.
+- **What to do:** Convert models, services, routes, middleware, utils, validation, configuration, and the seed script to `.ts`. Replace JSDoc typedefs with exported types where they overlap. Remove `allowJs` from the server `tsconfig` once no JavaScript source remains. Keep Zod as the runtime validator and derive request/response types from it.
+- **Why it matters:** Phase 3 restructures services and routes; converting them afterwards would mean editing every file twice. Deleting features first shrinks the migration surface.
+- **Technical considerations:** Convert in dependency order (types → models → services → routes → scripts). Do not change behavior while renaming files; keep runtime behavior and tests identical. Type Mongoose model statics and instance methods explicitly. Use `unknown` plus schema parsing at external boundaries rather than `any`. Update Jest, the dev runner, the Docker build, and `package.json` scripts to use the TypeScript entry point.
+- **Acceptance criteria:** No `.js`/`.jsx` source remains in `server/`; `tsc --noEmit` passes; all server tests pass; Docker starts the TypeScript server; no JSDoc block duplicates an exported type.
+- **Dependencies:** 2.1–2.6; ADR-09.
+
 ### Phase exit gate
 
 The repository is a commerce-only application. Every remaining feature maps to `docs/SCOPE.md`; every removed feature is gone from code, configuration, and documentation.
@@ -601,7 +633,7 @@ Turn the reduced application into a coherent commerce codebase: clear backend bo
 
 ### What to do
 
-Split the Express app from the listener, validate configuration, extract services, standardize errors and authorization, harden models/indexes, rebuild the frontend data layer, and implement the storefront/admin workflows against the new contract.
+Split the Express app from the listener, validate configuration, extract services, standardize errors and authorization, harden models/indexes, rebuild the frontend data layer, and implement the storefront/admin workflows against the new contract. Convert the client to TSX as pages are rebuilt.
 
 ### Why it matters
 
@@ -624,6 +656,7 @@ Phase 1 fixes the invariants; Phase 3 makes them understandable and maintainable
 - All protected routes enforce ownership or admin claims.
 - The frontend makes no direct ad hoc `fetch` calls in pages.
 - The storefront and admin use the same order/payment data.
+- The client is TSX with shared API types; PropTypes are removed.
 - Accessibility and responsive behavior pass the defined checks.
 
 ### Dependencies
@@ -640,12 +673,12 @@ Phase 1 fixes the invariants; Phase 3 makes them understandable and maintainable
 - **Why it matters:** Tests currently import route files that may start services or read unvalidated environment. A clean app factory is the foundation for integration tests and operations.
 - **Technical considerations:** Keep optional providers (Razorpay, SMTP, Redis) able to disable cleanly. Required MongoDB and Firebase config must fail fast. Do not log secret values. Use `NODE_ENV=test` to avoid production requirements in unit tests.
 - **Acceptance criteria:** Tests can import `app.js` without opening a port or connecting to MongoDB; invalid env produces a clear startup error; `server.js` owns listener and shutdown; no module calls `process.exit` on import.
-- **Dependencies:** Phase 2; ADR-09.
+- **Dependencies:** Phase 2; ADR-07, ADR-09.
 
 #### 3.2 — Define the API contract, services, and error taxonomy
 
 - **Objective:** Give the application one predictable interface.
-- **What to do:** Extract catalog, cart, quote, reservation, payment, order, inventory, customer, and report services. Add Zod schemas for params/query/body. Add domain error classes and a single error middleware. Publish the endpoint and error contract in `docs/API.md`. Remove ownership-bearing user IDs from request bodies.
+- **What to do:** Extract catalog, cart, quote, reservation, payment, order, inventory, customer, and report services. Add Zod schemas for params/query/body and export the inferred TypeScript types. Add domain error classes and a single error middleware. Publish the endpoint and error contract in `docs/API.md`. Remove ownership-bearing user IDs from request bodies.
 - **Why it matters:** The current routes mix business logic, validation, response shapes, and direct model access. A consistent contract reduces client drift and makes tests meaningful.
 - **Technical considerations:** Map domain errors to HTTP status and stable codes (`VALIDATION_FAILED`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INSUFFICIENT_STOCK`, `QUOTE_EXPIRED`, `PAYMENT_VERIFICATION_FAILED`, `RATE_LIMITED`, `INTERNAL`). Keep provider details out of responses. Validate query parameters for catalog pagination/search. Do not add a repository layer.
 - **Acceptance criteria:** All routes use the error envelope; no route returns an ad hoc `{message}` error; ownership is derived from `req.user.uid`; services contain the money-path logic; contract tests pass; API doc matches routes.
@@ -663,10 +696,10 @@ Phase 1 fixes the invariants; Phase 3 makes them understandable and maintainable
 #### 3.4 — Build the frontend API client, auth context, and query layer
 
 - **Objective:** Remove per-page data fetching and centralize auth/error behavior.
-- **What to do:** Create one API client that attaches the Firebase ID token, normalizes errors, and handles 401/403. Create a stable `QueryClient` at module scope. Add auth context with loading/claims. Define query keys and invalidation for cart, quote, orders, products, and admin data. Remove `credentials: "include"`, local dev tokens, and hardcoded admin checks.
+- **What to do:** Create one typed API client that attaches the Firebase ID token, normalizes errors, and handles 401/403. Create a stable `QueryClient` at module scope. Add auth context with loading/claims. Define query keys and invalidation for cart, quote, orders, products, and admin data. Import request/response types from the shared contract rather than redeclaring them. Remove `credentials: "include"`, local dev tokens, and hardcoded admin checks.
 - **Why it matters:** Ad hoc `fetch` calls duplicate headers, error handling, and token logic. The current `QueryClient` is recreated inside `App` on every render, and the admin guard trusts local storage.
-- **Technical considerations:** React Query for server state only; no Redux. Invalidate cart after mutations, quote after cart changes, orders after payment success, admin lists after admin mutations. Handle token expiry and claim refresh. Keep fetch abort signals for unmounting.
-- **Acceptance criteria:** No page component calls `fetch` directly; QueryClient is stable; 401 redirects to auth; 403 shows a permission error; admin navigation uses the claim but server returns 403 if forged; tests cover the client.
+- **Technical considerations:** React Query for server state only; no Redux. Invalidate cart after mutations, quote after cart changes, orders after payment success, admin lists after admin mutations. Handle token expiry and claim refresh. Keep fetch abort signals for unmounting. Do not widen API types with `any` to make the client compile; fix the contract instead.
+- **Acceptance criteria:** No page component calls `fetch` directly; QueryClient is stable; 401 redirects to auth; 403 shows a permission error; admin navigation uses the claim but server returns 403 if forged; API calls use shared types; tests cover the client.
 - **Dependencies:** 3.2; ADR-10.
 
 #### 3.5 — Rebuild the storefront purchase flow
@@ -705,9 +738,18 @@ Phase 1 fixes the invariants; Phase 3 makes them understandable and maintainable
 - **Acceptance criteria:** Keyboard-only purchase path works; dialogs trap and restore focus; forms have labels; no horizontal overflow at supported widths; loading/empty/error states exist for each retained page; no placeholder CTA remains.
 - **Dependencies:** 3.5, 3.6.
 
+#### 3.9 — Migrate the client to TSX and shared contracts
+
+- **Objective:** Finish the frontend in TypeScript so the whole repository is typed before verification.
+- **What to do:** Rename pages, components, hooks, contexts, and utilities to `.tsx`/`.ts` as they are rebuilt. Add a client `tsconfig.json`, `vite-env.d.ts`, and typed environment access. Type the API client, query hooks, auth context, forms, and admin tables against the shared contract. Remove PropTypes and replace them with prop interfaces.
+- **Why it matters:** The client is where server contracts are consumed. Untyped consumption lets a server contract change break the UI silently, which is exactly the drift this repo is meant to demonstrate against.
+- **Technical considerations:** Enable `strict` for the client from the start because it is being rebuilt, not incrementally patched. Use discriminated unions for quote/payment/order view state. Keep React Query generics explicit at the hook boundary. Do not duplicate server types; import them from the shared package/module. Type `import.meta.env` rather than casting it.
+- **Acceptance criteria:** No `.jsx`/`.js` source remains in `client/src`; `tsc --noEmit` passes; no PropTypes remain; shared API types are imported, not redeclared; the production build succeeds; component tests compile under TypeScript.
+- **Dependencies:** 3.4–3.8; ADR-09.
+
 ### Phase exit gate
 
-The storefront and admin are one coherent application. The same order and payment state is visible from both sides, the API contract is documented, and no retained page uses ad hoc fetching or client-authored pricing.
+The storefront and admin are one coherent, fully typed application. The same order and payment state is visible from both sides, the typed API contract is documented, and no retained page uses ad hoc fetching or client-authored pricing.
 
 ---
 
@@ -732,14 +774,16 @@ A correctness-first reference must make correctness verifiable and repeatable. A
 
 - Tests must exercise real MongoDB behavior for concurrency and transactions.
 - Do not use production auth/payment bypasses in test infrastructure.
-- CI must fail, not warn, on lint/test/build failures.
+- CI must fail, not warn, on lint/typecheck/test/build failures.
 - Docker must support transactions, not just start MongoDB.
 - Observability must not log secrets or personal data.
+- Strict TypeScript is a release gate, not a suggestion.
 
 ### Acceptance criteria
 
-- CI runs lint, server tests, client tests, build, Docker build, and dependency audit.
+- CI runs lint, typecheck, server tests, client tests, build, Docker build, and dependency audit.
 - The full test suite is green from a clean install.
+- Strict TypeScript is enabled in both packages with no untyped money-path code.
 - Docker Compose starts a working app with a replica set and seed.
 - `/healthz` and `/readyz` behave correctly.
 - Request IDs and structured logs are present.
@@ -750,7 +794,7 @@ A correctness-first reference must make correctness verifiable and repeatable. A
 ### Dependencies
 
 - Phase 3.
-- Approval of ADR-04, ADR-11, ADR-12, ADR-15.
+- Approval of ADR-04, ADR-09, ADR-11, ADR-12, ADR-15.
 
 ### Tasks
 
@@ -759,7 +803,7 @@ A correctness-first reference must make correctness verifiable and repeatable. A
 - **Objective:** Verify business invariants and failure behavior.
 - **What to do:** Add unit tests for services/validation and integration tests for every route family. Cover authorization matrices, quote expiry, reservation concurrency, payment idempotency, transaction rollback, refund compensation, admin stock adjustment, archive behavior, and pagination validation. Replace the existing cart-reservation tests with quote-reservation tests.
 - **Why it matters:** The 78 existing tests are valuable but do not cover the money path. Green tests must mean the invariants hold.
-- **Technical considerations:** Use `MongoMemoryReplSet`. Inject a fake auth verifier and fake payment gateway through the app factory. Use deterministic clocks for expiry. Test HTTP status and error codes. Avoid brittle snapshot tests. Keep test data builders explicit.
+- **Technical considerations:** Use `MongoMemoryReplSet`. Inject a fake auth verifier and fake payment gateway through the app factory. Use deterministic clocks for expiry. Test HTTP status and error codes. Avoid brittle snapshot tests. Keep test data builders explicit. Write tests in TypeScript and type the builders and fixtures.
 - **Acceptance criteria:** Critical services have meaningful branch coverage (target ≥90% for quote/payment/order/reservation); invariant tests fail if guards are removed; tests run in parallel safely or are isolated; no live external calls.
 - **Dependencies:** 3.2, 3.3.
 
@@ -775,10 +819,10 @@ A correctness-first reference must make correctness verifiable and repeatable. A
 #### 4.3 — Repair and enforce CI
 
 - **Objective:** Make quality gates real.
-- **What to do:** Fix the broken ESLint config, add server ESLint, run lint/tests/build for both packages, add Docker build validation, add dependency audit, pin Node, and remove `|| true` or silent test bypasses. Run CI on pull requests and `main`.
+- **What to do:** Fix the broken ESLint config, add server ESLint with `typescript-eslint`, run lint/typecheck/tests/build for both packages, add Docker build validation, add dependency audit, pin Node, and remove `|| true` or silent test bypasses. Run CI on pull requests and `main`.
 - **Why it matters:** The workflow is named "build & lint" but does not lint; the lint config crashes. CI currently gives false confidence.
-- **Technical considerations:** Use `npm ci` with lockfiles. Do not require real provider secrets. Keep optional integrations disabled in CI. Use a MongoDB service or the in-memory replica set for server tests consistently. Fail on high/critical vulnerabilities; review moderate ones.
-- **Acceptance criteria:** A deliberately broken lint or test fails CI; a clean branch passes all jobs; Docker image builds; Node version is pinned; dependency audit runs; no job uses dummy credentials to bypass real validation.
+- **Technical considerations:** Use `npm ci` with lockfiles. Do not require real provider secrets. Keep optional integrations disabled in CI. Use a MongoDB service or the in-memory replica set for server tests consistently. Fail on high/critical vulnerabilities; review moderate ones. Run `tsc --noEmit` before tests so type errors fail fast, and do not let a TypeScript error be downgraded to a warning.
+- **Acceptance criteria:** A deliberately broken lint, type, or test fails CI; a clean branch passes all jobs; Docker image builds; Node version is pinned; dependency audit runs; typecheck runs for both packages; no job uses dummy credentials to bypass real validation.
 - **Dependencies:** 4.1, 4.2.
 
 #### 4.4 — Make Docker and local setup reproducible
@@ -826,9 +870,18 @@ A correctness-first reference must make correctness verifiable and repeatable. A
 - **Acceptance criteria:** Runbook exists; sweeper/refund paths are tested; dry-run repair tool exists for stuck reservations; no documented procedure requires direct production DB edits without a backup.
 - **Dependencies:** 1.3, 1.5, 1.6, 4.5.
 
+#### 4.9 — Enforce strict TypeScript and remove escape hatches
+
+- **Objective:** Make the type system a real guarantee rather than decoration.
+- **What to do:** Enable `strict` across both packages, including `noImplicitAny`, `strictNullChecks`, and `noImplicitOverride`. Turn on `noUncheckedIndexedAccess` where it does not produce noise. Remove `allowJs`, remaining `.js`/`.jsx` source, `any` in the money path, unchecked casts, and unexplained `@ts-ignore`/`@ts-expect-error`. Add typed Mongoose interfaces and a typed provider adapter. Run `tsc --noEmit` in CI.
+- **Why it matters:** A partially typed codebase gives false confidence. Money-path code with `any` is not meaningfully safer than JavaScript.
+- **Technical considerations:** Enable strict per package after migration rather than mid-conversion. Use `unknown` and schema parsing at boundaries. Keep Razorpay/Firebase SDK types at the adapter edge. If a third-party type is wrong, isolate the workaround in one documented file rather than scattering suppressions. Do not weaken the config to make a flaky type pass.
+- **Acceptance criteria:** `strict: true` in both packages; no `.js`/`.jsx` source; zero `any` and zero `@ts-ignore` in quote/payment/order/reservation modules; `tsc --noEmit` passes in CI; the lint config reports unused types and unsafe assignments.
+- **Dependencies:** 3.9, 4.3, 4.1; ADR-09.
+
 ### Phase exit gate
 
-CI is trustworthy, Docker reproduces the transactional environment, the app is observable, the threat model is reviewed, and recovery procedures are documented and tested.
+CI is trustworthy, strict TypeScript is enforced, Docker reproduces the transactional environment, the app is observable, the threat model is reviewed, and recovery procedures are documented and tested.
 
 ---
 
@@ -874,18 +927,18 @@ The project's value is partly communicative. An excellent implementation with an
 #### 5.1 — Rewrite the README truthfully
 
 - **Objective:** Describe what exists, not what would be impressive.
-- **What to do:** Replace the 1,100+ line feature catalogue with a concise document: thesis, architecture diagram, retained workflows, quickstart, test-mode payment instructions, admin setup, invariants protected by tests, limitations, and links to docs.
+- **What to do:** Replace the 1,100+ line feature catalogue with a concise document: thesis, architecture diagram, retained workflows, quickstart, test-mode payment instructions, admin setup, invariants protected by tests, limitations, and links to docs. State that the stack is TypeScript end to end and list the typecheck commands.
 - **Why it matters:** The current README claims PWA support, rewards redemption, workout features, and other behavior that is incomplete or inaccurate. That is the largest trust defect in the repository.
-- **Technical considerations:** Include the MongoDB replica-set requirement. Do not claim production readiness or real customers. Keep screenshots current or omit them. Link to `ROADMAP.md`, `PRODUCT.md`, and `SCOPE.md`.
+- **Technical considerations:** Include the MongoDB replica-set requirement. Do not claim production readiness or real customers. Keep screenshots current or omit them. Link to `ROADMAP.md`, `PRODUCT.md`, and `SCOPE.md`. Show `npm run typecheck` in the quickstart so the typed baseline is visible.
 - **Acceptance criteria:** Every feature claim is verifiable; setup works from a clean clone; limitations are explicit; no dead links; no removed feature appears.
 - **Dependencies:** Phase 4.
 
 #### 5.2 — Publish architecture, data, API, and ADR documentation
 
 - **Objective:** Make the system teachable.
-- **What to do:** Write `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/API.md`, `docs/OPERATIONS.md`, and numbered ADRs. Document the quote/reservation/payment/order state machines and the transaction boundaries.
+- **What to do:** Write `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/API.md`, `docs/OPERATIONS.md`, and numbered ADRs. Document the quote/reservation/payment/order state machines, the transaction boundaries, and the shared type contract (Zod schema → inferred TypeScript type → client use).
 - **Why it matters:** The repository's thesis is architectural understanding. Diagrams and explicit invariants are part of the deliverable.
-- **Technical considerations:** Keep docs versioned with code. Do not generate a second source of truth that will drift; API docs should be checked against contract tests. Include sequence diagrams for verify-first/webhook-first and expiry/refund.
+- **Technical considerations:** Keep docs versioned with code. Do not generate a second source of truth that will drift; API docs should be checked against contract tests. Include sequence diagrams for verify-first/webhook-first and expiry/refund. Show the state unions as they exist in code.
 - **Acceptance criteria:** Docs match code; state diagrams are accurate; every ADR records alternatives/trade-offs; a new contributor can trace the money path.
 - **Dependencies:** 5.1.
 
@@ -903,7 +956,7 @@ The project's value is partly communicative. An excellent implementation with an
 - **Objective:** Prove v1.0 before tagging.
 - **What to do:** Execute the full checklist in Section 11 on a clean clone and on Docker. Record results, known limitations, and any accepted risks.
 - **Why it matters:** A release tag is a claim. The verification matrix is the evidence.
-- **Technical considerations:** Use a fresh database and deterministic seed. Test success, duplicate callbacks, expiry, amount mismatch, unauthorized access, admin claim failure, and refund compensation. Test in the provider's test mode. Do not use production money.
+- **Technical considerations:** Use a fresh database and deterministic seed. Test success, duplicate callbacks, expiry, amount mismatch, unauthorized access, admin claim failure, and refund compensation. Run lint, typecheck, tests, and builds from a clean clone. Test in the provider's test mode. Do not use production money.
 - **Acceptance criteria:** All release criteria pass or have an approved, documented exception; no critical/high open defect; evidence recorded in the release notes.
 - **Dependencies:** 5.1–5.3.
 
@@ -1057,7 +1110,10 @@ v1.0.0 may be tagged only when every item below is true or has an explicitly app
 
 - [ ] Server tests cover all invariants in `docs/SCOPE.md` Section 6.6.
 - [ ] Client tests cover critical purchase and permission states.
-- [ ] Lint, tests, production build, Docker build, and dependency audit run in CI.
+- [ ] `tsc --noEmit` passes for both server and client, with `strict` enabled.
+- [ ] No `.js`/`.jsx` source remains; shared API types are inferred from Zod schemas.
+- [ ] No `any` or unjustified `@ts-ignore` exists in the money path.
+- [ ] Lint, typecheck, tests, production build, Docker build, and dependency audit run in CI.
 - [ ] A failing check blocks merge.
 - [ ] Tests pass from a clean install.
 - [ ] Critical service coverage target is met; coverage is not gamed globally.
@@ -1109,6 +1165,7 @@ In maintenance mode, the following changes remain allowed:
 - correctness and data-integrity fixes;
 - compatibility fixes for Firebase, Razorpay, MongoDB, Node, or browser APIs;
 - dependency upgrades that keep the reference installable;
+- type-level fixes and TypeScript version upgrades that do not change runtime behavior;
 - documentation corrections;
 - release notes and maintenance releases.
 
@@ -1120,7 +1177,7 @@ The following changes require a new product/scope review and are not accepted as
 - multi-vendor support;
 - reviews, promotions, loyalty, or recommendations;
 - a UI rewrite or framework migration;
-- a TypeScript rewrite;
+- a language migration or a second runtime;
 - microservices, a queue, or Kubernetes.
 
 A v1.1 restart requires a new `PRODUCT.md` and `SCOPE.md` decision. It cannot begin with a single feature PR.
@@ -1238,7 +1295,7 @@ No old PR should be merged before its cluster is reviewed against Phase 1–3. M
 | A11y labels | Retain into Phase 3 | #945 |
 | Payment error messages | Superseded by the Phase 3 error contract | #943 |
 | Admin inventory leak | Retain/rebuild in Phase 3 | #932 |
-| JSDoc utilities | Retain; matches ADR-09 | #931 |
+| JSDoc utilities | Close; TypeScript types replace JSDoc for utilities (ADR-09) | #931 |
 | Pre-hydration spinners | Close/defer; not a v1.0 concern | #906, #928 |
 | Admin KPI skeletons | Close; admin layout is rebuilt | #925, #926 |
 | Stars component tests | Close; ratings removed | #912 |
@@ -1269,12 +1326,14 @@ No old PR should be merged before its cluster is reviewed against Phase 1–3. M
 4. If it is a dependency bump, keep only the latest passing PR per dependency and verify the lockfile.
 5. If it is a UI polish PR for a page that will be rewritten, close and fold the intent into Phase 3.
 6. If it is a test/tooling PR that matches Phase 4, keep it as an input but rebase after Phase 2 deletions.
-7. Never merge a PR just because it is old or has green CI; CI currently does not cover the real money path.
+7. If it adds or edits `.js`/`.jsx` source, require a TypeScript version or port it during rebase; do not merge it as-is.
+8. If it adds PropTypes, close it; TypeScript prop interfaces replace PropTypes.
+9. Never merge a PR just because it is old or has green CI; CI currently does not cover the real money path.
 
 ---
 
 ## 14. What "done" means
 
-FitMart is done when a reader can see a small commerce application, trace the money path end to end, find tests for every dangerous edge, run it from a clean clone, and read an honest description of its capabilities and limits.
+FitMart is done when a reader can see a small, fully typed commerce application, trace the money path end to end, find tests for every dangerous edge, run it from a clean clone, and read an honest description of its capabilities and limits.
 
 At that point, the project stops growing and starts being maintained.
