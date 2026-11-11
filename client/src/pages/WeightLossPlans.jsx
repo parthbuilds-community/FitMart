@@ -62,7 +62,6 @@ export default function WeightLossPlans() {
   return (
     <div className="min-h-screen bg-stone-50 font-['DM_Sans',sans-serif]">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
         .fade-in { opacity:0; transform:translateY(16px); transition:opacity .5s ease,transform .5s ease; }
         .fade-in.show { opacity:1; transform:translateY(0); }
         .d1{transition-delay:.05s} .d2{transition-delay:.15s}
