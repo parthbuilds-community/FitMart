@@ -30,6 +30,7 @@ const CRITICAL_ENV_VARS = ["MONGO_URI"];
 const OPTIONAL_ENV_VARS = [
   "RAZORPAY_KEY_ID",
   "RAZORPAY_KEY_SECRET",
+  "RAZORPAY_WEBHOOK_SECRET",
   "MONGO_DB",
   "PORT",
   "FIREBASE_PROJECT_ID",
@@ -106,6 +107,11 @@ app.use(
 );
 
 app.use(helmet());
+
+// ── Razorpay webhook needs the raw request body for signature verification ──
+// Must be registered BEFORE express.json() so the body isn't consumed by JSON parser
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Disable automatic ETag generation to avoid conditional 304 responses
