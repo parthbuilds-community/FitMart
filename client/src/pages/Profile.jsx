@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import useFocusTrap from "../hooks/useFocusTrap";
 import {
   getRewardTier,
   getTierProgress,
@@ -125,6 +126,14 @@ export default function Profile() {
   const [editingAddress, setEditingAddress] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
   const fileInputRef = useRef();
+  const addressModalRef = useRef(null);
+
+  // Trap keyboard focus inside the address modal while open: Tab/Shift+Tab
+  // cycle within the panel, Escape closes it, focus moves to the close button
+  // on open and returns to the trigger on close.
+  useFocusTrap(addressModalRef, !!editingAddress, {
+    onEscape: () => setEditingAddress(null),
+  });
   const [photoURL, setPhotoURL] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -597,8 +606,16 @@ const [rewardsError, setRewardsError] = useState("");
       {/* ── ADDRESS MODAL ── */}
       {editingAddress && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditingAddress(null)} />
           <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setEditingAddress(null)}
+            aria-hidden="true"
+          />
+          <div
+            ref={addressModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit address"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
             className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-6 z-50 max-h-[90vh] overflow-y-auto"
           >

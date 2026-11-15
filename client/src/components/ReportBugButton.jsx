@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/useAuth';
+import useFocusTrap from '../hooks/useFocusTrap';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -151,6 +152,7 @@ export default function ReportBugButton() {
   const [imgError, setImgError]       = useState('');
 
   const fileInputRef = useRef(null);
+  const formRef = useRef(null);
   const pageUrl = typeof window !== 'undefined' ? window.location.pathname : '/';
 
   const dismissToast = useCallback(() => setToast(null), []);
@@ -170,13 +172,10 @@ export default function ReportBugButton() {
   const openModal  = () => { resetForm(); setOpen(true); };
   const closeModal = () => { if (loading) return; setOpen(false); };
 
-  // Escape to close
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, loading]);
+  // Trap keyboard focus inside the bug report modal while open: Tab/Shift+Tab
+  // cycle within the panel, Escape closes it, focus moves to the close button
+  // on open and returns to the trigger on close.
+  useFocusTrap(formRef, open, { onEscape: closeModal });
 
   // Handle screenshot pick
   const onFileChange = (e) => {
@@ -308,6 +307,7 @@ export default function ReportBugButton() {
 
             {/* Panel */}
             <motion.form
+              ref={formRef}
               onSubmit={submit}
               initial={{ opacity: 0, y: 40, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}

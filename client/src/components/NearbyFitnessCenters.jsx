@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import useFocusTrap from "../hooks/useFocusTrap";
 import FitnessCenterDetail from "./FitnessCenterDetail";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -29,6 +30,14 @@ export default function NearbyFitnessCenters({ visible = true }) {
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const modalRef = useRef(null);
+
+  // Trap keyboard focus inside the fitness center detail modal while open:
+  // Tab/Shift+Tab cycle within the modal, Escape closes it, focus moves to
+  // the close button on open and returns to the card that opened it on close.
+  useFocusTrap(modalRef, modalOpen && !!selected, {
+    onEscape: () => setModalOpen(false),
+  });
 
   useEffect(() => {
     (async () => {
@@ -121,7 +130,13 @@ export default function NearbyFitnessCenters({ visible = true }) {
         CSS transform stacking context created by the fade-in animation.
         This ensures the backdrop covers the full viewport. */}
     {modalOpen && selected && createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${selected.name} details`}
+        className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10"
+      >
         {/* Fix 1: backdrop is now fixed (not absolute) — covers full viewport */}
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm"
