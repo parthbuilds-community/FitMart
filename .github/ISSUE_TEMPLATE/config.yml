@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Contributing Guidelines
+    url: https://github.com/parthbuilds-community/FitMart/blob/main/docs/CONTRIBUTING.md
+    about: Please read the contributing guidelines before opening an issue or pull request.
+  - name: Security Policy
+    url: https://github.com/parthbuilds-community/FitMart/blob/main/SECURITY.md
+    about: Please report security vulnerabilities privately according to the security policy.
