@@ -7,7 +7,7 @@ jest.mock('../middleware/verifyFirebaseToken', () => (req, res, next) => next())
 jest.mock('../middleware/verifyAdmin', () => (req, res, next) => next());
 jest.mock('../middleware/validateRequest', () => (schema) => (req, res, next) => next());
 
-jest.mock('../models/Product', () => ({ find: jest.fn(), countDocuments: jest.fn() }));
+jest.mock('../models/Product', () => ({ find: jest.fn(), countDocuments: jest.fn(), findOneAndDelete: jest.fn() }));
 const Product = require('../models/Product');
 const productsRouter = require('../routes/products');
 
@@ -50,5 +50,27 @@ describe('GET /api/products pagination', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('data');
     expect(res.body.meta).toMatchObject({ page: 1, limit: 3, total: 10 });
+  });
+});
+
+describe('DELETE /api/products/:id', () => {
+  let app;
+  beforeAll(() => {
+    app = express();
+    app.use('/api/products', productsRouter);
+  });
+
+  test('returns 404 when product does not exist', async () => {
+    Product.findOneAndDelete.mockResolvedValueOnce(null);
+    const res = await request(app).delete('/api/products/999');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Product not found');
+  });
+
+  test('returns 200 when product is deleted', async () => {
+    Product.findOneAndDelete.mockResolvedValueOnce({ productId: 1 });
+    const res = await request(app).delete('/api/products/1');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
   });
 });
