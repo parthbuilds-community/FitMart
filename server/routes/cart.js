@@ -133,7 +133,7 @@ router.post('/:userId/add', verifyFirebaseToken,validateRequest(cartAddSchema), 
     const fresh = await Cart.findOne({ userId });
     res.json(fresh);
   } catch (err) {
-    console.error(err);
+    req.logger.error('Error adding to cart', { error: err.message });
     fail(res, 'Server error', 500);
   }
 });
@@ -165,7 +165,7 @@ router.post('/:userId/remove', verifyFirebaseToken,validateRequest(cartRemoveSch
     const fresh = await Cart.findOne({ userId });
     res.json(fresh);
   } catch (err) {
-    console.error(err);
+    req.logger.error('Error adding to cart', { error: err.message });
     fail(res, 'Server error', 500);
   }
 });
@@ -191,7 +191,7 @@ router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
     await cart.save();
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    req.logger.error('Error adding to cart', { error: err.message });
     fail(res, 'Server error', 500);
   }
 });

@@ -144,7 +144,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Dashboard route error:', err);
+    req.logger.error('Dashboard route error', { error: err.message });
     res.status(500).json({ success: false, message: 'Failed to load dashboard data' });
   }
 });

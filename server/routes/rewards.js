@@ -58,7 +58,7 @@ router.get("/:userId", verifyFirebaseToken, async (req, res) => {
       transactions,
     });
   } catch (error) {
-    console.error("Get rewards error:", error);
+    req.logger.error("Get rewards error", { error: error.message });
     return res.status(500).json({ message: "Failed to fetch rewards" });
   }
 });
@@ -132,7 +132,7 @@ router.post("/earn", verifyFirebaseToken, async (req, res) => {
       transaction,
     });
   } catch (error) {
-    console.error("Earn rewards error:", error);
+    req.logger.error("Earn rewards error", { error: error.message });
     return res.status(500).json({ message: "Failed to earn rewards" });
   }
 });
