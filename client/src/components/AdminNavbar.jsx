@@ -1,5 +1,5 @@
 // src/components/AdminNavbar.jsx
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 import { useAuth } from "../auth/useAuth";
@@ -74,16 +74,15 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
               ))}
             </div>
           ) : (
-            <button
-              onClick={() => navigate("/admin/dashboard")}
-              className="border border-stone-200 text-stone-600 text-xs px-3 sm:px-5
-                         py-2 rounded-full hover:bg-stone-900 hover:text-white
-                         hover:border-stone-900 transition-all cursor-pointer
-                         min-h-9 shrink-0"
+            <NavLink
+              to="/admin/dashboard"
+              className={({ isActive }) => 
+                `flex items-center justify-center border border-stone-200 text-xs px-3 sm:px-5 py-2 rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all cursor-pointer min-h-9 shrink-0 ${isActive ? "font-semibold text-stone-900" : "text-stone-500"}`
+              }
             >
               <span className="hidden sm:inline">← Go to Dashboard</span>
               <span className="sm:hidden">← Dashboard</span>
-            </button>
+            </NavLink>
           )}
 
           {/* ── Profile dropdown ── */}
