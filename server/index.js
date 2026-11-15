@@ -199,7 +199,40 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong" });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(", ")}`);
 });
+
+// ── Graceful shutdown ───────────────────────────────────────────────────────
+// In Docker the container is stopped with SIGTERM, so without handlers the
+// process is killed mid-flight: in-flight requests are dropped and the
+// Mongoose connection is never closed cleanly. These handlers let in-flight
+// requests drain, close the DB connection, and exit with code 0.
+const SHUTDOWN_TIMEOUT_MS = 10000;
+
+function shutdown(signal) {
+  console.log(`\n${signal} received — shutting down gracefully`);
+  server.close(async (err) => {
+    if (err) {
+      console.error("Error while closing server:", err.message);
+    }
+    try {
+      const mongoose = require("./db");
+      await mongoose.disconnect();
+      console.log("MongoDB connection closed");
+    } catch (e) {
+      console.error("Error while disconnecting MongoDB:", e.message);
+    }
+    process.exit(0);
+  });
+
+  // Safety net: if connections do not drain in time, force exit.
+  setTimeout(() => {
+    console.error("Forcing shutdown — connections did not drain in time");
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS).unref();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
