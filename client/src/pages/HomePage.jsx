@@ -213,7 +213,7 @@ export default function HomePage() {
     return () => unsub();
   }, [navigate]);
 
-  // React Query: infinite products
+  // React Query: infinite products — pass debounced search + category for server-side filtering
   const {
     data: pagesData,
     isLoading: rqLoading,
@@ -221,7 +221,11 @@ export default function HomePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteProducts({ limit: 24 });
+  } = useInfiniteProducts({
+    limit: 24,
+    search: debouncedQuery || undefined,
+    category: activeCategory !== "all" ? activeCategory : undefined,
+  });
 
   useEffect(() => {
     setLoading(rqLoading);
@@ -329,6 +333,8 @@ export default function HomePage() {
   const firstName = user?.displayName?.split(" ")[0] || "there";
 
   const filtered = products.filter(p => {
+    // Server-side filtering handles category + search via useInfiniteProducts params.
+    // This client-side filter is a safety fallback for any edge cases.
     const matchCat = activeCategory === "all" || p.category === activeCategory;
     const matchSearch = !debouncedQuery
       || p.name.toLowerCase().includes(debouncedQuery.toLowerCase())
