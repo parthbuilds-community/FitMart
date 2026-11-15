@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   // Look for tests in server/tests/ only
-  testMatch: ['**/tests/**/*.test.js'],
+  testMatch: ['**/tests/**/*.test.js', '**/tests/**/*.test.ts'],
 
   // Node environment (not jsdom — this is server-side code)
   testEnvironment: 'node',
@@ -18,4 +18,16 @@ module.exports = {
 
   // Clear mocks between tests
   clearMocks: true,
+
+  // Compile TypeScript tests and modules with ts-jest. Plain .js files keep
+  // running untransformed.
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
+  },
+
+  // Shared domain types live outside server/ and are imported via this alias.
+  moduleNameMapper: {
+    '^@shared/(.*)$': '<rootDir>/../shared/$1',
+    '^zod$': '<rootDir>/node_modules/zod',
+  },
 };

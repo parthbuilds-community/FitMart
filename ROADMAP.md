@@ -379,7 +379,7 @@ The maintainer approves all three documents and the issue/PR disposition. No imp
 
 ## 5. Phase 1 — Make the money path trustworthy
 
-**Status:** Proposed  
+**Status:** In progress — task 1.0 complete  
 **Dependencies:** Phase 0 approved.
 
 ### Phase objective

@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "tsx index.js",
+    "dev": "nodemon --exec tsx index.js --ext js,ts",
+    "typecheck": "tsc --noEmit",
     "seed": "node seed.js",
     "seed:fitness": "node seedFitnessCenters.js",
     "test:cart": "jest tests/cart.reserved.test.js --forceExit",
@@ -26,13 +27,21 @@
     "razorpay": "^2.9.8",
     "redis": "^6.2.1",
     "streamifier": "^0.1.1",
+    "tsx": "^4.23.15",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
+    "@types/supertest": "^7.2.1",
     "jest": "^30.4.2",
     "mongodb-memory-server": "^11.1.0",
     "nodemon": "^3.1.14",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.15",
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "@tootallnate/once": "^3.0.1"
