@@ -99,7 +99,7 @@ function CartDrawer({
     <>
       {/* Overlay */}
       <div
-        className={`overlay fixed inset-0 bg-black/30 z-50 ${isOpen ? "show" : ""}`}
+        className={`overlay fixed inset-0 bg-black/30 z-[9000] ${isOpen ? "show" : ""}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -111,7 +111,7 @@ function CartDrawer({
         aria-modal="true"
         aria-labelledby="cart-drawer-title"
         aria-hidden={!isOpen}
-        className={`cart-slide fixed right-0 top-0 h-full z-50 shadow-2xl flex flex-col
+        className={`cart-slide fixed right-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-full z-[10000] shadow-2xl flex flex-col
                     bg-white w-full sm:max-w-sm ${isOpen ? "open" : ""}`}
       >
         {/* ── Header ── */}
