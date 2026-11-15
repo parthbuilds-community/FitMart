@@ -66,9 +66,6 @@ jobs:
       RAZORPAY_KEY_SECRET: ci_dummy
       GEMINI_API_KEY: ci_dummy
       GEMINI_MODEL_NAME: gemini-2.5-flash
-      FIREBASE_PROJECT_ID: ci_dummy
-      FIREBASE_CLIENT_EMAIL: ci_dummy
-      FIREBASE_PRIVATE_KEY: "ci_dummy"
       RAPIDAPI_KEY: ci_dummy
       RAPIDAPI_HOST: exercisedb.p.rapidapi.com
       SMTP_HOST: ci_dummy
