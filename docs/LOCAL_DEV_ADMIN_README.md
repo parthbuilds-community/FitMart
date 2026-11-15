@@ -17,7 +17,7 @@ Contents
 ---
 
 Prerequisites
-- Node.js (recommended v16+)
+- Node.js v20.19+ (see `.nvmrc` at the repo root — run `nvm use`)
 - MongoDB running locally (or a configured remote DB)
 - The project already uses Firebase for production auth — you do NOT need Firebase to use the local admin flow.
 

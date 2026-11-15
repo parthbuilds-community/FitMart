@@ -2,6 +2,9 @@
   "name": "fitmart-server",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
