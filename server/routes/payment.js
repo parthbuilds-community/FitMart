@@ -204,7 +204,7 @@ router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
  *          and returns success without creating an order
  * @access  Public (TESTING ONLY) - No authentication required
  */
-router.post("/demo-success", async (req, res) => {
+router.post("/demo-success", verifyFirebaseToken, async (req, res) => {
   // TEST-ONLY bypass — never register behavior in production. Returns 404 so the
   // endpoint is inert outside of non-production environments (same gate as /api/dev).
   if (process.env.NODE_ENV === "production") {
@@ -214,6 +214,7 @@ router.post("/demo-success", async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (req.user.uid !== userId) return res.status(403).json({ error: "Unauthorized" });
 
     // Generate a fake payment ID that looks like a real Razorpay one
     const fakePaymentId = `pay_DEMO_${Date.now()}`;
