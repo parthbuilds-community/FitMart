@@ -160,7 +160,7 @@ export default function PaymentPage() {
         body: JSON.stringify({ userId: user.uid }),
       });
 
-      if (!res.ok) throw new Error("Demo order failed");
+      if (!res.ok) throw new Error("Demo payment failed. Please try again.");
 
       const data = await res.json();
 
@@ -173,12 +173,12 @@ export default function PaymentPage() {
 
   const handlePay = async () => {
     if (!rzpReady) {
-      showError("Payment SDK not loaded. Please refresh.");
+      showError("Payment SDK not loaded. Please refresh the page and try again.");
       return;
     }
 
     if (!RAZORPAY_KEY) {
-      showError("Payment provider not configured.");
+      showError("Payment provider not configured. Please contact support.");
       return;
     }
 
@@ -210,7 +210,7 @@ export default function PaymentPage() {
 
       if (!orderRes.ok) {
         const e = await orderRes.json().catch(() => ({}));
-        throw new Error(e.error || "Could not create order");
+        throw new Error(e.error || "Failed to create payment order. Please try again.");
       }
 
       const order = await orderRes.json();
@@ -250,7 +250,7 @@ export default function PaymentPage() {
             );
 
             if (!verifyRes.ok) {
-              throw new Error("Payment verification failed");
+              throw new Error("Payment verification failed. Please contact support.");
             }
 
             await finishOrder(userId, response.razorpay_payment_id);
@@ -265,7 +265,7 @@ export default function PaymentPage() {
             setPaying(false);
 
             showError(
-              "Payment was cancelled. Use the button below to simulate success."
+              "Payment was cancelled. Please try again or use the demo payment option."
             );
           },
         },
@@ -277,8 +277,7 @@ export default function PaymentPage() {
         setPaying(false);
 
         showError(
-          `Payment failed: ${resp.error?.description || "Unknown error"
-          }`
+          `Payment failed: ${resp.error?.description || "An unexpected error occurred. Please try again."}`
         );
       });
 
