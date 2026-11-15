@@ -8,9 +8,11 @@ const router = express.Router();
 
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const Order = require("../models/Order");
 const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 const { sendFirstPurchaseEmail } = require("../services/firstPurchaseEmailService");
-const { createOrder } = require("../services/orderService");
+const { calculateCheckout } = require("../services/checkoutService");
+const { createOrder, fulfillOrder } = require("../services/orderService");
 
 const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
   ? new Razorpay({
@@ -39,14 +41,27 @@ async function releaseAndClearCart(userId) {
 
 /**
  * @route   POST /create-order
- * @desc    Creates a Razorpay payment order; body: { amount (₹), currency, userId }
+ * @desc    Creates a Razorpay payment order; derives user and total server-side
  * @access  Private
  */
 router.post("/create-order", verifyFirebaseToken, async (req, res) => {
   try {
-    const { amount, currency = "INR", userId } = req.body;
-    if (!amount || !userId)
-      return res.status(400).json({ error: "amount and userId are required" });
+    const userId = req.user.uid;
+
+    if (!razorpay) {
+      return res.status(503).json({ error: "Payment provider not configured" });
+    }
+
+    let checkout;
+    try {
+      checkout = await calculateCheckout(userId);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (checkout.total <= 0) {
+      return res.status(400).json({ error: "Invalid order total" });
+    }
 
     // receipt must be ≤ 40 chars
     const shortId = userId.slice(-8);
@@ -54,12 +69,29 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
     const receipt = `r_${shortId}_${shortTs}`;   // always 18 chars
 
     const order = await razorpay.orders.create({
-      amount: Math.round(amount * 100),   // ₹ → paise
-      currency,
+      amount: Math.round(checkout.total * 100),   // ₹ → paise
+      currency: "INR",
       receipt,
+      notes: { userId },
     });
 
-    res.json(order);
+    await Order.create({
+      userId,
+      items: checkout.items,
+      total: checkout.total,
+      status: "created",
+      razorpayOrderId: order.id,
+    });
+
+    res.json({
+      ...order,
+      checkout: {
+        subtotal: checkout.subtotal,
+        discountAmount: checkout.discountAmount,
+        discountPercent: checkout.discountPercent,
+        total: checkout.total,
+      },
+    });
   } catch (err) {
     console.error("Razorpay create-order error:", err);
     res.status(500).json({ error: err.message });
@@ -70,15 +102,19 @@ router.post("/create-order", verifyFirebaseToken, async (req, res) => {
  * @route   POST /verify-payment
  * @desc    Verifies Razorpay HMAC signature, prevents duplicate orders, creates the
  *          order record, and attaches the paymentId with status "paid";
- *          body: { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId }
+ *          body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
  * @access  Private
  */
 router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const userId = req.user.uid;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
       return res.status(400).json({ error: "Missing required payment fields" });
+
+    if (!process.env.RAZORPAY_KEY_SECRET)
+      return res.status(503).json({ error: "Payment provider not configured" });
 
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -89,31 +125,25 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
       return res.status(400).json({ error: "Signature mismatch — payment not verified" });
 
     //  STEP 1: Prevent duplicate orders
-    const Order = require("../models/Order");
     const existingOrder = await Order.findOne({ paymentId: razorpay_payment_id });
 
     if (existingOrder) {
-      return res.json({ success: true, message: "Order already created" });
+      return res.json({ success: true, message: "Order already created", order: existingOrder });
     }
 
-    // STEP 2: Create order using service logic
-    let order;
-    try {
-      order = await createOrder(userId);
-    } catch (createErr) {
-      return res.status(400).json({ error: createErr.message });
+    // STEP 2: Find pending order and verify ownership
+    const pendingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id, userId });
+    if (!pendingOrder) {
+      return res.status(404).json({ error: "Order not found or user mismatch" });
+    }
+    if (pendingOrder.status === "paid") {
+      return res.json({ success: true, message: "Order already paid", order: pendingOrder });
     }
 
-    //  STEP 3: Attach paymentId to order
-    await Order.findByIdAndUpdate(order._id, {
-      paymentId: razorpay_payment_id,
-      status: "paid"
-    });
+    //  STEP 3: Fulfill order using snapshot
+    const order = await fulfillOrder(pendingOrder, razorpay_payment_id);
 
-    // Update local object to reflect changes
-    order.paymentId = razorpay_payment_id;
-    order.status = "paid";
-        // STEP 4: Award FitRewards points after successful payment
+    // STEP 4: Award FitRewards points after successful payment
     try {
       let rewards = await Rewards.findOne({ userId });
 
@@ -174,14 +204,12 @@ router.post("/verify-payment", verifyFirebaseToken, async (req, res) => {
 
 /**
  * @route   POST /clear-cart
- * @desc    Releases all reserved stock and clears the user's cart without creating an order;
- *          body: { userId }
+ * @desc    Releases all reserved stock and clears the user's cart without creating an order
  * @access  Private
  */
 router.post("/clear-cart", verifyFirebaseToken, async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId is required" });
+    const userId = req.user.uid;
 
     await releaseAndClearCart(userId);
     res.json({ success: true });
