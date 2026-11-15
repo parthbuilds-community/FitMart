@@ -1,9 +1,9 @@
 # FitMart Implementation Roadmap
 
-> **Status:** Phase 0 proposal — awaiting maintainer approval  
-> **Last updated:** 2026-11-11  
+> **Status:** Approved — Phase 0 decision freeze complete (2026-11-15)  
+> **Last updated:** 2026-11-15  
 > **Product definition:** [`docs/PRODUCT.md`](./docs/PRODUCT.md)  
-> **v1.0 scope:** [`docs/SCOPE.md`](./docs/SCOPE.md)  
+> **v2.0.0 scope:** [`docs/SCOPE.md`](./docs/SCOPE.md)  
 > **This document is the single source of truth for implementation order.**  
 > **It supersedes `docs/NEW_PLAN.md`.** The "Fitness Membership OS" direction is retired.
 
@@ -14,7 +14,7 @@
 - Phases are ordered by dependency and risk, not by novelty.
 - A phase is complete only when its acceptance criteria and exit gate are satisfied.
 - No application code changes begin until the maintainer approves Phase 0.
-- No feature work outside `docs/SCOPE.md` is accepted before v1.0.
+- No feature work outside `docs/SCOPE.md` is accepted before v2.0.0.
 - Every task that changes the money path must add or update tests that prove the invariant.
 - TypeScript is the required language for new and rewritten code. Do not add new `.js`/`.jsx` source files after Phase 0.
 - Removing a feature includes removing its model, route, page, component, navigation, environment variables, dependencies, seed data, tests, and documentation.
@@ -31,9 +31,9 @@
 
 ---
 
-## 1. Baseline (verified before Phase 0)
+## 1. Baseline
 
-The audit was performed against the repository at commit `f77dac4` on 2026-11-10.
+The original audit was performed against commit `f77dac4` on 2026-11-10. Because dependency bumps landed between that commit and the Phase 0 freeze, the table below was re-run and confirmed against commit `37d2da8` on 2026-11-15 (task 0.4). Results are unchanged; only the lockfiles and manifest versions moved.
 
 | Check | Result |
 |---|---|
@@ -45,10 +45,12 @@ The audit was performed against the repository at commit `f77dac4` on 2026-11-10
 | Mongoose models | 8 |
 | Client pages | 24 |
 | Client components | 24 |
-| Language | JavaScript (`.js`/`.jsx`); v1.0 target is TypeScript |
+| Language | JavaScript (`.js`/`.jsx`); v2.0.0 target is TypeScript |
 | Approximate source size | ~19,300 lines across 114 JS/JSX files |
 
-These numbers are the comparison point for v1.0. The target is not a specific line count; it is a smaller surface with stronger guarantees.
+These numbers are the comparison point for v2.0.0. The target is not a specific line count; it is a smaller surface with stronger guarantees.
+
+**Reproduce (task 0.4):** `cd server; npm test` — 78 passed / 3 suites. `cd client; npm run build` — passed, 1,598.00 kB JS (444.71 kB gzip). `cd client; npm run lint` — fails at config load with the error above; this is the recorded before-state, not a regression. `git status --short` — clean after the Phase 0 documentation commit.
 
 ### Current defects this roadmap must resolve
 
@@ -109,7 +111,7 @@ These are the decisions that shape every phase. Each records the choice, the rea
 
 **Alternatives considered:** client totals, recalculation inside the payment route, decimal strings, a separate pricing service.
 
-**Trade-off accepted:** Introducing a quote adds a state machine and expiry handling. There is no promotion engine in v1.0; the quote contains subtotal, zero shipping, and total. Adding discounts later requires a new ADR and new concurrency tests.
+**Trade-off accepted:** Introducing a quote adds a state machine and expiry handling. There is no promotion engine in v2.0.0; the quote contains subtotal, zero shipping, and total. Adding discounts later requires a new ADR and new concurrency tests.
 
 ---
 
@@ -150,7 +152,7 @@ These are the decisions that shape every phase. Each records the choice, the rea
 
 **Alternatives considered:** a role field in `UserProfile`, an environment allowlist, an external identity provider, full RBAC with permissions.
 
-**Trade-off accepted:** A claim change requires the user to refresh their token. Custom claims are coarse; v1.0 has one admin role, not granular permissions. That is appropriate for this scope.
+**Trade-off accepted:** A claim change requires the user to refresh their token. Custom claims are coarse; v2.0.0 has one admin role, not granular permissions. That is appropriate for this scope.
 
 ---
 
@@ -174,24 +176,24 @@ These are the decisions that shape every phase. Each records the choice, the rea
 
 **Alternatives considered:** keep the current mixed shapes, use GraphQL, use tRPC, return HTTP status only.
 
-**Trade-off accepted:** This is a breaking API change before v1.0. Clients and tests must be updated together. The error envelope adds a small amount of response structure.
+**Trade-off accepted:** This is a breaking API change before v2.0.0. Clients and tests must be updated together. The error envelope adds a small amount of response structure.
 
 ---
 
-### ADR-09 — Migrate the codebase to TypeScript during v1.0
+### ADR-09 — Migrate the codebase to TypeScript during v2.0.0
 
-**Decision:** FitMart v1.0 ships as a TypeScript codebase. The migration is incremental and follows the rewrite boundaries in this roadmap: new and rewritten server modules are TypeScript from Phase 1; retained server files are converted while features are deleted in Phase 2; the client becomes TSX during the Phase 3 rebuild; and `strict` is enforced in Phase 4. No `.js`/`.jsx` source files remain at release.
+**Decision:** FitMart v2.0.0 ships as a TypeScript codebase. The migration is incremental and follows the rewrite boundaries in this roadmap: new and rewritten server modules are TypeScript from Phase 1; retained server files are converted while features are deleted in Phase 2; the client becomes TSX during the Phase 3 rebuild; and `strict` is enforced in Phase 4. No `.js`/`.jsx` source files remain at release.
 
 **Why:** The money path is already being rewritten, so typing it now costs little extra and avoids writing the same code twice. Discriminated unions for quote, payment, and order states make illegal transitions harder to represent; typed API contracts reduce client/server drift; and Mongoose, Firebase, and Razorpay payloads become explicit instead of discovered at runtime. Zod remains the runtime boundary, and TypeScript types are inferred from those schemas (`z.infer`) so there is one contract, not two.
 
 **Alternatives considered:**
 
 1. Stay on JavaScript with JSDoc typedefs (the previous plan).
-2. Migrate after v1.0 as a separate release.
+2. Migrate after v2.0.0 as a separate release.
 3. A big-bang rewrite before any commerce work.
 4. Generate types from OpenAPI instead of Zod.
 
-**Trade-off accepted:** Phase 1 and Phase 3 carry extra work: toolchain setup, `tsconfig`, test transforms, and type definitions for Mongoose, Express, Firebase, and Razorpay. A compile step and source maps add build/operational surface. Migration churn is real, but it is concentrated where the code is already being rewritten. Staying on JSDoc would avoid the toolchain but leave the money path without compile-time guarantees; a post-v1.0 migration would touch every file twice and is rejected.
+**Trade-off accepted:** Phase 1 and Phase 3 carry extra work: toolchain setup, `tsconfig`, test transforms, and type definitions for Mongoose, Express, Firebase, and Razorpay. A compile step and source maps add build/operational surface. Migration churn is real, but it is concentrated where the code is already being rewritten. Staying on JSDoc would avoid the toolchain but leave the money path without compile-time guarantees; a post-v2.0.0 migration would touch every file twice and is rejected.
 
 ---
 
@@ -221,7 +223,7 @@ These are the decisions that shape every phase. Each records the choice, the rea
 
 ### ADR-12 — Order-confirmation email is best effort, not transactional infrastructure
 
-**Decision:** After a successful order commit, send an env-gated order-confirmation email. Record the attempt on the order. A failure is logged and visible to admin; it does not roll back the order. No queue, worker, or outbox in v1.0.
+**Decision:** After a successful order commit, send an env-gated order-confirmation email. Record the attempt on the order. A failure is logged and visible to admin; it does not roll back the order. No queue, worker, or outbox in v2.0.0.
 
 **Why:** Email is useful but not part of the money invariant. Adding BullMQ or a transactional outbox would add operational surface without protecting inventory, payment, or order correctness.
 
@@ -257,7 +259,7 @@ These are the decisions that shape every phase. Each records the choice, the rea
 
 ### ADR-15 — Deliberately do not add PWA, microservices, Kubernetes, or a queue
 
-**Decision:** v1.0 does not include PWA/offline support, microservices, Kubernetes, event streaming, or a job queue.
+**Decision:** v2.0.0 does not include PWA/offline support, microservices, Kubernetes, event streaming, or a job queue.
 
 **Why:** Each adds operational and conceptual surface without strengthening the transactional spine. The project is a reference, not a platform. The absence is documented rather than hidden behind a badge.
 
@@ -276,7 +278,7 @@ These are the decisions that shape every phase. Each records the choice, the rea
 | 2 | Second product removed; repository is commerce-only | No removed feature remains in code, deps, routes, or docs |
 | 3 | Commerce architecture and admin truth consolidated | Storefront and admin use one contract and one data source |
 | 4 | Verification, operations, and security are production-grade | CI, Docker, tests, observability, threat model green |
-| 5 | Documentation and release evidence complete | v1.0 criteria met; tag published |
+| 5 | Documentation and release evidence complete | v2.0.0 criteria met; tag published |
 | 6 | Project enters maintenance mode | Support policy and stop conditions active |
 
 **TypeScript is a cross-cutting requirement, not a separate phase.** Phase 1 introduces the toolchain and types the new money-path modules; Phase 2 completes the server migration while features are deleted; Phase 3 completes the client migration during the rebuild; Phase 4 enables strict mode and blocks merges on typecheck. See ADR-09.
@@ -285,12 +287,12 @@ These are the decisions that shape every phase. Each records the choice, the rea
 
 ## 4. Phase 0 — Decision freeze and baseline
 
-**Status:** Proposed  
+**Status:** Complete — exit gate closed 2026-11-15  
 **Dependencies:** Repository audit complete.
 
 ### Phase objective
 
-Freeze the product identity, v1.0 scope, and implementation order before any application code changes.
+Freeze the product identity, v2.0.0 scope, and implementation order before any application code changes.
 
 ### What to do
 
@@ -333,10 +335,10 @@ The repository's biggest historical problem is uncontrolled scope. A written, mu
 - **Acceptance criteria:** Maintainer approval recorded, including ADR-09 (TypeScript migration); no unresolved product-direction questions.
 - **Dependencies:** Audit complete.
 
-#### 0.2 — Approve the v1.0 scope
+#### 0.2 — Approve the v2.0.0 scope
 
 - **Objective:** Freeze what is in and out.
-- **What to do:** Review and approve `docs/SCOPE.md`, including retained, refactored, and removed capabilities, and the requirement that v1.0 ships as TypeScript.
+- **What to do:** Review and approve `docs/SCOPE.md`, including retained, refactored, and removed capabilities, and the requirement that v2.0.0 ships as TypeScript.
 - **Why it matters:** Prevents feature PRs from re-expanding the surface.
 - **Technical considerations:** Removed features must include their data models, dependencies, and documentation. The TypeScript migration is in scope; a different language or framework is not.
 - **Acceptance criteria:** Maintainer approval; removal list accepted; non-goals accepted; TypeScript scope accepted.
@@ -363,10 +365,10 @@ The repository's biggest historical problem is uncontrolled scope. A written, mu
 #### 0.5 — Triage issues and pull requests
 
 - **Objective:** Align open work with the new scope.
-- **What to do:** Apply the disposition appendix in Section 8; close removed-feature work; redirect valid work to roadmap tasks; identify one canonical PR per cluster.
-- **Why it matters:** 91 open issues and 215 open PRs create a false impression of an active, contradictory roadmap.
+- **What to do:** Apply the disposition appendix in Section 13; close removed-feature work; redirect valid work to roadmap tasks; identify one canonical PR per cluster. The item-level record for every open issue and PR is [`docs/ISSUE_PR_DISPOSITION.md`](./docs/ISSUE_PR_DISPOSITION.md).
+- **Why it matters:** 91 open issues and 221 open PRs (verified 2026-11-15) create a false impression of an active, contradictory roadmap.
 - **Technical considerations:** Do not merge old PRs blindly. Many touch code that will be deleted or rewritten.
-- **Acceptance criteria:** Every open item is retained, redirected, or closed; no duplicate canonical PR remains; labels reflect the new scope.
+- **Acceptance criteria:** Every open item is retained, redirected, or closed; no duplicate canonical PR remains; labels reflect the new scope. Applied on 2026-11-15 — see [`docs/ISSUE_PR_DISPOSITION.md`](./docs/ISSUE_PR_DISPOSITION.md).
 - **Dependencies:** 0.3.
 
 ### Phase exit gate
@@ -445,9 +447,9 @@ This is the project's reason to exist. A beautiful storefront on top of a client
 #### 1.2 — Introduce the checkout quote and integer money
 
 - **Objective:** Make the server the only author of prices and totals.
-- **What to do:** Add `CheckoutQuote` with line snapshots, subtotal, shipping, total, currency, address snapshot, status, expiry, and idempotency key. Convert product prices and order amounts to integer paise (`priceMinor`, `totalMinor`, `lineTotalMinor`). Add a quote service that validates the cart, address ownership, product activity, and stock before persisting. Remove discounts from v1.0.
+- **What to do:** Add `CheckoutQuote` with line snapshots, subtotal, shipping, total, currency, address snapshot, status, expiry, and idempotency key. Convert product prices and order amounts to integer paise (`priceMinor`, `totalMinor`, `lineTotalMinor`). Add a quote service that validates the cart, address ownership, product activity, and stock before persisting. Remove discounts from v2.0.0.
 - **Why it matters:** The current checkout computes totals in the browser and sends `amount` to the server. That is the root cause of amount tampering and quote/order drift.
-- **Technical considerations:** Use integer arithmetic only. Freeze line names, unit prices, quantities, and totals at quote time. Store the address as a snapshot on the quote and later on the order. Quote creation should be idempotent by client key so a retry does not create two reservations. Do not add a promotion engine; v1.0 has no discounts. Model the quote lifecycle as a discriminated union so an expired or consumed quote cannot be paid.
+- **Technical considerations:** Use integer arithmetic only. Freeze line names, unit prices, quantities, and totals at quote time. Store the address as a snapshot on the quote and later on the order. Quote creation should be idempotent by client key so a retry does not create two reservations. Do not add a promotion engine; v2.0.0 has no discounts. Model the quote lifecycle as a discriminated union so an expired or consumed quote cannot be paid.
 - **Acceptance criteria:** Quote totals are computed from database products; a client-supplied amount is ignored or rejected; a quote cannot be created for another user's address; expired quotes cannot be paid; money fields are integers; quote types are exported from the shared domain module; tests cover rounding, tampering, and address ownership.
 - **Dependencies:** 1.1; ADR-03.
 
@@ -541,7 +543,6 @@ Every retained-but-unused feature is a maintenance cost, an attack surface, and 
 - No removed feature has a route, model, page, component, navigation entry, environment variable, dependency, test, or README mention.
 - The server boots with only the retained route set.
 - The client builds with only the retained routes.
-- No removed feature has a route, model, page, component, navigation entry, environment variable, dependency, test, or README mention.
 - No removed feature leaves behind a TypeScript type, schema, or shared contract.
 - No fake testimonials, fallback GitHub stats, mock distances, PWA claims, or unverified ratings remain.
 - Seed data contains only products, profiles, and legitimate demo records.
@@ -669,7 +670,7 @@ Phase 1 fixes the invariants; Phase 3 makes them understandable and maintainable
 #### 3.1 — Split app/server and validate configuration
 
 - **Objective:** Make the app testable and fail fast on bad configuration.
-- **What to do:** Create `app.js` that exports the Express app and `server.js` that connects the database, starts the listener, and handles shutdown. Add `config/env.js` with a Zod schema for required and optional variables. Remove side-effect DB connection and scattered `process.exit` calls from importable modules.
+- **What to do:** Create `app.ts` that exports the Express app and `server.ts` that connects the database, starts the listener, and handles shutdown. Add `config/env.ts` with a Zod schema for required and optional variables. Remove side-effect DB connection and scattered `process.exit` calls from importable modules.
 - **Why it matters:** Tests currently import route files that may start services or read unvalidated environment. A clean app factory is the foundation for integration tests and operations.
 - **Technical considerations:** Keep optional providers (Razorpay, SMTP, Redis) able to disable cleanly. Required MongoDB and Firebase config must fail fast. Do not log secret values. Use `NODE_ENV=test` to avoid production requirements in unit tests.
 - **Acceptance criteria:** Tests can import `app.js` without opening a port or connecting to MongoDB; invalid env produces a clear startup error; `server.js` owns listener and shutdown; no module calls `process.exit` on import.
@@ -689,7 +690,7 @@ Phase 1 fixes the invariants; Phase 3 makes them understandable and maintainable
 - **Objective:** Make invalid states hard to represent and historical orders immutable.
 - **What to do:** Finalize schemas for `Product`, `UserProfile`, `Cart`, `CheckoutQuote`, `PaymentAttempt`, `Order`, `WebhookEvent`, and `AdminAuditLog`. Add unique/partial indexes, archive fields, order snapshots, order numbers, and quote/payment status indexes. Reset seed data and remove legacy fields.
 - **Why it matters:** Correct application logic still needs database-level guards. Unique indexes prevent duplicate payments/orders; archive preserves history; snapshots preserve commercial truth.
-- **Technical considerations:** Use unique sparse/partial indexes for nullable provider IDs. Do not use TTL as the only reservation expiry mechanism. Index the query patterns actually used by storefront/admin pages. Keep `productId` stable; archive rather than delete. Document that the pre-v1.0 schema reset is breaking.
+- **Technical considerations:** Use unique sparse/partial indexes for nullable provider IDs. Do not use TTL as the only reservation expiry mechanism. Index the query patterns actually used by storefront/admin pages. Keep `productId` stable; archive rather than delete. Document that the pre-v2.0.0 schema reset is breaking.
 - **Acceptance criteria:** Duplicate provider IDs/order numbers cannot be inserted; archived products disappear from storefront but remain in order history; indexes are documented; seed is deterministic; no legacy `price`/`discount`/ratings fields remain where removed.
 - **Dependencies:** Phase 1; 3.2; ADR-13.
 
@@ -812,7 +813,7 @@ A correctness-first reference must make correctness verifiable and repeatable. A
 - **Objective:** Verify critical UI behavior without a browser farm.
 - **What to do:** Add Vitest + React Testing Library. Test the API client, auth/claim guard, money formatting, cart mutations, quote expiry/error states, checkout flow with a mocked client, order detail, and admin permission states. Add tests for the accessibility-critical dialogs/forms.
 - **Why it matters:** The client owns the user's perception of correctness. A server-only suite misses broken empty states, stale totals, and guard bugs.
-- **Technical considerations:** Mock the API at the client boundary, not the component internals. Do not add Playwright in v1.0 unless the maintainer explicitly approves the extra infrastructure; API integration tests cover the server contract. Keep tests focused on behavior.
+- **Technical considerations:** Mock the API at the client boundary, not the component internals. Do not add Playwright in v2.0.0 unless the maintainer explicitly approves the extra infrastructure; API integration tests cover the server contract. Keep tests focused on behavior.
 - **Acceptance criteria:** Client tests run in CI; core purchase states are covered; guard tests prove non-admin cannot render admin routes; no test depends on a live Firebase/Razorpay account.
 - **Dependencies:** 3.4, 3.5, 3.6.
 
@@ -839,7 +840,7 @@ A correctness-first reference must make correctness verifiable and repeatable. A
 - **Objective:** Make the app operable when something goes wrong.
 - **What to do:** Add request IDs, structured JSON logs with redaction, `/healthz` liveness, `/readyz` database readiness, graceful shutdown, and startup validation. Add error tracking only if it can be optional and does not add a mandatory vendor.
 - **Why it matters:** Debugging a payment failure without a request ID or readiness check is guesswork. Logging request bodies can leak tokens and PII.
-- **Technical considerations:** Attach `req.id` and return `X-Request-Id`. Include request ID in error responses. Redact authorization, signatures, tokens, and personal data. Do not log full provider payloads. Handle SIGTERM/SIGINT by stopping new connections and closing Mongo. Avoid a full metrics stack in v1.0.
+- **Technical considerations:** Attach `req.id` and return `X-Request-Id`. Include request ID in error responses. Redact authorization, signatures, tokens, and personal data. Do not log full provider payloads. Handle SIGTERM/SIGINT by stopping new connections and closing Mongo. Avoid a full metrics stack in v2.0.0.
 - **Acceptance criteria:** Request ID is present in logs and errors; `/readyz` fails when DB is down; shutdown drains cleanly; no secret/PII appears in logs; structured logs are parseable.
 - **Dependencies:** 3.1, 3.2.
 
@@ -885,18 +886,18 @@ CI is trustworthy, strict TypeScript is enforced, Docker reproduces the transact
 
 ---
 
-## 9. Phase 5 — Documentation, release evidence, and v1.0
+## 9. Phase 5 — Documentation, release evidence, and v2.0.0
 
 **Status:** Proposed  
 **Dependencies:** Phase 4 complete.
 
 ### Phase objective
 
-Make the repository understandable and publish v1.0 with evidence that the release criteria are met.
+Make the repository understandable and publish v2.0.0 with evidence that the release criteria are met.
 
 ### What to do
 
-Rewrite the README truthfully, publish architecture/data/API/operations/security docs and ADRs, run a release-candidate verification, fix release blockers, and tag v1.0.0.
+Rewrite the README truthfully, publish architecture/data/API/operations/security docs and ADRs, run a release-candidate verification, fix release blockers, and tag v2.0.0.
 
 ### Why it matters
 
@@ -912,7 +913,7 @@ The project's value is partly communicative. An excellent implementation with an
 ### Acceptance criteria
 
 - README, architecture, data model, API, operations, security, and contribution docs agree with the code.
-- The v1.0 release checklist is complete.
+- The v2.0.0 release checklist is complete.
 - A clean clone can reproduce the documented flow.
 - The tag and release notes exist.
 - Known limitations are explicit.
@@ -920,14 +921,14 @@ The project's value is partly communicative. An excellent implementation with an
 ### Dependencies
 
 - Phase 4.
-- All v1.0 release criteria in Section 11.
+- All v2.0.0 release criteria in Section 11.
 
 ### Tasks
 
 #### 5.1 — Rewrite the README truthfully
 
 - **Objective:** Describe what exists, not what would be impressive.
-- **What to do:** Replace the 1,100+ line feature catalogue with a concise document: thesis, architecture diagram, retained workflows, quickstart, test-mode payment instructions, admin setup, invariants protected by tests, limitations, and links to docs. State that the stack is TypeScript end to end and list the typecheck commands.
+- **What to do:** Replace the 900+ line feature catalogue with a concise document: thesis, architecture diagram, retained workflows, quickstart, test-mode payment instructions, admin setup, invariants protected by tests, limitations, and links to docs. State that the stack is TypeScript end to end and list the typecheck commands.
 - **Why it matters:** The current README claims PWA support, rewards redemption, workout features, and other behavior that is incomplete or inaccurate. That is the largest trust defect in the repository.
 - **Technical considerations:** Include the MongoDB replica-set requirement. Do not claim production readiness or real customers. Keep screenshots current or omit them. Link to `ROADMAP.md`, `PRODUCT.md`, and `SCOPE.md`. Show `npm run typecheck` in the quickstart so the typed baseline is visible.
 - **Acceptance criteria:** Every feature claim is verifiable; setup works from a clean clone; limitations are explicit; no dead links; no removed feature appears.
@@ -953,17 +954,17 @@ The project's value is partly communicative. An excellent implementation with an
 
 #### 5.4 — Run the release-candidate verification matrix
 
-- **Objective:** Prove v1.0 before tagging.
+- **Objective:** Prove v2.0.0 before tagging.
 - **What to do:** Execute the full checklist in Section 11 on a clean clone and on Docker. Record results, known limitations, and any accepted risks.
 - **Why it matters:** A release tag is a claim. The verification matrix is the evidence.
 - **Technical considerations:** Use a fresh database and deterministic seed. Test success, duplicate callbacks, expiry, amount mismatch, unauthorized access, admin claim failure, and refund compensation. Run lint, typecheck, tests, and builds from a clean clone. Test in the provider's test mode. Do not use production money.
 - **Acceptance criteria:** All release criteria pass or have an approved, documented exception; no critical/high open defect; evidence recorded in the release notes.
 - **Dependencies:** 5.1–5.3.
 
-#### 5.5 — Publish v1.0.0
+#### 5.5 — Publish v2.0.0
 
 - **Objective:** Create a stable, referenceable release.
-- **What to do:** Update versions, write release notes, tag `v1.0.0`, publish the release, and link the verification evidence.
+- **What to do:** Update versions, write release notes, tag `v2.0.0`, publish the release, and link the verification evidence.
 - **Why it matters:** A tag gives the project a stable baseline for maintenance and for evaluators.
 - **Technical considerations:** Do not tag from an unverified branch. Include the commit SHA, test results, and known limitations. Do not claim production readiness.
 - **Acceptance criteria:** Tag exists; release notes match the verified scope; repository is clean; README points to the release; no post-tag code changes are required for the documented flow.
@@ -971,14 +972,14 @@ The project's value is partly communicative. An excellent implementation with an
 
 ### Phase exit gate
 
-v1.0.0 is published with complete documentation and release evidence. Any remaining work is maintenance, not active feature development.
+v2.0.0 is published with complete documentation and release evidence. Any remaining work is maintenance, not active feature development.
 
 ---
 
 ## 10. Phase 6 — Maintenance mode
 
 **Status:** Proposed  
-**Dependencies:** v1.0.0 published and stable.
+**Dependencies:** v2.0.0 published and stable.
 
 ### Phase objective
 
@@ -1019,7 +1020,7 @@ Without an explicit stop condition, the project will drift back into feature acc
 - **Objective:** Set expectations for users and contributors.
 - **What to do:** Document supported version, security-fix process, dependency cadence, documentation fixes, and the fact that feature requests are out of scope.
 - **Why it matters:** Prevents the repository from looking abandoned while also preventing uncontrolled expansion.
-- **Technical considerations:** Align with `SECURITY.md`; do not promise SLAs that cannot be met. State that v1.0 is the supported line.
+- **Technical considerations:** Align with `SECURITY.md`; do not promise SLAs that cannot be met. State that v2.0.0 is the supported line.
 - **Acceptance criteria:** Policy is published and linked from README; issue/PR templates reference it.
 - **Dependencies:** 5.5.
 
@@ -1035,19 +1036,19 @@ Without an explicit stop condition, the project will drift back into feature acc
 #### 6.3 — Close the loop on issues and pull requests
 
 - **Objective:** Make the open-work state match maintenance mode.
-- **What to do:** Close removed-feature and out-of-scope items, keep only security/correctness/documentation issues, mark stale PRs, and document the canonical path for a future v1.1 proposal.
-- **Why it matters:** 91 issues and 215 PRs create an illusion of active development and obscure the few items that matter.
-- **Technical considerations:** Use labels such as `scope:v1.0`, `maintenance`, `security`, `documentation`, `out-of-scope`. Do not delete issues; close with a reason.
+- **What to do:** Close removed-feature and out-of-scope items, keep only security/correctness/documentation issues, mark stale PRs, and document the canonical path for a future v2.1 proposal.
+- **Why it matters:** 91 issues and 221 PRs create an illusion of active development and obscure the few items that matter.
+- **Technical considerations:** Use labels such as `scope:v2.0.0`, `maintenance`, `security`, `documentation`, `out-of-scope`. Do not delete issues; close with a reason.
 - **Acceptance criteria:** Open backlog contains only maintenance-relevant work; every closed item has a reason; no duplicate canonical PR remains.
 - **Dependencies:** 6.1.
 
 #### 6.4 — Define the stop condition and restart triggers
 
 - **Objective:** Decide when active development ends and when it may resume.
-- **What to do:** Record the conditions for stopping (v1.0 criteria met, no release-blocking defect) and the triggers for a maintenance release or a v1.1 scope review (critical CVE, provider API break, data-loss bug, approved new product thesis).
+- **What to do:** Record the conditions for stopping (v2.0.0 criteria met, no release-blocking defect) and the triggers for a maintenance release or a v2.1 scope review (critical CVE, provider API break, data-loss bug, approved new product thesis).
 - **Why it matters:** Prevents "just one more feature" from restarting the kitchen sink.
-- **Technical considerations:** A v1.1 requires a new product/scope review, not a single PR. Maintenance releases are limited to security, correctness, compatibility, and documentation.
-- **Acceptance criteria:** Conditions documented; maintainer agrees; the default answer to feature requests is "out of scope for the v1.0 reference."
+- **Technical considerations:** A v2.1 requires a new product/scope review, not a single PR. Maintenance releases are limited to security, correctness, compatibility, and documentation.
+- **Acceptance criteria:** Conditions documented; maintainer agrees; the default answer to feature requests is "out of scope for the v2.0.0 reference."
 - **Dependencies:** 6.1–6.3.
 
 #### 6.5 — Final repository state check
@@ -1065,9 +1066,9 @@ FitMart is in maintenance mode. Active feature development has stopped. Security
 
 ---
 
-## 11. v1.0 release criteria
+## 11. v2.0.0 release criteria
 
-v1.0.0 may be tagged only when every item below is true or has an explicitly approved, documented exception.
+v2.0.0 may be tagged only when every item below is true or has an explicitly approved, documented exception.
 
 ### 11.1 Product and scope
 
@@ -1143,7 +1144,7 @@ v1.0.0 may be tagged only when every item below is true or has an explicitly app
 
 - [ ] Release-candidate verification was run on a clean clone and Docker.
 - [ ] No critical/high open defect remains.
-- [ ] `v1.0.0` is tagged from the verified commit.
+- [ ] `v2.0.0` is tagged from the verified commit.
 - [ ] Release notes are published.
 - [ ] The README points to the release and the limitations.
 
@@ -1153,7 +1154,7 @@ v1.0.0 may be tagged only when every item below is true or has an explicitly app
 
 Active development stops when:
 
-1. `v1.0.0` is published and the release criteria above are satisfied.
+1. `v2.0.0` is published and the release criteria above are satisfied.
 2. No release-blocking correctness, security, or data-integrity defect is open.
 3. The open backlog contains only maintenance-relevant work.
 4. The maintenance policy, dependency cadence, and issue/PR scope rules are published.
@@ -1180,7 +1181,7 @@ The following changes require a new product/scope review and are not accepted as
 - a language migration or a second runtime;
 - microservices, a queue, or Kubernetes.
 
-A v1.1 restart requires a new `PRODUCT.md` and `SCOPE.md` decision. It cannot begin with a single feature PR.
+A v2.1 restart requires a new `PRODUCT.md` and `SCOPE.md` decision. It cannot begin with a single feature PR.
 
 ---
 
@@ -1188,7 +1189,7 @@ A v1.1 restart requires a new `PRODUCT.md` and `SCOPE.md` decision. It cannot be
 
 This appendix is a triage guide, not an instruction to close items without review. The canonical rule is:
 
-- **Retain:** valid, aligned with v1.0, and mapped to a roadmap task.
+- **Retain:** valid, aligned with v2.0.0, and mapped to a roadmap task.
 - **Redirect:** valid idea, but must be rewritten as a roadmap task or folded into a larger change.
 - **Close:** removed feature, duplicate, obsolete, false premise, or superseded by a new design.
 
@@ -1272,9 +1273,9 @@ No old PR should be merged before its cluster is reviewed against Phase 1–3. M
 | Accessibility/focus | Retain | #962 |
 | README/setup docs | Replace with Phase 5 rewrite | #718, #772 |
 | PWA docs/feature | Close | #689, #690, #692, #707, #795 |
-| Chats/AI | Close | #724, #806, #846, #847, #852, #855, #880, #882, #886, #898, #917, #930, #972 |
+| Chats/AI | Close | #724, #806, #846, #847, #852, #855, #880, #882, #886, #898, #917, #930, #972, #1074, #1079 |
 | Rewards | Close | #701, #702, #708 |
-| Programs/memberships | Close | #999, #1001, #1014, #1023, #1025, #1032, #1038, #1043, #1044, #1046, #1048, #1053, #1059 |
+| Programs/memberships | Close | #999, #1001, #1014, #1023, #1025, #1032, #1038, #1043, #1044, #1046, #1048, #1053, #1059, #1076 |
 | Calculator/notes/plans | Close | #695, #910, #927, #933, #934, #936, #935 |
 | PropTypes | Close | #687, #759, #768, #918, #1030, #1036 |
 | Cart spacing/drawer duplication | Close after UI rewrite | #740, #745, #747, #748, #785 |
@@ -1284,41 +1285,42 @@ No old PR should be merged before its cluster is reviewed against Phase 1–3. M
 | GitHub star widgets | Close | #890, #909 |
 | Pull-to-refresh | Close/defer | #896, #897, #908, #915 |
 | Scroll-to-top | Close | #781, #789, #790 |
-| SEO/Open Graph | Defer beyond v1.0 | #754, #755, #756, #757, #854 |
+| SEO/Open Graph | Defer beyond v2.0.0 | #754, #755, #756, #757, #854 |
 | Sentry | Defer/optional | #939 |
 | Vague refactors | Close | #803, #893 |
 | useFetch abstraction | Close; React Query is the data layer | #804 |
 | Conventional commits | Keep one or defer | #866, #864, #978 |
-| Email queue | Close; ADR-12 rejects a queue for v1.0 | #975 |
+| Email queue | Close; ADR-12 rejects a queue for v2.0.0 | #975 |
 | Navbar/route polish | Retain into Phase 3 UI | #967 |
 | Profile address loading | Retain into Phase 3 | #946 |
 | A11y labels | Retain into Phase 3 | #945 |
 | Payment error messages | Superseded by the Phase 3 error contract | #943 |
 | Admin inventory leak | Retain/rebuild in Phase 3 | #932 |
 | JSDoc utilities | Close; TypeScript types replace JSDoc for utilities (ADR-09) | #931 |
-| Pre-hydration spinners | Close/defer; not a v1.0 concern | #906, #928 |
+| Pre-hydration spinners | Close/defer; not a v2.0.0 concern | #906, #928 |
 | Admin KPI skeletons | Close; admin layout is rebuilt | #925, #926 |
 | Stars component tests | Close; ratings removed | #912 |
 | Alert-to-toast | Keep one canonical PR | #845, #885 |
 | Admin bug search | Close; bug tracker removed | #881 |
-| Playwright E2E | Defer; not in v1.0 without explicit approval | #876 |
+| Playwright E2E | Defer; not in v2.0.0 without explicit approval | #876 |
 | Seed deprecation fix | Keep one; mirrors issue #862 | #863 |
 | External API timeouts | Close; integrations removed | #716, #860 |
 | Frontend test setup duplicates | Fold into the canonical test-setup PR above | #828 |
 | Zustand workout store | Close; feature removed and no global store | #788 |
 | Clear-cart confirmation | Retain into Phase 3 | #778 |
 | Cart drawer/product page fixes | Fold into the Phase 3 cart rewrite | #775 |
-| Category hover effect | Defer beyond v1.0 | #751 |
-| Body-size limit | Keep one; mirrors issue #360 | #749 |
+| Category hover effect | Defer beyond v2.0.0 | #751 |
+| Body-size limit | Keep one; mirrors issue #360 | #749, #1075 |
 | ExercisePage console logs | Close; page removed | #712, #721 |
 | Debounced catalog search | Keep one canonical PR | #711, #683 |
 | Chat history fixes | Close; chatbot removed | #709 |
 | README fitness-centers row | Close; README is rewritten in Phase 5 | #1050 |
 | Noisy automation | Close/disable in Phase 6; not product work | #959 |
 | Exercise page loading state | Close; page removed | #944 |
-| Dependabot | Keep the latest passing PR per dependency; close superseded duplicates. After Phase 2, close bumps for removed packages (for example #1007 `@fullcalendar/react`). | All `chore(deps...)` PRs, including #1003, #1007, #1008, #1010–#1012, #1017–#1018, #1022, #1024, #1026, #1039, #1042, #1047, #1052, #1054–#1057, #1060–#1061, #1064–#1071 |
+| Dependabot | Keep the latest passing PR per dependency; close superseded duplicates. After Phase 2, close bumps for removed packages (for example #1007 `@fullcalendar/react`). | All `chore(deps...)` PRs, including #1003, #1007–#1008, #1010–#1012, #1017–#1018, #1022, #1024, #1026, #1039, #1042, #1047, #1052, #1054–#1057, #1060–#1061, #1064–#1073 |
+| MongoDB retry backoff | Retain; small reliability fix referenced by issue #862, rebase after Phase 2 | #894 |
 
-### 13.4 Triage rules for the 215 open PRs
+### 13.4 Triage rules for the 221 open PRs
 
 1. If the PR implements a removed feature, close with a link to `SCOPE.md`.
 2. If it duplicates another open PR, keep the most complete/current one and close the rest.
@@ -1337,3 +1339,42 @@ No old PR should be merged before its cluster is reviewed against Phase 1–3. M
 FitMart is done when a reader can see a small, fully typed commerce application, trace the money path end to end, find tests for every dangerous edge, run it from a clean clone, and read an honest description of its capabilities and limits.
 
 At that point, the project stops growing and starts being maintained.
+
+---
+
+## 15. Phase 0 record
+
+### Task 0.3 — Approve the roadmap and retire the old plan
+
+| Field | Value |
+|---|---|
+| Decision | **Approved** — recorded on the maintainer's instruction to complete Phase 0 tasks 0.2–0.5 |
+| Date | 2026-11-15 |
+| Approver | Repository maintainer |
+| Repository state | Commit `37d2da8`; application code unchanged by this approval |
+| Old plan | `docs/NEW_PLAN.md` carries a superseded banner and is not an implementation reference |
+| Linked from | `README.md` and `docs/CONTRIBUTING.md` |
+| Corrections at approval | Appendix itemization gaps closed; stale counts updated; duplicate acceptance bullet removed; Phase 0 status corrected; baseline re-verified at the current commit |
+
+Corrections made at approval:
+
+1. Section 13 could not assign a disposition to 14 open issues (#984–#997) and 16 open PRs; all are now itemized.
+2. The dependabot list stopped at #1071 and used ranges that skipped members; it now names every open dependency bump.
+3. The removed-feature clusters were missing #1074, #1076, and #1079; the body-size-limit cluster was missing #1075; the MongoDB retry fix #894 had no row.
+4. A duplicate acceptance bullet was removed from Phase 2, and the baseline section now records re-verification at `37d2da8`.
+5. `docs/ISSUE_PR_DISPOSITION.md` records the item-level disposition for all 91 open issues and 221 open PRs.
+
+### Task status
+
+| Task | Status | Evidence |
+|---|---|---|
+| 0.1 Approve the product definition | Complete | `docs/PRODUCT.md` §12 |
+| 0.2 Approve the v2.0.0 scope | Complete | `docs/SCOPE.md` §9 |
+| 0.3 Approve the roadmap and retire the old plan | Complete | This section; `docs/NEW_PLAN.md` banner |
+| 0.4 Record the baseline and freeze feature merges | Complete | §1 reproduce block; merge freeze confirmed by the maintainer on 2026-11-15 — only the maintainer pushes to `main`, and feature merges stay paused until Phase 1 tasks are ready |
+| 0.5 Triage issues and pull requests | Complete | `docs/ISSUE_PR_DISPOSITION.md` — applied 2026-11-15; open items went from 91 issues / 221 PRs to 44 / 79 |
+
+### Phase exit gate
+
+**Closed 2026-11-15.** All five tasks are complete: the three documents are approved, the baseline is recorded, the old plan is retired, and the issue/PR disposition is applied (91 → 44 open issues, 221 → 79 open PRs). The maintainer confirmed the merge freeze: only the maintainer pushes to `main`, and feature merges stay paused until Phase 1 tasks are ready. Phase 1 may begin.
+

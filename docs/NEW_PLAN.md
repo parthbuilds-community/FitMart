@@ -1,3 +1,10 @@
+> **SUPERSEDED - DO NOT EXECUTE.**
+> This plan is retired. The "Fitness Membership OS" direction was rejected and must not be implemented.
+> Authoritative documents: [PRODUCT.md](PRODUCT.md) (product), [SCOPE.md](SCOPE.md) (v2.0.0 scope), [ROADMAP.md](../ROADMAP.md) (implementation order).
+> No code may be written against this document. It is retained only as historical context.
+
+---
+
 # FitMart — Transition Plan to a Flagship Open-Source "Fitness Membership OS"
 
 > **Status:** Approved vision + roadmap. Phase 0 ("Integrity") is already **committed** to the repo. This document is the operational plan that evolves the existing codebase — no rewrite.

@@ -7,6 +7,14 @@
 
 > A full-stack MERN e-commerce application combining premium fitness gear, nutrition products, workout tracking, and seamless payments — built for learning, collaboration, and real-world use.
 
+> **Project direction — Phase 0 approved (2026-11-15):** FitMart is being rebuilt as a small, correctness-first commerce reference. The code you see today predates that rebuild and still contains features scheduled for removal; this README will be rewritten when v2.0.0 is verified.
+>
+> - Product definition: [`docs/PRODUCT.md`](docs/PRODUCT.md)
+> - v2.0.0 scope: [`docs/SCOPE.md`](docs/SCOPE.md)
+> - Implementation order: [`ROADMAP.md`](ROADMAP.md)
+>
+> Feature work outside the approved scope will be declined. The retired "Fitness Membership OS" plan is marked superseded.
+
 <br/>
 
 [![React](https://img.shields.io/badge/React-v19-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)

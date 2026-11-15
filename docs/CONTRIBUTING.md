@@ -10,6 +10,7 @@ This guide will walk you through **everything** you need to know to contribute t
 
 ## 📌 Table of Contents
 
+- [Project Scope and Roadmap](#project-scope-and-roadmap)
 - [Code of Conduct](#-code-of-conduct)
 - [How Can I Contribute?](#-how-can-i-contribute)
 - [Getting Started (Step-by-Step)](#-getting-started-step-by-step)
@@ -22,6 +23,23 @@ This guide will walk you through **everything** you need to know to contribute t
 - [Project Structure Reference](#-project-structure-reference)
 - [Style Guide](#-style-guide)
 - [Need Help?](#-need-help)
+
+---
+
+## 🗺️ Project Scope and Roadmap
+
+FitMart is in Phase 0 of a planned rebuild into a small, correctness-first commerce reference. Before opening a pull request, read:
+
+- [`ROADMAP.md`](../ROADMAP.md) — the single source of truth for implementation order.
+- [`docs/SCOPE.md`](SCOPE.md) — what is in and out of v2.0.0.
+- [`docs/PRODUCT.md`](PRODUCT.md) — the product definition.
+
+Important:
+
+- Feature work outside `docs/SCOPE.md` will be declined until v2.0.0 ships.
+- New and rewritten source files must be TypeScript. No new `.js`/`.jsx` source is accepted after Phase 0.
+- Changes to the money path require tests that prove the invariant being preserved.
+- `docs/NEW_PLAN.md` ("Fitness Membership OS") is retired and is not an implementation reference.
 
 ---
 

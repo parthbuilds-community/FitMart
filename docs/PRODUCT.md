@@ -1,9 +1,10 @@
 # FitMart Product Definition
 
-> **Status:** Phase 0 proposal — awaiting maintainer approval  
-> **Last updated:** 2026-11-11  
+> **Status:** Approved — Phase 0 decision freeze (2026-11-15)  
+> **Last updated:** 2026-11-15  
 > **Source of truth for implementation:** [`ROADMAP.md`](../ROADMAP.md)  
-> **Supersedes:** `docs/NEW_PLAN.md` ("Fitness Membership OS") — that plan is retired and must not be executed.
+> **Supersedes:** `docs/NEW_PLAN.md` ("Fitness Membership OS") — that plan is retired and must not be executed.  
+> **Approval record:** [§12](#12-approval-record) — includes acceptance of ADR-09 (TypeScript migration).
 
 ---
 
@@ -171,7 +172,7 @@ FitMart offers five things that a typical MERN demo does not:
 
 ## 7. Product boundaries
 
-### In scope for v1.0
+### In scope for v2.0.0
 
 - A single-tenant storefront for physical fitness gear.
 - One currency: INR, stored and calculated in integer paise.
@@ -181,11 +182,13 @@ FitMart offers five things that a typical MERN demo does not:
 - Razorpay test-mode payment creation, verification, webhook handling, and compensation.
 - Order creation, immutable order snapshots, and customer order history.
 - Admin authentication, catalog management, inventory management, order/payment inspection, customer summaries, and sales reports.
+- A best-effort, environment-gated order-confirmation email after a paid order (ADR-12). Delivery is not guaranteed and is never a correctness dependency.
+- System-initiated compensation refunds for captured payments that cannot be fulfilled (ADR-14). This is an internal recovery path, not a customer-facing refund workflow.
 - A small design system, responsive storefront, and accessible core flows.
 - A TypeScript codebase (server and client) with strict compilation at release, shared API types inferred from Zod schemas, and no untyped money-path code.
 - Docker-based local environment, deterministic seed data, CI, tests, and documentation.
 
-### Explicitly out of scope for v1.0
+### Explicitly out of scope for v2.0.0
 
 - Memberships, subscriptions, recurring billing, programs, coaching, or cohorts.
 - Workout tracking, workout calendars, notes, exercise libraries, or fitness-content feeds.
@@ -194,7 +197,7 @@ FitMart offers five things that a typical MERN demo does not:
 - Nearby gym/studio discovery or any mocked geolocation.
 - Bug reporting, in-app support desks, admin bug triage, or GitHub statistics widgets.
 - Profile-photo uploads or any media-upload pipeline.
-- Multi-vendor marketplaces, multi-currency pricing, tax engines, shipping integrations, returns, or customer-facing refunds.
+- Multi-vendor marketplaces, multi-currency pricing, tax engines, shipping integrations, or any customer-facing return, cancellation, or refund workflow. (System-initiated compensation refunds under ADR-14 are in scope; see above.)
 - Reviews, ratings, testimonials, or social proof that is not backed by real data.
 - PWA installation, offline mode, native mobile apps, or push notifications.
 - Real-money production operation, real customer acquisition, or claims of business impact.
@@ -248,7 +251,7 @@ Architecture decisions record the alternative that was rejected and the trade-of
 
 ## 9. Success criteria
 
-FitMart v1.0 is successful when all of the following are true.
+FitMart v2.0.0 is successful when all of the following are true.
 
 ### Product truth
 
@@ -302,12 +305,12 @@ FitMart v1.0 is successful when all of the following are true.
 ## 10. Governance and change control
 
 - `ROADMAP.md` is the single source of truth for implementation order.
-- `docs/SCOPE.md` is the source of truth for what is in and out of v1.0.
-- Any proposal outside the v1.0 scope is deferred, not quietly added.
+- `docs/SCOPE.md` is the source of truth for what is in and out of v2.0.0.
+- Any proposal outside the v2.0.0 scope is deferred, not quietly added.
 - Changes to the money path require tests that demonstrate the invariant being preserved.
 - New and rewritten source files are TypeScript; no new `.js` or `.jsx` source files are accepted after Phase 0.
 - Removing a feature requires removing its code, data model, configuration, navigation, tests, and documentation together.
-- v1.0 is frozen before release. After the release criteria are met, the project enters maintenance mode defined in `ROADMAP.md`.
+- v2.0.0 is frozen before release. After the release criteria are met, the project enters maintenance mode defined in `ROADMAP.md`.
 
 ---
 
@@ -318,3 +321,33 @@ A reader should come away with the impression of a **deliberately small system w
 Not: "Look how many features were built."
 
 But: "This person understands what can go wrong when money, inventory, and retries meet, and they built the smallest coherent system that handles it."
+
+---
+
+## 12. Approval record
+
+### Task 0.1 — Approve the product definition
+
+| Field | Value |
+|---|---|
+| Decision | **Approved** |
+| Date | 2026-11-15 |
+| Approver | Repository maintainer |
+| Repository state | Commit `37d2da8`, clean working tree; application code unchanged by this approval |
+| Reviewed against | This document, `docs/SCOPE.md`, `ROADMAP.md`, and the current codebase |
+| Decisions accepted | ADR-01 (commerce reference, not a live store), **ADR-09 (TypeScript migration)**, ADR-12 (best-effort email), ADR-14 (compensation refunds) |
+| Unresolved product-direction questions | None |
+
+Approval confirms that:
+
+- FitMart is a correctness-first, single-store commerce reference. It is not a live retail business, a fitness super-app, or a membership platform, and it makes no claim of real customers, revenue, or production operation.
+- The transactional spine in §2 is the organizing principle: a feature stays only if it supports that spine or helps a developer understand, test, or operate it.
+- v2.0.0 ships as a TypeScript codebase end to end, migrated incrementally per ADR-09, with `strict` compilation and no `.js`/`.jsx` source at release.
+- The boundaries in §7 are accepted, including the removal list delegated to `docs/SCOPE.md`.
+
+Two documentation gaps were resolved at approval time:
+
+1. The retained order-confirmation email (§7, ADR-12) was added to the in-scope list, stated as best effort and non-transactional.
+2. System-initiated compensation refunds (ADR-14) were made explicitly in scope and distinguished from the out-of-scope customer-facing refund workflow.
+
+Scope of this approval: it approves the **product definition only**. It does not approve `docs/SCOPE.md` (task 0.2) or `ROADMAP.md` (task 0.3), and it does not start implementation. The Phase 0 exit gate remains closed until those tasks are complete.

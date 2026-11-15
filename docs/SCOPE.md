@@ -1,18 +1,19 @@
-# FitMart v1.0 Scope
+# FitMart v2.0.0 Scope
 
-> **Status:** Phase 0 proposal — awaiting maintainer approval  
-> **Last updated:** 2026-11-11  
+> **Status:** Approved — Phase 0 decision freeze (2026-11-15)  
+> **Last updated:** 2026-11-15  
 > **Product definition:** [`docs/PRODUCT.md`](./PRODUCT.md)  
 > **Implementation sequence:** [`ROADMAP.md`](../ROADMAP.md)  
-> **Supersedes:** `docs/NEW_PLAN.md` — retired; not part of v1.0.
+> **Supersedes:** `docs/NEW_PLAN.md` — retired; not part of v2.0.0.  
+> **Approval record:** [§9](#9-approval-record)
 
 This document is decisive. A feature is retained only if it supports the commerce spine or materially improves the ability to understand, test, or operate that spine.
 
 ---
 
-## 1. v1.0 scope summary
+## 1. v2.0.0 scope summary
 
-FitMart v1.0 is:
+FitMart v2.0.0 is:
 
 > One storefront, one admin surface, one currency, one payment provider, one transactional money path — written in TypeScript.
 
@@ -26,7 +27,7 @@ Everything else is removed.
 
 These capabilities stay, but most are hardened rather than preserved as-is.
 
-| Capability | v1.0 responsibility | Notes |
+| Capability | v2.0.0 responsibility | Notes |
 |---|---|---|
 | Product catalog | List, search, filter, paginate, detail | Public read API; no unverified ratings/reviews |
 | Product images | Display image URLs from seeded/admin data | No upload pipeline |
@@ -48,13 +49,15 @@ These capabilities stay, but most are hardened rather than preserved as-is.
 | Docker/CI | Reproducible local run and quality gates | Mongo replica set required |
 | TypeScript | Server and client typechecked with `tsc`; client bundled by Vite | Strict mode at release; migrated incrementally; no new JS source |
 
+**Current-state note:** most rows exist in the repository today and are hardened rather than rebuilt. Four capabilities do not exist yet and are delivered later in the roadmap: the checkout quote (Phase 1), admin order/payment inspection and payment exceptions (Phase 3), product archiving (Phase 3), and the TypeScript migration (Phases 1–4). Admin catalog create/edit exists today; archiving is new. The admin audit log in §5.4 is also new (Phase 3).
+
 ---
 
 ## 3. Capabilities to refactor
 
 These stay in concept but must be rebuilt around the new invariants.
 
-| Current capability | Required v1.0 design | Why |
+| Current capability | Required v2.0.0 design | Why |
 |---|---|---|
 | Cart stock reservation | Remove reservation from cart; reserve only when a checkout quote is created | Abandoned carts currently strand stock indefinitely |
 | Client-computed total | Server-issued quote with integer paise | Client currently sends `amount` and computes discounts |
@@ -64,10 +67,6 @@ These stay in concept but must be rebuilt around the new invariants.
 | Order model | Immutable line, price, address, and total snapshots | Current model omits address and discount/pricing breakdown |
 | Admin authorization | Firebase custom claim and server middleware | Env UID and hardcoded frontend fallback are unsafe |
 | User-derived routes | Derive user identity from the verified token | Current routes accept `userId` in body/params |
-| Rewards purchase hook | Remove rewards entirely | Not part of commerce reference scope |
-| Welcome discount | Remove | Adds promotion concurrency without supporting the core thesis |
-| Profile photo upload | Remove | Cloudinary/media pipeline is unrelated to commerce correctness |
-| Product rating/review display | Remove unverified fields and UI | Current values are seed metadata presented as social proof |
 | Product delete | Archive product (`isActive: false`) | Preserve order history and referential clarity |
 | Product cache | Cache public catalog reads only; invalidate on admin writes | Stock/quote decisions must never rely on stale cache |
 | Logger | Structured, redacted, request-scoped | Current logger logs request bodies and has no request ID |
@@ -102,6 +101,7 @@ Remove from server, client, tests, seed, environment, and documentation:
 - First-purchase-only email behavior; replace with a plain order-confirmation email for every paid order.
 - GitHub stats proxy, fallback statistics, GitHub star widgets, and contributor-count UI.
 - Static testimonials, invented customer names, fake quotes, and decorative social proof.
+- Invented customer-count and activity metrics (for example the landing-page "Happy Customers" figure) that are not derived from the database.
 
 ### 4.3 Support and internal tooling
 
@@ -113,7 +113,7 @@ Remove from server, client, tests, seed, environment, and documentation:
 ### 4.4 Unsafe or false capabilities
 
 - `POST /api/payment/demo-success` and the "Simulate Successful Payment" button.
-- Development `dev:<email>` bearer-token bypass.
+- Development `dev:<email>` bearer-token bypass and its server route `POST /api/dev/login`.
 - `DevAdminLogin`, `/dev-login`, `dev_token` localStorage bypass, and dev admin seeding.
 - Hardcoded admin UID fallback in `AdminRoute`.
 - Environment-UID admin authorization as the primary mechanism.
@@ -138,7 +138,7 @@ Remove from server, client, tests, seed, environment, and documentation:
 
 ---
 
-## 5. Target v1.0 surface
+## 5. Target v2.0.0 surface
 
 ### 5.1 Customer routes
 
@@ -155,7 +155,7 @@ Remove from server, client, tests, seed, environment, and documentation:
 | `/profile` | Name, phone, addresses |
 | `/terms`, `/privacy-policy` | Legal pages, corrected to match actual data practice |
 
-No `/payment` route that depends on React Router navigation state. Payment is a checkout action, and confirmation is an order-detail read.
+No `/payment` route that depends on React Router navigation state. The current `/payment` and `/payment-confirmation` routes are removed; payment is a checkout action, and confirmation is an order-detail read at `/orders/:orderId`.
 
 ### 5.2 Admin routes
 
@@ -213,7 +213,7 @@ Removed entities:
 
 ---
 
-## 6. Engineering capabilities v1.0 must demonstrate
+## 6. Engineering capabilities v2.0.0 must demonstrate
 
 The final product must visibly demonstrate all of the following.
 
@@ -328,14 +328,49 @@ The scope is complete when:
 4. The admin surface reads the same order/payment data as the customer surface.
 5. The repository is fully TypeScript, strict, and typechecked in CI.
 6. The README describes only behavior that exists.
-7. The repository passes the v1.0 release criteria in `ROADMAP.md`.
+7. The repository passes the v2.0.0 release criteria in `ROADMAP.md`.
 
 ---
 
 ## 8. Scope change control
 
-- New features are out of scope until v1.0 ships.
-- A proposed feature must identify which v1.0 invariant it protects or which retained workflow it improves. If it does neither, it is deferred.
+- New features are out of scope until v2.0.0 ships.
+- A proposed feature must identify which v2.0.0 invariant it protects or which retained workflow it improves. If it does neither, it is deferred.
 - A proposal to retain a currently existing feature must justify it against the same test.
 - Removing a feature is part of the same change as removing its data model, configuration, navigation, tests, and documentation.
 - The roadmap order may change only when a dependency or a newly discovered correctness issue requires it; the scope itself does not expand.
+
+---
+
+## 9. Approval record
+
+### Task 0.2 — Approve the v2.0.0 scope
+
+| Field | Value |
+|---|---|
+| Decision | **Approved** |
+| Date | 2026-11-15 |
+| Approver | Repository maintainer |
+| Repository state | Commit `37d2da8`; application code unchanged by this approval |
+| Reviewed against | This document, `docs/PRODUCT.md`, `ROADMAP.md`, and the current codebase |
+| Removal list | §4 accepted in full |
+| Non-goals | §4.5 accepted in full |
+| TypeScript scope | Accepted — server and client TypeScript, strict at release, shared types inferred from Zod schemas (ADR-09) |
+| Retained capabilities | §2 accepted, with the current-state note |
+| Refactored capabilities | §3 accepted |
+
+Scope corrections made at approval:
+
+1. Removed four rows from §3 that described removals rather than refactors (rewards, welcome discount, profile-photo upload, rating/review display). Those capabilities remain removals under §4.
+2. Added a current-state note to §2 distinguishing capabilities that exist today from target-state work delivered by the roadmap.
+3. Named the server-side `POST /api/dev/login` route and the `/payment-confirmation` route explicitly in the removal list.
+4. Added invented customer-count metrics to the removal list.
+
+Approval confirms that:
+
+- The §4 removal list is binding for Phase 2, including each feature's model, routes, pages, components, navigation, environment variables, dependencies, tests, seed data, and documentation.
+- The §4.5 non-goals are binding: a proposal that requires one of them needs a new product/scope review, not a pull request.
+- The TypeScript migration is in scope; changing language, framework, or data store is not.
+- Retained capabilities must satisfy §6 before v2.0.0 ships.
+
+Scope of this approval: it approves the **v2.0.0 scope only**. It does not approve `ROADMAP.md` (task 0.3) and does not start implementation.
