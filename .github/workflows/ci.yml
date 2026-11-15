@@ -86,7 +86,7 @@ jobs:
       
       - name: Install server dependencies
         working-directory: server
-        run: npm ci
+        run: npm install
       
       - name: Wait for MongoDB
         run: sleep 5
