@@ -3,7 +3,7 @@ const router = express.Router();
 
 const Rewards = require("../models/Rewards");
 const rewardsConfig = require("../config/rewardsConfig");
-const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const { requireAuth } = require("../middleware/requireAuth");
 
 function getTier(points) {
   let currentTier = rewardsConfig.TIERS[0];
@@ -33,7 +33,7 @@ function calculatePoints(source, amount = 0) {
   return 0;
 }
 
-router.get("/:userId", verifyFirebaseToken, async (req, res) => {
+router.get("/:userId", requireAuth, async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -63,7 +63,7 @@ router.get("/:userId", verifyFirebaseToken, async (req, res) => {
   }
 });
 
-router.post("/earn", verifyFirebaseToken, async (req, res) => {
+router.post("/earn", requireAuth, async (req, res) => {
   try {
     const { userId, source, orderId, amount, description } = req.body;
 

@@ -5,7 +5,7 @@ const streamifier = require("streamifier");
 const cloudinary = require("../lib/cloudinary");
 const UserProfile = require("../models/UserProfile");
 const admin = require("../firebaseAdmin");
-const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const { requireAuth } = require("../middleware/requireAuth");
 const { fail } = require("../utils/apiResponse");
 const router = express.Router();
 
@@ -23,21 +23,11 @@ const upload = multer({
 // ─────────────────────────────────────────────────────────────────────────────
 // Ownership + admin checks
 // A user may act on their own profile; admins may also read/write other users'
-// profiles (e.g. the admin customer-detail page). Mirrors verifyAdmin.js.
+// profiles (e.g. the admin customer-detail page). Admin access comes from the
+// Firebase custom claim, the same source requireAdmin.ts uses.
 // ─────────────────────────────────────────────────────────────────────────────
-const ADMIN_UID = process.env.ADMIN_UID || process.env.VITE_ADMIN_UID || '';
-const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || process.env.VITE_SUPER_ADMIN_UID || '';
-const DEV_ADMIN_EMAIL = process.env.DEV_ADMIN_EMAIL || '';
-const isDev = process.env.NODE_ENV !== 'production';
-
 function isAdminUser(req) {
-  if (ADMIN_UID && req.user.uid === ADMIN_UID) return true;
-  if (SUPER_ADMIN_UID && req.user.uid === SUPER_ADMIN_UID) return true;
-  if (isDev) {
-    if (DEV_ADMIN_EMAIL && req.user.email && req.user.email === DEV_ADMIN_EMAIL) return true;
-    if (process.env.DEV_ADMIN_UID && req.user.uid === process.env.DEV_ADMIN_UID) return true;
-  }
-  return false;
+  return req.user?.admin === true;
 }
 
 // Reject unless the authenticated uid matches the userId in the request body.
@@ -63,7 +53,7 @@ function checkParamOwnership(req, res) {
 // - If profile exists and isFirstLogin is false → return showBanner: false
 // Also syncs user email from Firebase to the profile for email sending.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/login", verifyFirebaseToken, async (req, res) => {
+router.post("/login", requireAuth, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return fail(res, "userId required");
@@ -134,7 +124,7 @@ router.post("/login", verifyFirebaseToken, async (req, res) => {
 // Called when user dismisses the welcome banner.
 // Flips isFirstLogin → false so it never shows again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/dismiss-banner", verifyFirebaseToken, async (req, res) => {
+router.post("/dismiss-banner", requireAuth, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return fail(res, "userId required");
@@ -159,7 +149,7 @@ router.post("/dismiss-banner", verifyFirebaseToken, async (req, res) => {
 // Called after a successful first order.
 // Flips discountUsed → true so it can't be used again.
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/use-discount", verifyFirebaseToken, async (req, res) => {
+router.post("/use-discount", requireAuth, async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return fail(res, "userId required");
@@ -188,7 +178,7 @@ router.post("/use-discount", verifyFirebaseToken, async (req, res) => {
 // Returns current discount eligibility for a user.
 // Used by Checkout to decide whether to apply the 10% discount.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/discount-status/:userId", verifyFirebaseToken, async (req, res) => {
+router.get("/discount-status/:userId", requireAuth, async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;
@@ -214,7 +204,7 @@ router.get("/discount-status/:userId", verifyFirebaseToken, async (req, res) => 
 // GET /api/user/profile/:userId
 // Returns stored profile (including addresses) for a user
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/profile/:userId", verifyFirebaseToken, async (req, res) => {
+router.get("/profile/:userId", requireAuth, async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;
@@ -235,7 +225,7 @@ router.get("/profile/:userId", verifyFirebaseToken, async (req, res) => {
 // Body: fields to merge into profile (name, phone, addresses, defaultAddressId)
 // Creates profile if missing.
 // ─────────────────────────────────────────────────────────────────────────────
-router.put("/profile/:userId", verifyFirebaseToken, async (req, res) => {
+router.put("/profile/:userId", requireAuth, async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;
@@ -270,7 +260,7 @@ router.put("/profile/:userId", verifyFirebaseToken, async (req, res) => {
 // Authenticated endpoint to upload profile photo to Cloudinary
 // Body: multipart form-data with 'photo' field
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/upload-photo/:userId", verifyFirebaseToken, upload.single("photo"), async (req, res) => {
+router.post("/upload-photo/:userId", requireAuth, upload.single("photo"), async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
     const { userId } = req.params;

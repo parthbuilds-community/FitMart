@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const { requireAuth } = require('../middleware/requireAuth');
 const ensureOwnership = require('../middleware/ownership');
 const validateRequest = require('../middleware/validateRequest');
 const { createOrderSchema } = require('../validation/requestSchemas');
@@ -16,7 +16,7 @@ const ensureOrderOwnership = ensureOwnership('Forbidden — you can only view yo
  *          body: { userId, items?: [{ productId, quantity }] }
  * @access  Private
  */
-router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async (req, res) => {
+router.post('/', requireAuth, validateRequest(createOrderSchema), async (req, res) => {
   const { userId, items } = req.body;
 
   if (!userId) return res.status(400).json({ error: 'userId required' });
@@ -47,7 +47,7 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
  * @desc    Returns all orders for a given user, sorted by most recent first
  * @access  Private
  */
-router.get('/:userId', verifyFirebaseToken, ensureOrderOwnership, async (req, res) => {
+router.get('/:userId', requireAuth, ensureOrderOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
     const orders = await Order.find({ userId }).sort({ createdAt: -1 });

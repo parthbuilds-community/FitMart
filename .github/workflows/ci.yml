@@ -18,10 +18,6 @@ jobs:
       VITE_FIREBASE_APP_ID: ci_dummy
       VITE_FIREBASE_MEASUREMENT_ID: ci_dummy
       VITE_RAZORPAY_KEY_ID: ci_dummy
-      VITE_ADMIN_UID: ci_dummy
-      VITE_SUPER_ADMIN_UID: ci_dummy
-      VITE_DEV_ADMIN_EMAIL: admin@example.com
-      VITE_DEV_ADMIN_UID: dev-admin-uid
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,10 +51,6 @@ jobs:
       PORT: 5000
       MONGO_URI: mongodb://localhost:27017
       MONGO_DB: FitMart_test
-      ADMIN_UID: ci_dummy
-      SUPER_ADMIN_UID: ci_dummy
-      VITE_ADMIN_UID: ci_dummy
-      VITE_SUPER_ADMIN_UID: ci_dummy
       CLOUDINARY_CLOUD_NAME: ci_dummy
       CLOUDINARY_API_KEY: ci_dummy
       CLOUDINARY_API_SECRET: ci_dummy
@@ -90,6 +82,10 @@ jobs:
       
       - name: Wait for MongoDB
         run: sleep 5
+      
+      - name: Typecheck server
+        working-directory: server
+        run: npm run typecheck
       
       - name: Run server tests
         working-directory: server

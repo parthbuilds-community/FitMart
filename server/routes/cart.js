@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const { requireAuth } = require('../middleware/requireAuth');
 const validateRequest = require('../middleware/validateRequest');
 const { cartAddSchema, cartRemoveSchema } = require('../validation/requestSchemas');
 const { fail } = require('../utils/apiResponse');
@@ -82,7 +82,7 @@ function checkOwnership(req, res) {
  * @desc    Get or create a cart for the given user
  * @access  Private
  */
-router.get('/:userId', verifyFirebaseToken, async (req, res) => {
+router.get('/:userId', requireAuth, async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
   try {
@@ -103,7 +103,7 @@ router.get('/:userId', verifyFirebaseToken, async (req, res) => {
  * @access  Private
  */
 
-router.post('/:userId/add', verifyFirebaseToken,validateRequest(cartAddSchema), async (req, res) => {
+router.post('/:userId/add', requireAuth,validateRequest(cartAddSchema), async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
   try {
@@ -143,7 +143,7 @@ router.post('/:userId/add', verifyFirebaseToken,validateRequest(cartAddSchema), 
  * @desc    Remove an item (or reduce its quantity) from the user's cart and release reserved stock; body: { productId, quantity }
  * @access  Private
  */
-router.post('/:userId/remove', verifyFirebaseToken,validateRequest(cartRemoveSchema), async (req, res) => {
+router.post('/:userId/remove', requireAuth,validateRequest(cartRemoveSchema), async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
   try {
@@ -175,7 +175,7 @@ router.post('/:userId/remove', verifyFirebaseToken,validateRequest(cartRemoveSch
  * @desc    Clear all items from the user's cart and release all reserved stock
  * @access  Private
  */
-router.delete('/:userId', verifyFirebaseToken, async (req, res) => {
+router.delete('/:userId', requireAuth, async (req, res) => {
   if (!checkOwnership(req, res)) return;
 
   try {

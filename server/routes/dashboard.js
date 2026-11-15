@@ -6,8 +6,8 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const admin = require('../firebaseAdmin');
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
-const verifyAdmin = require('../middleware/verifyAdmin');
+const { requireAuth } = require('../middleware/requireAuth');
+const { requireAdmin } = require('../middleware/requireAdmin');
 const resolveFirebaseUser = require('../lib/resolveFirebaseUser');
 
 // ── Helper: get the start date based on the time range filter
@@ -30,7 +30,7 @@ const getStartDate = (range) => {
 
 // GET /api/dashboard?range=today|week|month
 // Admin-only dashboard metrics
-router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+router.get('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const range = req.query.range || 'month';
     const startDate = getStartDate(range);

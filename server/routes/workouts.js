@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const WorkoutLog = require('../models/WorkoutLog');
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+const { requireAuth } = require('../middleware/requireAuth');
 const validateRequest = require('../middleware/validateRequest');
 const { updateWorkoutLogSchema } = require('../validation/requestSchemas');
 
@@ -10,7 +10,7 @@ const { updateWorkoutLogSchema } = require('../validation/requestSchemas');
  * @desc    Get all workout logs for the authenticated user, keyed by date
  * @access  Private
  */
-router.get('/', verifyFirebaseToken, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const logs = await WorkoutLog.find({ userId: req.user.uid });
     
@@ -36,7 +36,7 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
  * @desc    Create or update a workout log for a specific date
  * @access  Private
  */
-router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), async (req, res) => {
+router.post('/', requireAuth, validateRequest(updateWorkoutLogSchema), async (req, res) => {
   try {
     const { date, title, notes, exercises } = req.body;
 
@@ -64,7 +64,7 @@ router.post('/', verifyFirebaseToken, validateRequest(updateWorkoutLogSchema), a
  * @desc    Delete a workout log for a specific date
  * @access  Private
  */
-router.delete('/:date', verifyFirebaseToken, async (req, res) => {
+router.delete('/:date', requireAuth, async (req, res) => {
   try {
     const { date } = req.params;
     await WorkoutLog.findOneAndDelete({ userId: req.user.uid, date });

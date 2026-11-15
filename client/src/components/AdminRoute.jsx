@@ -2,21 +2,16 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 
-const ADMIN_UID = import.meta.env.VITE_ADMIN_UID || "n5LtrXIGVSVjNktRn1PgDXZbHgq1";
-const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
-const DEV_ADMIN_EMAIL = import.meta.env.VITE_DEV_ADMIN_EMAIL || '';
-
+/**
+ * Admin routes are guarded by the Firebase custom claim `admin: true`.
+ * The server enforces the same claim, so this only decides what to show.
+ */
 export default function AdminRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
-  // In development allow a local dev admin session
-  if (import.meta.env.MODE === 'development') {
-    const isDevLocal = localStorage.getItem('dev_token') && (DEV_ADMIN_EMAIL ? true : true);
-    if (isDevLocal) return children;
-  }
+  if (!isAdmin) return <Navigate to="/home" replace />;
 
-  if (user.uid !== ADMIN_UID && user.uid !== SUPER_ADMIN_UID) return <Navigate to="/home" replace />;
   return children;
 }

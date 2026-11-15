@@ -16,10 +16,20 @@ import {
 import { auth } from "../auth/firebase";
 import { useGithubStats } from "../utils/useGithubStats";
 
-const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
-const SUPER_ADMIN_UID = import.meta.env.VITE_SUPER_ADMIN_UID || '';
-
 const formatStat = (n, loading) => (loading ? "—" : Number(n).toLocaleString("en-IN"));
+
+/**
+ * Admin access is the Firebase custom claim `admin: true`, granted by the
+ * server bootstrap script. A missing claim means a normal customer.
+ */
+async function destinationFor(user) {
+  try {
+    const tokenResult = await user.getIdTokenResult();
+    return tokenResult.claims.admin === true ? "/admin/dashboard" : "/home";
+  } catch {
+    return "/home";
+  }
+}
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -76,9 +86,9 @@ export default function Authentication() {
       pollInterval = setInterval(async () => {
         try {
           await auth.currentUser.reload();
-          if (auth.currentUser.emailVerified || auth.currentUser.uid === SUPER_ADMIN_UID) {
+          if (auth.currentUser.emailVerified) {
             clearInterval(pollInterval);
-            navigate(auth.currentUser.uid === ADMIN_UID || auth.currentUser.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+            navigate(await destinationFor(auth.currentUser));
           }
         } catch (err) {
           console.error("Failed to reload user:", err);
@@ -112,13 +122,13 @@ export default function Authentication() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
-      if (!cred.user.emailVerified && cred.user.uid !== SUPER_ADMIN_UID) {
+      if (!cred.user.emailVerified) {
         // Keep user signed in so resend can use auth.currentUser
         setError("");
         setMode("pending-verification");
         return;
       }
-      navigate(cred?.user?.uid === ADMIN_UID || cred?.user?.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+      navigate(await destinationFor(cred.user));
     } catch (err) {
       console.error('handleSignIn error', err);
       setError(parseError(err.code));
@@ -169,7 +179,7 @@ export default function Authentication() {
         }
       }
       if (cred && cred.user) {
-        navigate(cred.user.uid === ADMIN_UID || cred.user.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+        navigate(await destinationFor(cred.user));
       }
     } catch (err) {
       console.error('handleGoogle error', err);
@@ -187,7 +197,7 @@ export default function Authentication() {
         const result = await getRedirectResult(auth);
         if (!mounted || !result || !result.user) return;
         const u = result.user;
-        navigate(u.uid === ADMIN_UID || u.uid === SUPER_ADMIN_UID ? "/admin/dashboard" : "/home");
+        navigate(await destinationFor(u));
       } catch (err) {
         // Not an error in many cases (no redirect result), but log for debugging
         if (err && err.code) console.error('getRedirectResult error', err);

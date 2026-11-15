@@ -6,6 +6,7 @@
     "start": "tsx index.js",
     "dev": "nodemon --exec tsx index.js --ext js,ts",
     "typecheck": "tsc --noEmit",
+    "admin:claim": "tsx scripts/adminClaim.ts",
     "seed": "node seed.js",
     "seed:fitness": "node seedFitnessCenters.js",
     "test:cart": "jest tests/cart.reserved.test.js --forceExit",

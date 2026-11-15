@@ -9,11 +9,6 @@ export default function AdminNavbar({ range, setRange, menuOpen, setMenuOpen }) 
   const { user, loading: authLoading } = useAuth();
 
   const handleSignOut = async () => {
-    // Clear dev token when present
-    if (import.meta.env.MODE === 'development') {
-      localStorage.removeItem('dev_token');
-      localStorage.removeItem('dev_admin');
-    }
     await signOut(auth);
     setMenuOpen?.(false);
     navigate("/");

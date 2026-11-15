@@ -30,7 +30,6 @@ The first-purchase email feature sends a welcome email to users after they succe
 
 5. **`server/routes/payment.js`** (Updated)
    - `POST /api/payment/verify-payment` - Calls email service after order is marked paid
-   - `POST /api/payment/demo-success` - Calls email service for test orders
 
 6. **`server/routes/user.js`** (Updated)
    - `POST /api/user/login` - Syncs Firebase email to UserProfile on user login
@@ -68,7 +67,7 @@ If using Gmail:
 
 ### Flow for Paid Orders
 
-1. **User completes payment** via Razorpay (real payment) or demo-success (testing)
+1. **User completes payment** via Razorpay (use Razorpay test mode locally)
 2. **Order is created** with `status: "paid"` and a `paymentId`
 3. **First-purchase email service is triggered** (asynchronously, doesn't block response)
 4. **Service checks:**
@@ -128,8 +127,8 @@ If using Gmail:
 1. Log in to FitMart with a test user (Firebase auth)
 2. Add items to cart
 3. Go to checkout and payment page
-4. Click "Test Payment" or use the demo-success endpoint
-5. Complete the payment flow
+4. Complete a Razorpay test-mode payment through the app
+5. The server verifies the signature and marks the order paid
 
 **Verification:**
 - Check server logs for:
@@ -199,30 +198,12 @@ If using Gmail:
 # Or use Firebase CLI: firebase auth:import credentials.json
 ```
 
-#### Step 2: Create Test Order (Demo Success)
-```bash
-POST http://localhost:5000/api/payment/demo-success
-Content-Type: application/json
+#### Step 2: Complete a Razorpay test-mode payment
 
-{
-  "userId": "test-user-id-123"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "paymentId": "pay_DEMO_1713084000000",
-  "order": {
-    "_id": "...",
-    "userId": "test-user-id-123",
-    "items": [...],
-    "status": "paid",
-    "createdAt": "2026-04-14T..."
-  }
-}
-```
+The former `POST /api/payment/demo-success` bypass was removed in v2.0.0, so
+there is no way to fake a paid order. Use Razorpay test keys and complete the
+payment through the app; `POST /api/payment/verify-payment` then records the
+order and triggers the email.
 
 #### Step 3: Monitor Server Logs
 Watch for email-related logs:
@@ -337,7 +318,7 @@ server/
 ├── models/
 │   └── UserProfile.js (MODIFIED - added email and firstPurchaseEmailSentAt fields)
 ├── routes/
-│   ├── payment.js (MODIFIED - added email sending to verify-payment and demo-success)
+│   ├── payment.js (MODIFIED - added email sending to verify-payment)
 │   └── user.js (MODIFIED - added email sync on login)
 ├── index.js (MODIFIED - added SMTP vars to optional env vars list)
 └── .env.example (MODIFIED - added SMTP configuration variables)

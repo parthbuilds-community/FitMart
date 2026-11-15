@@ -51,7 +51,6 @@ export default function PaymentPage() {
   const sdkReady = rzpReady && Boolean(RAZORPAY_KEY);
 
   const [paying, setPaying] = useState(false);
-  const [bypassing, setBypassing] = useState(false);
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -81,7 +80,7 @@ export default function PaymentPage() {
     address = null,
   } = location.state || {};
 
-  const busy = paying || bypassing;
+  const busy = paying;
 
   const fmt = (n) =>
     new Intl.NumberFormat("en-IN", {
@@ -139,36 +138,6 @@ export default function PaymentPage() {
         address,
       },
     });
-  };
-
-  const handleDemoSuccess = async () => {
-    const user = auth.currentUser;
-
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    setBypassing(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`${API}/api/payment/demo-success`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ userId: user.uid }),
-      });
-
-      if (!res.ok) throw new Error("Demo order failed");
-
-      const data = await res.json();
-
-      await finishOrder(user.uid, data.paymentId);
-    } catch (err) {
-      showError(err.message);
-      setBypassing(false);
-    }
   };
 
   const handlePay = async () => {
@@ -469,43 +438,6 @@ export default function PaymentPage() {
         <p className="text-xs text-stone-400 text-center mt-3 sm:mt-4">
           100% secure · powered by Razorpay
         </p>
-
-        {/* Demo bypass — testing only, hidden in production */}
-        {!import.meta.env.PROD && (
-        <div className="mt-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-stone-200" />
-
-            <span className="text-[10px] tracking-[0.15em] uppercase text-stone-400 whitespace-nowrap">
-              Demo / Testing
-            </span>
-
-            <div className="flex-1 h-px bg-stone-200" />
-          </div>
-
-          <button
-            onClick={handleDemoSuccess}
-            disabled={busy}
-            className="w-full border border-stone-300 text-stone-600 text-sm px-8 py-4
-                     rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900
-                     transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                     flex items-center justify-center gap-2 min-h-13 active:scale-[0.98]"
-          >
-            {bypassing ? (
-              <>
-                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                Processing…
-              </>
-            ) : (
-              "Simulate Successful Payment ✓"
-            )}
-          </button>
-
-          <p className="text-[10px] text-stone-400 text-center mt-2">
-            Skips Razorpay · clears cart · goes to confirmation
-          </p>
-        </div>
-        )}
 
         {/* Back button */}
         <button

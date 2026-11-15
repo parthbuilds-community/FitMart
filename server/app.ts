@@ -14,7 +14,6 @@ export const allowedOrigins = allowedOrigin
   .filter(Boolean);
 
 const isDev = process.env.NODE_ENV !== "production";
-const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === "true" || isDev;
 
 if (isDev) {
   allowedOrigins.push("http://localhost:5173", "http://127.0.0.1:5173");
@@ -48,19 +47,16 @@ export function createApp(): Express {
   app.use(
     cors({
       origin(origin: string | undefined, callback: CorsCallback) {
-        if (allowAllOrigins) {
-          console.log("[CORS] Allowing all origins for testing");
+        // Requests without an Origin header are not browser cross-origin
+        // requests (health checks, server-to-server, supertest).
+        if (!origin) {
           return callback(null, true);
         }
 
-        if (origin && allowedOrigins.includes(origin)) {
-          console.log(`[CORS] Allowing whitelisted origin: ${origin}`);
+        if (allowedOrigins.includes(origin)) {
           return callback(null, true);
         }
 
-        console.error(
-          `[CORS] Rejecting origin: ${origin}. Allowed origins: ${allowedOrigins.join(", ")}`,
-        );
         return callback(new Error("Not allowed by CORS"));
       },
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -101,10 +97,6 @@ export function createApp(): Express {
   app.use("/api/payment", require("./routes/payment"));
   app.use("/api/rewards", require("./routes/rewards"));
   app.use("/api/fitness-centers", require("./routes/fitnessCenters"));
-
-  if (process.env.NODE_ENV !== "production") {
-    app.use("/api/dev", require("./routes/devAuth"));
-  }
 
   app.use("/api/github", require("./routes/github"));
   /* eslint-enable @typescript-eslint/no-var-requires */

@@ -50,8 +50,9 @@ documentation:
 # Security related changes
 security:
   - changed-files:
-      - any-glob-to-any-file: 'server/middleware/verifyFirebaseToken.js'
-      - any-glob-to-any-file: 'server/middleware/verifyAdmin.js'
+      - any-glob-to-any-file: 'server/middleware/requireAuth.ts'
+      - any-glob-to-any-file: 'server/middleware/requireAdmin.ts'
+      - any-glob-to-any-file: 'server/scripts/adminClaim.ts'
       - any-glob-to-any-file: 'server/firebaseAdmin.js'
       - any-glob-to-any-file: '**/*auth*'
       - any-glob-to-any-file: '**/helmet*'

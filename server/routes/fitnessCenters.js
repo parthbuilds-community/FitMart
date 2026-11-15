@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const FitnessCenter = require("../models/FitnessCenter");
 const UserProfile = require("../models/UserProfile");
-const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
+const { requireAuth } = require("../middleware/requireAuth");
 
 // Simple helper to compute a mocked distance score and readable distance
 function computeDistanceScore(userAddr, center) {
@@ -45,7 +45,7 @@ function computeDistanceScore(userAddr, center) {
 }
 
 // GET /api/fitness-centers/nearby?type=gym
-router.get("/nearby", verifyFirebaseToken, async (req, res) => {
+router.get("/nearby", requireAuth, async (req, res) => {
   try {
     const uid = req.user?.uid;
     if (!uid) return res.status(401).json({ error: "Unauthorized" });

@@ -8,8 +8,8 @@ const cache = require('../lib/cache');
 const { LOW_STOCK_THRESHOLD } = require('../config/constants');
 
 // Parth's New Security & Validation Imports
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
-const verifyAdmin = require('../middleware/verifyAdmin');
+const { requireAuth } = require('../middleware/requireAuth');
+const { requireAdmin } = require('../middleware/requireAdmin');
 const validateRequest = require('../middleware/validateRequest');
 const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
 
@@ -155,7 +155,7 @@ router.get('/:id', async (req, res) => {
  * @desc    Creates a new product; body: full product object including unique productId
  * @access  Private (Admin)
  */
-router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProductSchema), async (req, res) => {
+router.post('/', requireAuth, requireAdmin, validateRequest(createProductSchema), async (req, res) => {
   try {
     const body = req.body;
     const existing = await Product.findOne({ productId: body.productId });
@@ -175,7 +175,7 @@ router.post('/', verifyFirebaseToken, verifyAdmin, validateRequest(createProduct
  * @desc    Updates an existing product by productId; body: fields to update
  * @access  Private (Admin)
  */
-router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProductSchema), async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, validateRequest(updateProductSchema), async (req, res) => {
   const productId = Number(req.params.id);
 
   if (isNaN(productId)) {
@@ -198,7 +198,7 @@ router.put('/:id', verifyFirebaseToken, verifyAdmin, validateRequest(updateProdu
  * @access  Private (Admin)
  */
 
-router.delete('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   const productId = Number(req.params.id);
 
   if (isNaN(productId)) {

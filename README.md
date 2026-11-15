@@ -11,6 +11,7 @@
 >
 > - Product definition: [`docs/PRODUCT.md`](docs/PRODUCT.md)
 > - v2.0.0 scope: [`docs/SCOPE.md`](docs/SCOPE.md)
+> - Admin access: [`docs/ADMIN_ACCESS.md`](docs/ADMIN_ACCESS.md)
 > - Implementation order: [`ROADMAP.md`](ROADMAP.md)
 >
 > Feature work outside the approved scope will be declined. The retired "Fitness Membership OS" plan is marked superseded.
@@ -207,7 +208,6 @@ FitMart/
 │   │   │   ├── CalorieCalculator.jsx  # Daily calorie target calculator
 │   │   │   ├── CartDrawer.jsx     # Slide-in cart panel
 │   │   │   ├── CategoryPillsSkeleton.jsx  # Category pills skeleton loader
-│   │   │   ├── DevAdminLogin.jsx  # Development admin login
 │   │   │   ├── ErrorBoundary.jsx  # Global error boundary
 │   │   │   ├── FitnessCenterDetail.jsx  # Fitness center detail modal
 │   │   │   ├── FitnessChatBot.jsx # Floating AI chatbot (Gemini)
@@ -271,8 +271,8 @@ FitMart/
     │   ├── logger.js              # Colored request/response logger
     │   ├── ownership.js         # Resource ownership middleware
     │   ├── validateRequest.js   # Request validation middleware
-    │   ├── verifyAdmin.js         # Admin UID authorization middleware
-    │   └── verifyFirebaseToken.js # Firebase Bearer token middleware
+    │   ├── requireAdmin.ts      # Admin claim authorization middleware
+    │   └── requireAuth.ts       # Firebase Bearer token middleware
     ├── models/
     │   ├── Bug.js                 # Bug report schema
     │   ├── Cart.js                # Cart schema
@@ -288,7 +288,6 @@ FitMart/
     │   ├── chat.js                # Gemini AI chatbot endpoint
     │   ├── customers.js           # Customer management
     │   ├── dashboard.js           # Admin dashboard data
-    │   ├── devAuth.js             # Development authentication endpoints
     │   ├── exercises.js           # ExerciseDB proxy (RapidAPI)
     │   │   ├── fitnessCenters.js      # Nearby fitness center discovery
     │   ├── github.js              # GitHub integration endpoints
@@ -398,7 +397,7 @@ Admin-specific sticky navbar with range selector buttons (Today / Week / Month),
 
 ### `AdminRoute` / `NonAdminRoute`
 
-React Router route guards using `useAuth` and `VITE_ADMIN_UID` to protect admin and customer routes respectively.
+React Router route guards using `useAuth` and the Firebase custom claim `admin: true` to protect admin and customer routes respectively. See [`docs/ADMIN_ACCESS.md`](docs/ADMIN_ACCESS.md).
 
 ---
 
@@ -448,7 +447,6 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_RAZORPAY_KEY_ID=your_razorpay_key
-VITE_ADMIN_UID=your_firebase_admin_uid
 ```
 
 3. Build and start all services:
@@ -566,17 +564,12 @@ DNS_SERVERS=8.8.8.8,8.8.4.4
 
 
 # =========================================
-# Admin Configuration
+# Admin access
 # =========================================
-ADMIN_UID=your_admin_uid
-SUPER_ADMIN_UID=your_super_admin_uid
-VITE_ADMIN_UID=your_admin_uid
-VITE_SUPER_ADMIN_UID=your_super_admin_uid
-
-# Local development admin (do NOT use production credentials here)
-# Example:
-# DEV_ADMIN_EMAIL=admin@example.com
-# DEV_ADMIN_UID=dev-admin-uid
+# Admin access is a Firebase custom claim (`admin: true`), not a UID or email.
+# Grant it with: npm run admin:claim -- <uid-or-email>
+# Revoke it with: npm run admin:claim -- <uid-or-email> --revoke
+# See docs/ADMIN_ACCESS.md.
 
 
 # =========================================
@@ -688,7 +681,6 @@ See [`docs/FIRST_PURCHASE_EMAIL_SETUP.md`](docs/FIRST_PURCHASE_EMAIL_SETUP.md) f
 ```env
 VITE_API_URL=http://localhost:5000
 VITE_RAZORPAY_KEY_ID=<your_razorpay_key_id>
-VITE_ADMIN_UID=<firebase_uid_of_admin_account>
 
 # Firebase config (from Firebase Console → Project Settings → General)
 VITE_FIREBASE_API_KEY=
@@ -700,7 +692,7 @@ VITE_FIREBASE_APP_ID=
 VITE_FIREBASE_MEASUREMENT_ID=
 ```
 
-> **Setting the Admin UID:** Sign in to Firebase, find your user's UID in the Firebase Console under **Authentication → Users**, and paste it into `VITE_ADMIN_UID`. That account will be redirected to `/admin/dashboard` on login.
+> **Granting admin access:** Sign in to Firebase, find your user's UID in the Firebase Console under **Authentication → Users**, then run `npm run admin:claim -- <uid>` from `server/`. Sign out and back in so the claim appears in your ID token. See [`docs/ADMIN_ACCESS.md`](docs/ADMIN_ACCESS.md).
 
 ---
 
@@ -810,7 +802,6 @@ cd server && npm start
 | `POST` | `/api/payment/create-order` | — | Create a Razorpay order |
 | `POST` | `/api/payment/verify-payment` | — | Verify HMAC signature + trigger first-purchase email |
 | `POST` | `/api/payment/clear-cart` | — | Release stock & clear cart — body: `{ userId }` |
-| `POST` | `/api/payment/demo-success` | — | Simulate successful payment (testing only) |
 
 > **Security:** Payment verification uses HMAC-SHA256 on `razorpay_order_id|razorpay_payment_id` with `RAZORPAY_KEY_SECRET`. Never expose this key to the client.
 
@@ -1085,12 +1076,12 @@ FitMart uses a **luxury refined minimalism** design language — clean, editoria
 
 ## 👑 Admin Panel
 
-The admin panel is accessible only to the account whose Firebase UID matches `VITE_ADMIN_UID`.
+The admin panel is accessible only to accounts that hold the Firebase custom claim `admin: true`.
 
 ### Accessing Admin
 
-1. Set `VITE_ADMIN_UID` in `client/.env` to your Firebase user UID
-2. Sign in with that account — you'll be automatically redirected to `/admin/dashboard`
+1. Run `npm run admin:claim -- <uid-or-email>` from `server/` (see [`docs/ADMIN_ACCESS.md`](docs/ADMIN_ACCESS.md))
+2. Sign out and sign in again with that account — you'll be automatically redirected to `/admin/dashboard`
 
 ### Admin Features
 

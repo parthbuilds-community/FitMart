@@ -377,7 +377,6 @@ FitMart/
 │   │   │   ├── CalorieCalculator.jsx  # Daily calorie target calculator
 │   │   │   ├── CartDrawer.jsx     # Slide-in cart panel
 │   │   │   ├── CategoryPillsSkeleton.jsx  # Category pills skeleton loader
-│   │   │   ├── DevAdminLogin.jsx  # Development admin login
 │   │   │   ├── ErrorBoundary.jsx  # Global error boundary
 │   │   │   ├── FitnessCenterDetail.jsx  # Fitness center detail modal
 │   │   │   ├── FitnessChatBot.jsx # Floating AI chatbot (Gemini)
@@ -441,8 +440,8 @@ FitMart/
 │   │   ├── logger.js              # Colored request/response logger
 │   │   ├── ownership.js         # Resource ownership middleware
 │   │   ├── validateRequest.js   # Request validation middleware
-│   │   ├── verifyAdmin.js         # Admin UID authorization middleware
-│   │   └── verifyFirebaseToken.js # Firebase Bearer token middleware
+│   │   ├── requireAdmin.ts      # Admin claim authorization middleware
+│   │   └── requireAuth.ts       # Firebase Bearer token middleware
 │   ├── models/
 │   │   ├── Bug.js                 # Bug report schema
 │   │   ├── Cart.js                # Cart schema
@@ -458,7 +457,6 @@ FitMart/
 │   │   ├── chat.js                # Gemini AI chatbot endpoint
 │   │   ├── customers.js           # Customer management
 │   │   ├── dashboard.js           # Admin dashboard data
-│   │   ├── devAuth.js             # Development authentication endpoints
 │   │   ├── exercises.js           # ExerciseDB proxy (RapidAPI)
 │   │   ├── fitnessCenters.js      # Nearby fitness center discovery
 │   │   ├── github.js              # GitHub integration endpoints

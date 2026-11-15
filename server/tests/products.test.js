@@ -3,8 +3,8 @@ const express = require('express');
 
 // Prevent side-effects from Redis client and Firebase during tests by mocking
 jest.mock('../lib/cache', () => ({ get: jest.fn(), set: jest.fn(), delPattern: jest.fn(), clearAll: jest.fn(), client: null }));
-jest.mock('../middleware/verifyFirebaseToken', () => (req, res, next) => next());
-jest.mock('../middleware/verifyAdmin', () => (req, res, next) => next());
+jest.mock('../middleware/requireAuth', () => ({ requireAuth: (req, res, next) => next() }));
+jest.mock('../middleware/requireAdmin', () => ({ requireAdmin: (req, res, next) => next() }));
 jest.mock('../middleware/validateRequest', () => (schema) => (req, res, next) => next());
 
 jest.mock('../models/Product', () => ({ find: jest.fn(), countDocuments: jest.fn() }));

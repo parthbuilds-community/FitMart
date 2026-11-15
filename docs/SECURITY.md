@@ -77,7 +77,7 @@ The following components are in scope for vulnerability reports:
 
 ### Backend (Node.js / Express)
 
-- **Authentication middleware** — Firebase Admin SDK token verification (`server/middleware/verifyFirebaseToken.js`), including token forgery or bypass
+- **Authentication middleware** — Firebase Admin SDK token verification (`server/middleware/requireAuth.ts`), including token forgery or bypass
 - **Payment flow** — Razorpay order creation and HMAC signature verification (`server/routes/payment.js`); any bypass that allows orders to be marked `paid` without a valid Razorpay signature
 - **API endpoints** — Any endpoint that leaks data it shouldn't, allows unauthorized access, or is vulnerable to injection (NoSQL injection via Mongoose, etc.)
 - **Rate limiting** — Bypasses to the API or payment rate limiters
@@ -108,7 +108,6 @@ The following are **not** considered valid security reports for this project:
 - Issues that only affect local development environments (e.g., no HTTPS on `localhost`)
 - Missing security headers beyond what is already handled by Helmet
 - Rate limiting configurations that are intentionally lenient for demo purposes
-- The demo payment bypass button (`/api/payment/demo-success`) — it is intentionally present for testing and documented as such
 - Self-XSS or attacks that require the victim to already have admin access
 - Theoretical vulnerabilities with no demonstrated impact
 - Social engineering attacks
@@ -127,9 +126,9 @@ If you're contributing code, please follow these practices to keep FitMart secur
 - Always document new environment variables in `README.md` and mark them as optional/required appropriately
 
 **Authentication**
-- Use the `verifyFirebaseToken` middleware for any endpoint that requires a logged-in user
+- Use the `requireAuth` middleware for any endpoint that requires a logged-in user
 - Never trust `userId` values from the request body for privileged actions — always derive identity from the verified Firebase token (`req.user`)
-- Admin actions must verify that the requesting user's UID matches `ADMIN_UID`
+- Admin actions must use `requireAdmin`, which checks the Firebase custom claim `admin: true`; see `docs/ADMIN_ACCESS.md`
 
 **Input Validation**
 - Always validate required fields before processing — return a clear `400` error for missing or malformed input
@@ -139,7 +138,7 @@ If you're contributing code, please follow these practices to keep FitMart secur
 **Payment Security**
 - Always verify Razorpay payments server-side using HMAC-SHA256 — never trust the client to report payment success
 - Never expose `RAZORPAY_KEY_SECRET` to the frontend
-- Remove or gate the demo payment bypass (`POST /api/payment/demo-success`) before any production deployment
+- There is no demo payment bypass: the former `POST /api/payment/demo-success` route and its UI button are removed
 
 **Sensitive Data**
 - The request logger automatically redacts `password`, `token`, `secret`, and `apiKey` fields — keep this list updated if you add new sensitive fields
@@ -159,6 +158,7 @@ Here is a summary of the security measures already in place in FitMart:
 | Control | Implementation |
 |---|---|
 | Authentication | Firebase Admin SDK token verification on protected routes |
+| Admin authorization | Firebase custom claim `admin: true`, checked by `requireAdmin` |
 | Payment verification | HMAC-SHA256 signature verification server-side |
 | HTTP security headers | `helmet` middleware applied globally |
 | Rate limiting | `express-rate-limit`: 100 req/15 min (API), 20 req/15 min (payment routes) |
