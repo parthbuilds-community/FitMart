@@ -1,4 +1,5 @@
 // server/index.js
+import { validateEnv } from './config/envSchema.js';
 require("dotenv").config();
 const rewardsRoutes = require("./routes/rewards");
 const express = require("express");
@@ -14,8 +15,8 @@ const allowedOrigins = allowedOrigin
   .map((s) => s.trim())
   .filter(Boolean);
 
-const isDev = process.env.NODE_ENV !== "production";
-const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === "true" || isDev;
+const env = validateEnv();
+const PORT = env.PORT;
 
 
 
