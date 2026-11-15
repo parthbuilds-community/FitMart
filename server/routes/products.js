@@ -11,23 +11,28 @@ const { LOW_STOCK_THRESHOLD } = require('../config/constants');
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const validateRequest = require('../middleware/validateRequest');
-const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
+const {
+  createProductSchema,
+  updateProductSchema,
+  productQuerySchema,
+} = require('../validation/requestSchemas');
 
 /**
  * @route   GET /api/products
  * @desc    Returns all products sorted by productId in ascending order
  * @access  Public
  */
-router.get('/', async (req, res) => {
+router.get('/', validateRequest(productQuerySchema), async (req, res) => {
   try {
     // Query parameters
-    const all = req.query.all === 'true';
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 24;
-    const category = req.query.category;
-    const search = req.query.search;
-    const sort = req.query.sort || 'productId_asc';
-    const fields = req.query.fields; // comma separated
+    const query = req.validatedQuery;
+    const all = query.all === 'true';
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 24;
+    const category = query.category;
+    const search = query.search;
+    const sort = query.sort || 'productId_asc';
+    const fields = query.fields; // comma separated
 
     // Build mongoose filter
     const filter = {};
