@@ -128,6 +128,8 @@ export default function Profile() {
   const [photoURL, setPhotoURL] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersMeta, setOrdersMeta] = useState({ page: 1, totalPages: 0 });
+  const [loadingMoreOrders, setLoadingMoreOrders] = useState(false);
   const [rewardsData, setRewardsData] = useState(null);
 const [rewardsLoading, setRewardsLoading] = useState(false);
 const [rewardsError, setRewardsError] = useState("");
@@ -196,18 +198,20 @@ const [rewardsError, setRewardsError] = useState("");
   // Fetch orders when orders tab is active
   useEffect(() => {
     if (activeTab !== "orders") return;
-    
+
     const fetchOrders = async () => {
       const user = auth.currentUser;
       if (!user) return;
-      
+
       setLoadingOrders(true);
+      setOrdersMeta({ page: 1, totalPages: 0 });
       try {
         const headers = await getAuthHeaders();
-        const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
+        const res = await fetch(`${API}/api/orders/${user.uid}?page=1&limit=10`, { headers, credentials: "include" });
         if (!res.ok) throw new Error("Failed to load orders");
         const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
+        setOrders(data.data || []);
+        setOrdersMeta(data.meta || { page: 1, totalPages: 0 });
       } catch (err) {
         setError(err.message);
         setOrders([]);
@@ -551,10 +555,10 @@ const [rewardsError, setRewardsError] = useState("");
                     <div className="flex justify-between items-start gap-4 mb-3">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-stone-900">
-                          {new Date(order.createdAt).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
+                          {new Date(order.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
                           })}
                         </p>
                         <p className="text-xs text-stone-400 mt-0.5">
@@ -565,8 +569,8 @@ const [rewardsError, setRewardsError] = useState("");
                         <div className="text-right">
                           <p className="text-sm font-medium text-stone-900">₹{order.total.toFixed(2)}</p>
                           <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full ${
-                            order.status === 'paid' 
-                              ? 'bg-green-50 text-green-700' 
+                            order.status === 'paid'
+                              ? 'bg-green-50 text-green-700'
                               : order.status === 'failed'
                               ? 'bg-red-50 text-red-700'
                               : 'bg-stone-100 text-stone-600'
@@ -588,8 +592,51 @@ const [rewardsError, setRewardsError] = useState("");
                     </div>
                   </div>
                 ))}
+
+                {/* Load More button */}
+                {ordersMeta.page < ordersMeta.totalPages && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      onClick={async () => {
+                        const user = auth.currentUser;
+                        if (!user) return;
+                        setLoadingMoreOrders(true);
+                        try {
+                          const nextPage = ordersMeta.page + 1;
+                          const headers = await getAuthHeaders();
+                          const res = await fetch(
+                            `${API}/api/orders/${user.uid}?page=${nextPage}&limit=10`,
+                            { headers, credentials: "include" }
+                          );
+                          if (!res.ok) throw new Error("Failed to load more orders");
+                          const data = await res.json();
+                          setOrders((prev) => [...prev, ...(data.data || [])]);
+                          setOrdersMeta(data.meta || ordersMeta);
+                        } catch (err) {
+                          setError(err.message);
+                        } finally {
+                          setLoadingMoreOrders(false);
+                        }
+                      }}
+                      disabled={loadingMoreOrders}
+                      className="border border-stone-200 text-stone-700 text-sm px-8 py-2.5 rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {loadingMoreOrders ? (
+                        <>
+                          <span className="inline-block w-3.5 h-3.5 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
+                          Loading…
+                        </>
+                      ) : (
+                        <>
+                          Load more
+                          <span className="text-xs text-stone-400">({ordersMeta.page} of {ordersMeta.totalPages})</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            )
           </div>
         )}
       </div>

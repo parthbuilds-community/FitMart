@@ -44,14 +44,29 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
 
 /**
  * @route   GET /api/orders/:userId
- * @desc    Returns all orders for a given user, sorted by most recent first
+ * @desc    Returns paginated orders for a given user, sorted by most recent first
+ * @query   {number} [page=1]  - Page number
+ * @query   {number} [limit=10] - Orders per page (max 50)
  * @access  Private
  */
 router.get('/:userId', verifyFirebaseToken, ensureOrderOwnership, async (req, res) => {
   try {
     const { userId } = req.params;
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
-    res.json(orders);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find({ userId }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Order.countDocuments({ userId }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      data: orders,
+      meta: { page, limit, total, totalPages },
+    });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
