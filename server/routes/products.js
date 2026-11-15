@@ -106,7 +106,7 @@ router.get('/', async (req, res) => {
 
     return res.json(payload);
   } catch (err) {
-    console.error('[products] GET /api/products error:', err);
+    req.logger.error('[products] GET /api/products error', { error: err.message });
     res.status(500).json({ error: 'Server error' });
   }
 });

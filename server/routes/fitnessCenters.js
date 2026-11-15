@@ -77,7 +77,7 @@ router.get("/nearby", verifyFirebaseToken, async (req, res) => {
     const top = scored.slice(0, 10);
     return res.json(top);
   } catch (err) {
-    console.error("/api/fitness-centers/nearby error:", err);
+    req.logger.error("/api/fitness-centers/nearby error", { error: err.message });
     return res.status(500).json({ error: "Server error" });
   }
 });

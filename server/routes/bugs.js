@@ -69,7 +69,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
         screenshotUrl = result.secure_url || '';
         screenshotPublicId = result.public_id || '';
       } catch (uploadErr) {
-        console.error('Cloudinary upload failed:', uploadErr);
+        req.logger.error('Cloudinary upload failed', { error: uploadErr.message });
         return res.status(500).json({ error: 'Failed to upload screenshot' });
       }
     }
@@ -90,7 +90,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
     await bug.save();
     res.status(201).json({ ok: true, bug });
   } catch (err) {
-    console.error('Error saving bug:', err);
+    req.logger.error('Error saving bug', { error: err.message });
     res.status(500).json({ error: 'Failed to submit bug' });
   }
 });
@@ -135,7 +135,7 @@ router.get('/', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Error fetching bugs:', err);
+    req.logger.error('Error fetching bugs', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch bugs' });
   }
 });
@@ -152,7 +152,7 @@ router.patch('/:id', verifyFirebaseToken, verifyAdmin, async (req, res) => {
     if (!bug) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, bug });
   } catch (err) {
-    console.error('Error updating bug:', err);
+    req.logger.error('Error updating bug', { error: err.message });
     res.status(500).json({ error: 'Failed to update bug' });
   }
 });

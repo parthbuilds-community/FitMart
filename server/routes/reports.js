@@ -114,7 +114,7 @@ router.get('/sales', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       productPerformance,
     });
   } catch (err) {
-    console.error('Reports error:', err);
+    req.logger.error('Reports error', { error: err.message });
     res.status(500).json({ error: 'Server error' });
   }
 });

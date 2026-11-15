@@ -30,7 +30,7 @@ router.post('/', verifyFirebaseToken, validateRequest(createOrderSchema), async 
     const order = await createOrder(userId, items);
     res.status(201).json(order);
   } catch (err) {
-    console.error('Order creation error:', err.message);
+    req.logger.error('Order creation error', { error: err.message });
     if (
       err.message === 'Cart is empty' ||
       err.message.includes('not found') ||
