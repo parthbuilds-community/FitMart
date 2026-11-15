@@ -23,10 +23,28 @@ if (isDev) {
   allowedOrigins.push("http://localhost:5173", "http://127.0.0.1:5173");
 }
 
-// Display missing variables at server startup. Only require truly critical vars
-// to avoid failing entirely in environments where optional services (Razorpay)
-// are intentionally not configured (for example: demo deployments on Vercel).
-const CRITICAL_ENV_VARS = ["MONGO_URI"];
+// Validate environment variables with Zod on startup.
+// Critical vars (MONGO_URI) cause process.exit(1) if missing/invalid.
+// Optional vars that are missing are logged as warnings but don't block startup.
+const { ZodError } = require("zod");
+const envSchema = require("./config/envSchema");
+
+try {
+  envSchema.parse(process.env);
+} catch (err) {
+  if (err instanceof ZodError) {
+    console.error("❌ Invalid environment variables:");
+    for (const issue of err.issues) {
+      console.error(`   - ${issue.path.join(".")}: ${issue.message}`);
+    }
+    console.error(
+      "Server cannot start. Please fix the above issues in your environment.",
+    );
+    process.exit(1);
+  }
+  throw err;
+}
+
 const OPTIONAL_ENV_VARS = [
   "RAZORPAY_KEY_ID",
   "RAZORPAY_KEY_SECRET",
@@ -41,18 +59,7 @@ const OPTIONAL_ENV_VARS = [
   "SMTP_PASS",
 ];
 
-const missingCritical = CRITICAL_ENV_VARS.filter((v) => !process.env[v]);
 const missingOptional = OPTIONAL_ENV_VARS.filter((v) => !process.env[v]);
-
-if (missingCritical.length > 0) {
-  console.error(
-    `❌ Missing critical environment variables: ${missingCritical.join(", ")}`,
-  );
-  console.error(
-    "Server cannot start without these. Please set them in your environment.",
-  );
-  process.exit(1);
-}
 
 if (missingOptional.length > 0) {
   console.warn(
