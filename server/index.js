@@ -199,7 +199,27 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong" });
 });
 
-app.listen(port, () => {
+const mongoose = require("mongoose");
+
+const server = app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(", ")}`);
 });
+
+// ── Graceful Shutdown ─────────────────────────────────────────────────────────
+const shutdown = async (signal) => {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+  server.close(async () => {
+    try {
+      await mongoose.connection.close();
+      console.log("MongoDB connection closed.");
+      process.exit(0);
+    } catch (err) {
+      console.error("Error during shutdown:", err.message);
+      process.exit(1);
+    }
+  });
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
