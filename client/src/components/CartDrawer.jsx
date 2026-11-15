@@ -272,7 +272,7 @@ function CartDrawer({
         {/* ── Footer ── */}
         {cart.length > 0 && (
           <div className="border-t border-stone-200 px-5 sm:px-7 py-5 sm:py-6
-                          space-y-3 sm:space-y-4 shrink-0">
+                          flex flex-col gap-3 sm:gap-4 shrink-0">
             <div className="flex items-center justify-between">
               <p className="text-xs tracking-[0.2em] uppercase text-stone-400">
                 Subtotal
