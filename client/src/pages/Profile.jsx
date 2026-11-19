@@ -59,6 +59,31 @@ function Avatar({ name, photoURL, size = 96 }) {
   );
 }
 
+function formatMoney(order, minorAmount) {
+  if (Number.isFinite(minorAmount)) {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: order.currency || "INR",
+      minimumFractionDigits: 2,
+    }).format(minorAmount / 100);
+  }
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: order.currency || "INR",
+    minimumFractionDigits: 2,
+  }).format(Number(order.total) || 0);
+}
+
+function formatOrderDate(value, withTime = false) {
+  if (!value) return "Date unavailable";
+  return new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+  });
+}
+
 function AddressCard({ address, isDefault, onEdit, onRemove, onSetDefault }) {
   return (
     <div className="bg-white border border-stone-200 rounded-2xl p-5 hover:border-stone-300 hover:shadow-sm transition-all duration-300">
@@ -128,6 +153,8 @@ export default function Profile() {
   const [photoURL, setPhotoURL] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [productDetails, setProductDetails] = useState({});
+  const [expandedOrder, setExpandedOrder] = useState(null);
   const [rewardsData, setRewardsData] = useState(null);
 const [rewardsLoading, setRewardsLoading] = useState(false);
 const [rewardsError, setRewardsError] = useState("");
@@ -207,7 +234,29 @@ const [rewardsError, setRewardsError] = useState("");
         const res = await fetch(`${API}/api/orders/${user.uid}`, { headers, credentials: "include" });
         if (!res.ok) throw new Error("Failed to load orders");
         const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
+        const orderList = Array.isArray(data) ? data : [];
+        setOrders(orderList);
+
+        const productIds = [
+          ...new Set(orderList.flatMap((order) => order.items || []).map((item) => item.productId).filter(Boolean)),
+        ];
+        if (productIds.length === 0) {
+          setProductDetails({});
+          return;
+        }
+
+        const entries = await Promise.all(
+          productIds.map(async (productId) => {
+            try {
+              const productRes = await fetch(`${API}/api/products/${productId}`, { headers, credentials: "include" });
+              if (!productRes.ok) return [productId, null];
+              return [productId, await productRes.json()];
+            } catch {
+              return [productId, null];
+            }
+          })
+        );
+        setProductDetails(Object.fromEntries(entries.filter(([, product]) => product)));
       } catch (err) {
         setError(err.message);
         setOrders([]);
@@ -545,49 +594,169 @@ const [rewardsError, setRewardsError] = useState("");
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {orders.map((order) => (
-                  <div key={order._id} className="bg-white border border-stone-200 rounded-2xl p-5 hover:border-stone-300 hover:shadow-sm transition-all">
-                    <div className="flex justify-between items-start gap-4 mb-3">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-stone-900">
-                          {new Date(order.createdAt).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}
-                        </p>
-                        <p className="text-xs text-stone-400 mt-0.5">
-                          {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-stone-900">₹{order.total.toFixed(2)}</p>
-                          <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full ${
-                            order.status === 'paid' 
-                              ? 'bg-green-50 text-green-700' 
-                              : order.status === 'failed'
-                              ? 'bg-red-50 text-red-700'
-                              : 'bg-stone-100 text-stone-600'
-                          }`}>
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+              <div className="space-y-4">
+                {orders.map((order) => {
+                  const isExpanded = expandedOrder === order._id;
+                  const itemCount = (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+                  const defaultAddress =
+                    profile.addresses.find((address) => address.id === profile.defaultAddressId) ||
+                    profile.addresses[0];
+                  const paid = order.status === "paid";
+                  const failed = order.status === "failed";
 
-                    {/* Order items list */}
-                    <div className="pt-3 border-t border-stone-100 space-y-1.5">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-xs text-stone-600">
-                          <span>Product ID {item.productId} × {item.quantity}</span>
-                          <span className="text-stone-900">₹{(item.price * item.quantity).toFixed(2)}</span>
+                  return (
+                    <article
+                      key={order._id}
+                      className="bg-white border border-stone-200 rounded-2xl overflow-hidden hover:border-stone-300 hover:shadow-sm transition-all"
+                    >
+                      <div className="px-5 py-4 sm:px-6 sm:py-5">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                              <p className="text-sm font-medium text-stone-900">
+                                Order #{String(order._id).slice(-8).toUpperCase()}
+                              </p>
+                              <span className={`text-[10px] tracking-[0.16em] uppercase px-2.5 py-1 rounded-full ${
+                                paid
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : failed
+                                  ? "bg-red-50 text-red-700"
+                                  : "bg-amber-50 text-amber-700"
+                              }`}>
+                                {paid ? "Confirmed" : failed ? "Payment failed" : order.status || "Processing"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-stone-400">
+                              Placed on {formatOrderDate(order.createdAt)}
+                            </p>
+                          </div>
+                          <div className="sm:text-right shrink-0">
+                            <p className="text-lg font-medium text-stone-900">
+                              {formatMoney(order, Number.isFinite(Number(order.totalMinor)) ? Number(order.totalMinor) : null)}
+                            </p>
+                            <p className="text-xs text-stone-400 mt-0.5">
+                              {itemCount} item{itemCount !== 1 ? "s" : ""}
+                            </p>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+
+                        <div className="mt-4 pt-4 border-t border-stone-100 space-y-3">
+                          {(order.items || []).slice(0, isExpanded ? undefined : 2).map((item, idx) => {
+                            const product = productDetails[item.productId];
+                            const lineMinor = Number.isFinite(Number(item.lineTotalMinor))
+                              ? Number(item.lineTotalMinor)
+                              : Number(item.price || 0) * Number(item.quantity || 0) * 100;
+                            return (
+                              <button
+                                type="button"
+                                key={`${item.productId}-${idx}`}
+                                onClick={() => navigate(`/product/${item.productId}`)}
+                                className="w-full flex items-center gap-3 text-left group"
+                              >
+                                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-stone-100 border border-stone-100 overflow-hidden flex-shrink-0">
+                                  {product?.image ? (
+                                    <img
+                                      src={product.image}
+                                      alt={product.name || `Product ${item.productId}`}
+                                      className="w-full h-full object-cover"
+                                      onError={(event) => { event.currentTarget.style.display = "none"; }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-lg text-stone-300">◇</div>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  {product?.brand && (
+                                    <p className="text-[10px] tracking-[0.16em] uppercase text-stone-400 mb-0.5">
+                                      {product.brand}
+                                    </p>
+                                  )}
+                                  <p className="text-sm text-stone-900 truncate group-hover:underline">
+                                    {product?.name || `Product #${item.productId}`}
+                                  </p>
+                                  <p className="text-xs text-stone-400 mt-1">
+                                    Qty: {item.quantity}
+                                  </p>
+                                </div>
+                                <p className="text-sm font-medium text-stone-900 flex-shrink-0">
+                                  {formatMoney(order, lineMinor)}
+                                </p>
+                              </button>
+                            );
+                          })}
+                          {!isExpanded && (order.items || []).length > 2 && (
+                            <p className="text-xs text-stone-400">
+                              + {(order.items || []).length - 2} more item{(order.items || []).length - 2 !== 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setExpandedOrder(isExpanded ? null : order._id)}
+                          className="mt-4 w-full sm:w-auto border border-stone-200 text-stone-700 text-xs px-4 py-2 rounded-full hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all"
+                          aria-expanded={isExpanded}
+                        >
+                          {isExpanded ? "Hide order details" : "View order details"}
+                        </button>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="border-t border-stone-100 bg-stone-50/60 px-5 py-5 sm:px-6">
+                          <div className="grid sm:grid-cols-2 gap-5">
+                            <div>
+                              <p className="text-[10px] tracking-[0.18em] uppercase text-stone-400 mb-3">Delivery address</p>
+                              {defaultAddress ? (
+                                <div className="text-sm text-stone-600 leading-relaxed">
+                                  <p className="font-medium text-stone-800">{profile.name || "Customer"}</p>
+                                  <p>{defaultAddress.line1}{defaultAddress.line2 ? `, ${defaultAddress.line2}` : ""}</p>
+                                  <p>{[defaultAddress.city, defaultAddress.state, defaultAddress.zip].filter(Boolean).join(", ")}</p>
+                                  {defaultAddress.country && <p>{defaultAddress.country}</p>}
+                                  {defaultAddress.phone && <p className="mt-1 text-xs text-stone-400">{defaultAddress.phone}</p>}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-stone-400">Saved address unavailable.</p>
+                              )}
+                            </div>
+
+                            <div>
+                              <p className="text-[10px] tracking-[0.18em] uppercase text-stone-400 mb-3">Payment summary</p>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between text-stone-500">
+                                  <span>Subtotal</span>
+                                  <span>{formatMoney(order, Number.isFinite(Number(order.subtotalMinor)) ? Number(order.subtotalMinor) : null)}</span>
+                                </div>
+                                <div className="flex justify-between text-stone-500">
+                                  <span>Shipping</span>
+                                  <span>{formatMoney(order, Number(order.shippingMinor) || 0)}</span>
+                                </div>
+                                <div className="flex justify-between pt-2 border-t border-stone-200 font-medium text-stone-900">
+                                  <span>Total paid</span>
+                                  <span>{formatMoney(order, Number.isFinite(Number(order.totalMinor)) ? Number(order.totalMinor) : null)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-5 pt-4 border-t border-stone-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[10px] tracking-[0.18em] uppercase text-stone-400 mb-1">Payment reference</p>
+                              <p className="text-xs text-stone-600 font-mono break-all">
+                                {order.paymentId || "Not available"}
+                              </p>
+                            </div>
+                            {paid && (
+                              <span className="text-xs text-emerald-700 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                Payment received
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
