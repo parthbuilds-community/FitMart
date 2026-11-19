@@ -1,5 +1,6 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LandingPage from "./pages/LandingPage";
 import Authentication from "./pages/Authentication";
@@ -29,12 +30,41 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import LegalTerms from "./pages/LegalTerms";
 import LegalPrivacy from "./pages/LegalPrivacy";
 
+function DocumentTitle() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    let title = "FitMart";
+
+    if (path.startsWith("/admin/")) {
+      if (path === "/admin/dashboard") title = "Dashboard";
+      else if (path === "/admin/inventory") title = "Inventory";
+      else if (path.startsWith("/admin/customers/")) title = "Customer Details";
+      else if (path === "/admin/customers") title = "Customers";
+      else if (path === "/admin/reports") title = "Reports";
+      else if (path === "/admin/marketing") title = "Marketing";
+      else if (path === "/admin/bugs") title = "Bug Reports";
+      title = `${title} - FitMart`;
+    } else if (path === "/profile") {
+      title = "Profile - FitMart";
+    } else if (path === "/auth") {
+      title = "Sign In - FitMart";
+    }
+
+    document.title = title;
+  }, [location.pathname]);
+
+  return null;
+}
+
 export default function App() {
   const queryClient = new QueryClient();
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <DocumentTitle />
           <Routes>
             {/* Public routes (redirect admin users to admin dashboard) */}
             <Route path="/" element={<NonAdminRoute><LandingPage /></NonAdminRoute>} />
