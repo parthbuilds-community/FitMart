@@ -20,7 +20,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  await mongoose.connect(uri);
+  await mongoose.connect(uri, process.env.MONGO_DB ? { dbName: process.env.MONGO_DB } : undefined);
   console.log("Connected to MongoDB");
 
   const products: Array<{ productId: number; price?: number; priceMinor?: number; isActive?: boolean }> =

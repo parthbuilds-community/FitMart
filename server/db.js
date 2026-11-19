@@ -23,6 +23,7 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const MONGO_URI = process.env.MONGO_URI;
+const MONGO_DB = process.env.MONGO_DB;
 
 if (!MONGO_URI) {
     console.error("MONGO_URI not set in server/.env");
@@ -33,7 +34,9 @@ mongoose.set("strictQuery", true);
 
 async function connect() {
     try {
-        await mongoose.connect(MONGO_URI);
+        // MONGO_URI may not include a database name (e.g. mongodb+srv://host/),
+        // so honour MONGO_DB to avoid silently connecting to the default "test" DB.
+        await mongoose.connect(MONGO_URI, MONGO_DB ? { dbName: MONGO_DB } : undefined);
         console.log("MongoDB connected successfully");
     } catch (err) {
         console.error("MongoDB connection failed:", err.message);
