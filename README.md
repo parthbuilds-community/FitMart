@@ -53,6 +53,22 @@
 - [Contributors](#-contributors)
 - [License](#-license)
 
+
+
+---
+
+## ⭐ Star History
+
+<div align="center">
+    <a href="https://www.star-history.com/?repos=parthbuilds-community%2Ffitmart&type=timeline&legend=bottom-right">
+        <picture>
+            <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=parthbuilds-community/fitmart&type=timeline&legend=bottom-right" width="540"/>
+        </picture>
+    </a>
+</div>
+
+---
+
 ---
 
 ## 🧠 About the Project
