@@ -6,17 +6,30 @@ import rateLimit from "express-rate-limit";
 import { API_LIMIT_MAX, PAYMENT_LIMIT_MAX, RATE_LIMIT_WINDOW_MS } from "./config/constants";
 import logger from "./middleware/logger";
 
-const allowedOrigin = process.env.ALLOWED_ORIGIN || "";
-
-export const allowedOrigins = allowedOrigin
+const configuredOrigins = [
+  process.env.ALLOWED_ORIGIN,
+  process.env.ALLOWED_ORIGINS,
+  process.env.CLIENT_ORIGIN,
+  process.env.APP_BASE_URL,
+]
+  .filter(Boolean)
+  .join(",")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// The production storefront. Keeping it here means the deployed API keeps
+// working even when ALLOWED_ORIGIN has not been set on the hosting provider.
+const defaultOrigins = ["https://fitmart-omega.vercel.app"];
+
+export const allowedOrigins = [...new Set([...configuredOrigins, ...defaultOrigins])];
+
 const isDev = process.env.NODE_ENV !== "production";
 
 if (isDev) {
-  allowedOrigins.push("http://localhost:5173", "http://127.0.0.1:5173");
+  for (const origin of ["http://localhost:5173", "http://127.0.0.1:5173"]) {
+    if (!allowedOrigins.includes(origin)) allowedOrigins.push(origin);
+  }
 }
 
 const apiLimiter = rateLimit({
