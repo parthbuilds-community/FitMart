@@ -5,5 +5,11 @@
       "memory": 1024,
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/[...slug]"
+    }
+  ]
 }
