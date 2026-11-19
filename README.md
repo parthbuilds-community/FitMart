@@ -17,8 +17,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![Gemini AI](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active%20Development-orange?style=flat-square)]()
-[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square)](docs/CONTRIBUTING.md)
 
 <br/>
 
@@ -763,6 +761,7 @@ cd server && npm start
 |--------|----------|------|-------------|
 | `GET` | `/api/products` | — | Paginated product listing with filtering/sorting/search and optional field projection. Supports `page`, `limit`, `category`, `search`, `sort`, `fields`. Use `?all=true` for legacy full-list behavior (avoid in production). See `docs/PRODUCTS_API.md` for full details. |
 | `GET` | `/api/products/:id` | — | Get product by `productId` |
+| `GET` | `/api/products/low-stock` | — | Get products whose available stock is below the low-stock threshold |
 | `POST` | `/api/products` | ✅ Admin | Create a new product (invalidates products cache) |
 | `PUT` | `/api/products/:id` | ✅ Admin | Update product by `productId` (invalidates products cache) |
 | `DELETE` | `/api/products/:id` | ✅ Admin | Delete product by `productId` (invalidates products cache) |
@@ -786,25 +785,32 @@ cd server && npm start
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/api/cart/:userId` | — | Get or create a user's cart |
-| `POST` | `/api/cart/:userId/add` | — | Add item — body: `{ productId, quantity }` |
-| `POST` | `/api/cart/:userId/remove` | — | Remove item — body: `{ productId, quantity }` |
-| `DELETE` | `/api/cart/:userId` | — | Clear cart and release reserved stock |
+| `GET` | `/api/cart/:userId` | ✅ | Get or create a user's cart |
+| `POST` | `/api/cart/:userId/add` | ✅ | Add item — body: `{ productId, quantity }` |
+| `POST` | `/api/cart/:userId/remove` | ✅ | Remove item — body: `{ productId, quantity }` |
+| `DELETE` | `/api/cart/:userId` | ✅ | Clear cart and release reserved stock |
 
 ### 📦 Orders
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/api/orders` | — | Create order — body: `{ userId, items? }` |
-| `GET` | `/api/orders/:userId` | — | List all orders for a user |
+| `POST` | `/api/orders` | ✅ | Create order — body: `{ userId, items? }` |
+| `GET` | `/api/orders/:userId` | ✅ | List all orders owned by the authenticated user |
+
+### 🧾 Quotes
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/quotes` | ✅ | Create an authoritative checkout quote — body: `{ addressId, idempotencyKey }` |
+| `GET` | `/api/quotes/:quoteId` | ✅ | Retrieve an active, unexpired quote owned by the authenticated user |
 
 ### 💳 Payments
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/api/payment/create-order` | — | Create a Razorpay order |
-| `POST` | `/api/payment/verify-payment` | — | Verify HMAC signature + trigger first-purchase email |
-| `POST` | `/api/payment/clear-cart` | — | Release stock & clear cart — body: `{ userId }` |
+| `POST` | `/api/payment/create-order` | ✅ | Create a Razorpay order |
+| `POST` | `/api/payment/verify-payment` | ✅ | Verify HMAC signature + trigger first-purchase email |
+| `POST` | `/api/payment/clear-cart` | ✅ | Release stock & clear cart — body: `{ userId }` |
 
 > **Security:** Payment verification uses HMAC-SHA256 on `razorpay_order_id|razorpay_payment_id` with `RAZORPAY_KEY_SECRET`. Never expose this key to the client.
 
@@ -818,16 +824,13 @@ cd server && npm start
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/api/user/login` | — | Register login, sync Firebase email, check welcome discount |
-| `GET` | `/api/user/discount-status/:userId` | — | Get discount eligibility and percent |
-| `POST` | `/api/user/use-discount` | — | Mark welcome discount as used |
-| `POST` | `/api/user/dismiss-banner` | — | Dismiss the welcome banner |
+| `POST` | `/api/user/login` | ✅ | Register login, sync Firebase email, check welcome discount |
+| `GET` | `/api/user/discount-status/:userId` | ✅ | Get discount eligibility and percent |
+| `POST` | `/api/user/use-discount` | ✅ | Mark welcome discount as used |
+| `POST` | `/api/user/dismiss-banner` | ✅ | Dismiss the welcome banner |
 | `GET` | `/api/user/profile/:userId` | ✅ | Get user profile (name, phone, addresses) |
 | `PUT` | `/api/user/profile/:userId` | ✅ | Update user profile |
-| `POST` | `/api/user/profile/:userId/addresses` | ✅ | Add a shipping address |
-| `PUT` | `/api/user/profile/:userId/addresses/:addressId` | ✅ | Update a shipping address |
-| `DELETE` | `/api/user/profile/:userId/addresses/:addressId` | ✅ | Delete a shipping address |
-| `PUT` | `/api/user/profile/:userId/default-address` | ✅ | Set default shipping address |
+| `POST` | `/api/user/upload-photo/:userId` | ✅ | Upload a profile photo |
 
 ### 🏋️ Exercises
 
@@ -850,7 +853,7 @@ Supported `category` values: `chest`, `back`, `shoulders`, `cardio`, `abs`, `arm
 |--------|----------|------|-------------|
 | `POST` | `/api/bugs` | — | Submit a bug report (auth optional; enriches reporter info if token present) |
 | `GET` | `/api/bugs` | ✅ Admin | List all bug reports |
-| `PATCH` | `/api/bugs/:id/status` | ✅ Admin | Update bug status: `open`, `in-progress`, `resolved` |
+| `PATCH` | `/api/bugs/:id` | ✅ Admin | Update bug status — body: `{ status }` |
 
 ### 📊 Admin
 
@@ -865,9 +868,8 @@ Supported `category` values: `chest`, `back`, `shoulders`, `cardio`, `abs`, `arm
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/api/rewards` | — | Get rewards program details and user's rewards points |
-| `POST` | `/api/rewards/earn` | — | Earn rewards points for an action |
-| `POST` | `/api/rewards/redeem` | — | Redeem rewards points for discounts or products |
+| `GET` | `/api/rewards/:userId` | ✅ | Get the user's rewards points, tier, and transactions |
+| `POST` | `/api/rewards/earn` | ✅ | Earn rewards points for a purchase, workout, or milestone |
 
 ### 🔧 Github
 
@@ -879,11 +881,9 @@ Supported `category` values: `chest`, `back`, `shoulders`, `cardio`, `abs`, `arm
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `GET` | `/api/workouts` | — | Get user's workout logs |
-| `POST` | `/api/workouts` | — | Create a new workout log |
-| `GET` | `/api/workouts/:id` | — | Get a specific workout log |
-| `PUT` | `/api/workouts/:id` | ✅ | Update a workout log |
-| `DELETE` | `/api/workouts/:id` | ✅ | Delete a workout log |
+| `GET` | `/api/workouts` | ✅ | Get the authenticated user's workout logs |
+| `POST` | `/api/workouts` | ✅ | Create or update a workout log for a date |
+| `DELETE` | `/api/workouts/:date` | ✅ | Delete a workout log by date |
 
 ---
 
