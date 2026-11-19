@@ -46,7 +46,7 @@ export default function Checkout() {
       try {
         const headers = await getAuthHeaders();
 
-        const [cartRes, prodRes, discountRes, profileRes] = await Promise.all([
+        const [cartRes, prodRes, discountRes] = await Promise.all([
           fetch(`${API}/api/cart/${userId}`, { headers, credentials: "include" }),
           fetch(`${API}/api/products?all=true`),
           fetch(`${API}/api/user/discount-status/${userId}`, { headers, credentials: "include" }),

@@ -1,4 +1,5 @@
 import React from "react";
+// eslint-disable-next-line no-unused-vars -- Framer Motion JSX namespace is used for animated elements
 import { motion } from "framer-motion";
 
 class ErrorBoundary extends React.Component {

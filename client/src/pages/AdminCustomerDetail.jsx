@@ -1,6 +1,6 @@
 // src/pages/AdminCustomerDetail.jsx
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
@@ -132,7 +132,6 @@ const MobileOrderCard = ({ order, expanded, onToggle, onDownload, productMap }) 
 
 export default function AdminCustomerDetail() {
   const { userId } = useParams();
-  const navigate = useNavigate();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -199,7 +198,7 @@ export default function AdminCustomerDetail() {
               `${addr.phone ? `<div style="margin-top:4px">${addr.phone}</div>` : ''}`;
           }
         }
-      } catch (e) {
+      } catch {
         // ignore profile fetch errors — invoice will still work without address
       }
       const itemsHtml = order.items.map(({ productId, quantity, price }) => {

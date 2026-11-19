@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars -- Framer Motion JSX namespace is used for the animated skeleton
 import { motion } from 'framer-motion';
 
 export default function SkeletonItem() {

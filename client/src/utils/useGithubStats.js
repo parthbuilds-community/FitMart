@@ -33,7 +33,7 @@ export function useGithubStats() {
           contributors: s.contributors ?? FALLBACK_STATS.contributors,
           commits: s.commits ?? FALLBACK_STATS.commits,
         });
-      } catch (e) {
+      } catch {
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);

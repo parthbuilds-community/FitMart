@@ -92,7 +92,6 @@ const INSTAGRAM = "https://instagram.com/parth.builds";
 export default function LandingPage() {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -174,8 +173,6 @@ export default function LandingPage() {
       {/* ── NAVBAR ── */}
       <NavbarWithGithub
         navOpaque={navOpaque}
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
         ghStats={ghStats}
         ghLoading={ghLoading}
       />
@@ -606,13 +603,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <LandingFooter aboutRef={aboutRef} ghStats={ghStats} ghLoading={ghLoading} />
+      <LandingFooter ghStats={ghStats} ghLoading={ghLoading} />
     </div>
   );
 }
 
 // ── NavbarWithGithub — extends Navbar with a GitHub star button ────────────
-function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading }) {
+function NavbarWithGithub({ navOpaque, ghStats, ghLoading }) {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
   const { user, loading: authLoading } = useAuth();
@@ -625,8 +622,6 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading
 
   const isOpaque = navOpaque || scrollY > 60;
   const textColor = "text-stone-900";
-  const mutedColor = isOpaque ? "text-stone-500" : "text-white/70";
-  const borderColor = isOpaque ? "border-stone-200" : "border-white/20";
   const bgClass = isOpaque
     ? "bg-white/95 backdrop-blur-sm border-b border-stone-200 shadow-sm"
     : "bg-transparent";
@@ -688,8 +683,7 @@ function NavbarWithGithub({ navOpaque, menuOpen, setMenuOpen, ghStats, ghLoading
 }
 
 // ── LandingFooter — rich footer with community + links ────────────────────
-function LandingFooter({ aboutRef, ghStats, ghLoading }) {
-  const navigate = useNavigate();
+function LandingFooter({ ghStats, ghLoading }) {
   const year = new Date().getFullYear();
 
   const links = {

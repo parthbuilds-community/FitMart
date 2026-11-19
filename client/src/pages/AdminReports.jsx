@@ -1,7 +1,6 @@
 // src/pages/AdminReports.jsx
 import { useState, useEffect } from "react";
 import { fmt } from "../utils/formatters";
-import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 
@@ -77,7 +76,6 @@ const ProductMobileCard = ({ p, index, productMap }) => {
 };
 
 export default function AdminReports() {
-  const navigate = useNavigate();
   const [range, setRange] = useState("weekly");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -94,7 +92,7 @@ export default function AdminReports() {
         const json = await res.json();
         setData(json);
         setLoading(false);
-      } catch (err) {
+      } catch {
         setError("Failed to load report data");
         setLoading(false);
       }
@@ -143,7 +141,7 @@ export default function AdminReports() {
 
             {/* Range selector — pill buttons */}
             <div className="flex gap-2">
-              {Object.entries(RANGE_LABELS).map(([key, label]) => (
+              {Object.entries(RANGE_LABELS).map(([key]) => (
                 <button
                   key={key}
                   onClick={() => setRange(key)}

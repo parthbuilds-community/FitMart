@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -189,7 +189,7 @@ const [rewardsError, setRewardsError] = useState("");
     });
     return () => unsub();
   }, [navigate]);
-    const fetchRewardsData = async () => {
+    const fetchRewardsData = useCallback(async () => {
     try {
       setRewardsLoading(true);
       setRewardsError("");
@@ -212,13 +212,13 @@ const [rewardsError, setRewardsError] = useState("");
     } finally {
       setRewardsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (activeTab === "fitrewards" && !rewardsData) {
       fetchRewardsData();
     }
-  }, [activeTab]);
+  }, [activeTab, fetchRewardsData, rewardsData]);
 
   // Fetch orders when orders tab is active
   useEffect(() => {

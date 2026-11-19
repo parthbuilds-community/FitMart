@@ -1,6 +1,5 @@
 // src/pages/AdminInventory.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
 
@@ -113,7 +112,6 @@ const Modal = ({ open, onClose, children }) => {
 };
 
 export default function AdminInventory() {
-  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -133,7 +131,7 @@ export default function AdminInventory() {
       const data = await res.json();
       setProducts(Array.isArray(data) ? data : []);
       setLoading(false);
-    } catch (err) {
+    } catch {
       setError('Failed to load inventory');
       setLoading(false);
     }

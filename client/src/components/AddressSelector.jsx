@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars -- Framer Motion JSX namespace is used for animated address cards
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AddressSelector({ addresses = [], selectedAddressId, onSelect }) {

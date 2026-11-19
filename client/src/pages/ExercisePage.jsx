@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { addExerciseToWorkout, getWorkoutByDate } from "../utils/workoutStorage";
+import { addExerciseToWorkout } from "../utils/workoutStorage";
 
 const CATEGORIES = [
   { id: "chest", name: "Chest" },

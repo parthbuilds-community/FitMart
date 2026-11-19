@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars -- Framer Motion JSX namespace is used for animated elements
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/useAuth';
 
@@ -168,7 +169,10 @@ export default function ReportBugButton() {
   };
 
   const openModal  = () => { resetForm(); setOpen(true); };
-  const closeModal = () => { if (loading) return; setOpen(false); };
+  const closeModal = useCallback(() => {
+    if (loading) return;
+    setOpen(false);
+  }, [loading]);
 
   // Escape to close
   useEffect(() => {
@@ -176,7 +180,7 @@ export default function ReportBugButton() {
     const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, loading]);
+  }, [open, closeModal]);
 
   // Handle screenshot pick
   const onFileChange = (e) => {
