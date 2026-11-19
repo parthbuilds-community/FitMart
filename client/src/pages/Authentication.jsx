@@ -86,9 +86,10 @@ export default function Authentication() {
       pollInterval = setInterval(async () => {
         try {
           await auth.currentUser.reload();
-          if (auth.currentUser.emailVerified) {
+          const destination = await destinationFor(auth.currentUser);
+          if (auth.currentUser.emailVerified || destination === "/admin/dashboard") {
             clearInterval(pollInterval);
-            navigate(await destinationFor(auth.currentUser));
+            navigate(destination);
           }
         } catch (err) {
           console.error("Failed to reload user:", err);
@@ -122,13 +123,14 @@ export default function Authentication() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, form.email, form.password);
-      if (!cred.user.emailVerified) {
+      const destination = await destinationFor(cred.user);
+      if (!cred.user.emailVerified && destination !== "/admin/dashboard") {
         // Keep user signed in so resend can use auth.currentUser
         setError("");
         setMode("pending-verification");
         return;
       }
-      navigate(await destinationFor(cred.user));
+      navigate(destination);
     } catch (err) {
       console.error('handleSignIn error', err);
       setError(parseError(err.code));

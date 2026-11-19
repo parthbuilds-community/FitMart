@@ -7,6 +7,7 @@
     "dev": "nodemon --exec tsx index.js --ext js,ts",
     "typecheck": "tsc --noEmit",
     "admin:claim": "tsx scripts/adminClaim.ts",
+    "admin:bootstrap": "tsx scripts/bootstrapAdmin.ts",
     "backfill:money": "tsx scripts/backfillMoney.ts",
     "seed": "node seed.js",
     "seed:fitness": "node seedFitnessCenters.js",
