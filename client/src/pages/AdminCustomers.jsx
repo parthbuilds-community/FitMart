@@ -71,7 +71,7 @@ const CustomerMobileCard = ({ c, index, onClick, onSendReminder, isSending, remi
           ) : (
             <p className="text-xs text-stone-400 font-mono">{c.userId?.slice(0, 12)}…</p>
           )}
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium capitalize shrink-0
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium capitalize shrink-0 whitespace-nowrap
                           ${SEGMENT_STYLES[c.segment]}`}>
             {c.segment}
           </span>
@@ -425,7 +425,7 @@ export default function AdminCustomers() {
                       </span>
                     </td>
                     <td className="px-6 py-5 text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize
+                      <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium capitalize whitespace-nowrap
                                         ${SEGMENT_STYLES[c.segment]}`}>
                         {c.segment}
                       </span>
