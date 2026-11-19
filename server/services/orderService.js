@@ -14,6 +14,7 @@ const Product = require('../models/Product');
  */
 async function createOrder(userId, items = null) {
   let orderItems = items;
+  let fromCart = false;
 
   // If no items are explicitly provided, fetch them from the user's cart
   if (!orderItems || !orderItems.length) {
@@ -21,6 +22,7 @@ async function createOrder(userId, items = null) {
     if (!cart || !cart.items.length) {
       throw new Error('Cart is empty');
     }
+    fromCart = true;
     orderItems = cart.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
   }
 
@@ -38,7 +40,10 @@ async function createOrder(userId, items = null) {
 
     // Oversell guard - skip check if stock is null (unlimited)
     if (p.stock !== null) {
-      const available = p.stock - (p.reserved || 0);
+      // Cart quantities are already counted in p.reserved, so add them back
+      // before checking availability. Otherwise a cart that has reserved the
+      // last unit would fail its own checkout.
+      const available = p.stock - (p.reserved || 0) + (fromCart ? it.quantity : 0);
       if (available < it.quantity) {
         throw new Error(`Insufficient stock for ${p.name}. Available: ${available}`);
       }
@@ -71,21 +76,24 @@ async function createOrder(userId, items = null) {
     currency: 'INR',
   });
 
-  // Deduct stock and reserved amounts for each item
+  // Deduct stock and release the cart's reserved amounts for each item.
+  // Explicit items (not from the cart) were never reserved, so only their
+  // stock is decremented.
   for (const it of orderItems) {
     const p = await Product.findOne({ productId: Number(it.productId) });
-    if (p && p.stock !== null) {
+    if (!p) continue;
+
+    const update = {};
+    if (p.stock !== null) update.$inc = { stock: -it.quantity };
+    if (fromCart) {
       // Safely calculate new reserved to avoid negative values
-      const currentReserved = Number(p.reserved || 0);
-      const newReserved = Math.max(0, currentReserved - it.quantity);
-      
-      await Product.findOneAndUpdate(
-        { productId: p.productId },
-        { 
-          $inc: { stock: -it.quantity },
-          $set: { reserved: newReserved }
-        }
-      );
+      update.$set = {
+        reserved: Math.max(0, Number(p.reserved || 0) - it.quantity),
+      };
+    }
+
+    if (Object.keys(update).length) {
+      await Product.findOneAndUpdate({ productId: p.productId }, update);
     }
   }
 

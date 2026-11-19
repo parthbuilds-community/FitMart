@@ -219,7 +219,8 @@ export default function PaymentPage() {
             );
 
             if (!verifyRes.ok) {
-              throw new Error("Payment verification failed");
+              const e = await verifyRes.json().catch(() => ({}));
+              throw new Error(e.error || "Payment verification failed");
             }
 
             await finishOrder(userId, response.razorpay_payment_id);
@@ -234,7 +235,7 @@ export default function PaymentPage() {
             setPaying(false);
 
             showError(
-              "Payment was cancelled. Use the button below to simulate success."
+              "Payment was cancelled"
             );
           },
         },
