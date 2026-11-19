@@ -125,9 +125,13 @@ export default function AdminInventory() {
     setLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${API_BASE}/products`, { headers });
+      const res = await fetch(`${API_BASE}/products?all=true`, { headers });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to load inventory');
+      }
       const data = await res.json();
-      setProducts(data);
+      setProducts(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (err) {
       setError('Failed to load inventory');
