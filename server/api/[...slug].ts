@@ -5,6 +5,10 @@
 // /api/* and reuses one MongoDB connection across warm invocations.
 import type { IncomingMessage, ServerResponse } from "node:http";
 
+// Must stay first: registers the server's node_modules so `shared/` can resolve
+// `zod` in the compiled serverless bundle.
+import "../lib/sharedNodeModules";
+
 import { allowedOrigins, createApp } from "../app";
 import { connectToDatabase } from "../db";
 
