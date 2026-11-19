@@ -30,7 +30,7 @@
     "redis": "^6.2.1",
     "streamifier": "^0.1.1",
     "tsx": "^4.23.15",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
