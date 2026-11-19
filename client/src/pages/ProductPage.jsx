@@ -35,6 +35,13 @@ async function apiGetCart(userId) {
   return res.json();
 }
 
+async function apiGetProductsByIds(ids) {
+  if (!ids.length) return [];
+  const res = await fetch(`${API}/api/products?ids=${ids.join(",")}`);
+  if (!res.ok) throw new Error("Failed to load cart products");
+  return res.json();
+}
+
 function enrichCart(cartDoc, products) {
   return (cartDoc.items || []).map(it => {
     const prod = products.find(p => Number(p.productId) === Number(it.productId));
@@ -48,7 +55,6 @@ export default function ProductPage() {
   const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
-  const [products, setProducts] = useState([]);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,15 +84,11 @@ export default function ProductPage() {
   ];
   const busy = adding || buyingNow;
 
-  const refreshCart = async (productsList = products) => {
-    const user = auth.currentUser;
-    if (!user || !productsList.length) return;
-    try {
-      const cartDoc = await apiGetCart(user.uid);
-      setCart(enrichCart(cartDoc, productsList));
-    } catch (err) {
-      console.error("refreshCart error:", err);
-    }
+  // Only fetch the products that are actually in the cart.
+  const setCartFromDoc = async (cartDoc) => {
+    const ids = [...new Set((cartDoc.items || []).map(it => Number(it.productId)))];
+    const cartProducts = await apiGetProductsByIds(ids);
+    setCart(enrichCart(cartDoc, cartProducts));
   };
 
   useEffect(() => {
@@ -100,23 +102,33 @@ export default function ProductPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API}/api/products?all=true`);
-        if (!res.ok) throw new Error("Failed to load products");
-        const all = res.ok ? await res.json() : [];
-        const normalised = all.map(p => ({ ...p, id: p.productId }));
-        setProducts(normalised);
-        const found = normalised.find(p => String(p.productId) === String(productId));
-        if (!found) throw new Error("Product not found");
+        // Fetch only the requested product instead of downloading the whole catalogue.
+        const res = await fetch(`${API}/api/products?id=${encodeURIComponent(productId)}`);
+        if (res.status === 404) throw new Error("Product not found");
+        if (!res.ok) throw new Error("Failed to load product");
+        const found = await res.json();
         setProduct(found);
-        setRelated(
-          normalised
-            .filter(p => p.category === found.category && String(p.productId) !== String(productId))
-            .slice(0, 4)
-        );
+
+        if (found.category) {
+          const relatedRes = await fetch(
+            `${API}/api/products?category=${encodeURIComponent(found.category)}` +
+            `&exclude=${found.productId}&limit=4`
+          );
+          if (relatedRes.ok) {
+            const relatedPayload = await relatedRes.json();
+            setRelated(Array.isArray(relatedPayload) ? relatedPayload : relatedPayload.data || []);
+          }
+        }
+
         const user = auth.currentUser;
         if (user) {
-          const cartDoc = await apiGetCart(user.uid);
-          setCart(enrichCart(cartDoc, normalised));
+          // A cart failure must not prevent the product itself from rendering.
+          try {
+            const cartDoc = await apiGetCart(user.uid);
+            await setCartFromDoc(cartDoc);
+          } catch (cartErr) {
+            console.error("Cart load failed:", cartErr);
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -137,7 +149,7 @@ export default function ProductPage() {
     setAdding(true);
     try {
       const cartDoc = await apiAddToCart(user.uid, product.productId, quantity);
-      setCart(enrichCart(cartDoc, products));
+      await setCartFromDoc(cartDoc);
       setAdded(true);
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
@@ -177,7 +189,7 @@ export default function ProductPage() {
         throw new Error(errData.error || "Failed to remove");
       }
       const cartDoc = await res.json();
-      setCart(enrichCart(cartDoc, products));
+      await setCartFromDoc(cartDoc);
     } catch (err) {
       console.error("removeFromCart error:", err);
       alert(err.message);
@@ -199,7 +211,7 @@ export default function ProductPage() {
         throw new Error(errData.error || "Failed to update qty");
       }
       const cartDoc = await res.json();
-      setCart(enrichCart(cartDoc, products));
+      await setCartFromDoc(cartDoc);
     } catch (err) {
       console.error("updateQty error:", err);
       alert(err.message);

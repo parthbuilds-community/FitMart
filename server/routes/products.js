@@ -28,11 +28,18 @@ router.get('/', async (req, res) => {
     const search = req.query.search;
     const sort = req.query.sort || 'productId_asc';
     const fields = req.query.fields; // comma separated
+    const id = req.query.id; // single product by productId
+    const ids = req.query.ids; // comma separated productIds
+    const exclude = req.query.exclude; // omit one productId (e.g. for related products)
 
     // Build mongoose filter
     const filter = {};
     if (category && category !== 'all') filter.category = category;
     if (search) filter.$text = { $search: search };
+    if (exclude !== undefined) {
+      const excludeId = Number(exclude);
+      if (Number.isInteger(excludeId)) filter.productId = { $ne: excludeId };
+    }
 
     // Projection
     let projection = null;
@@ -46,6 +53,29 @@ router.get('/', async (req, res) => {
     const sortMap = { asc: 1, desc: -1 };
     const sortObj = {};
     sortObj[sortField || 'productId'] = sortMap[sortDir] || 1;
+
+    // Single product by productId: GET /api/products?id=2
+    if (id !== undefined) {
+      const productId = Number(id);
+      if (!Number.isInteger(productId)) {
+        return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
+      }
+      const product = await Product.findOne({ productId }, projection).lean();
+      if (!product) return res.status(404).json({ error: 'Product not found' });
+      return res.json(product);
+    }
+
+    // Multiple products by productId: GET /api/products?ids=1,2,3
+    if (ids !== undefined) {
+      const productIds = String(ids).split(',').map(Number);
+      if (productIds.some(n => !Number.isInteger(n))) {
+        return res.status(400).json({ error: 'Invalid product IDs. They must be numbers.' });
+      }
+      const products = await Product.find({ ...filter, productId: { $in: productIds } }, projection)
+        .sort(sortObj)
+        .lean();
+      return res.json(products);
+    }
 
     // Backward compatible: return all when ?all=true
     if (all) {
