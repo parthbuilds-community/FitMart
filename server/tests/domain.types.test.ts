@@ -4,6 +4,7 @@ import {
   PAYMENT_STATUSES,
   addMoney,
   asMoney,
+  checkQuotePayability,
   checkoutQuoteSchema,
   createQuoteRequestSchema,
   formatMoney,
@@ -100,6 +101,38 @@ describe("quote boundary schemas", () => {
   it("requires an idempotency key long enough to be unique", () => {
     expect(createQuoteRequestSchema.safeParse({ addressId: "a1", idempotencyKey: "short" }).success).toBe(false);
     expect(createQuoteRequestSchema.safeParse({ addressId: "a1", idempotencyKey: "long-enough-key" }).success).toBe(true);
+  });
+
+  it("rejects any client-supplied amount or total", () => {
+    const tampered = {
+      addressId: "a1",
+      idempotencyKey: "long-enough-key",
+      amount: 1,
+      totalMinor: 1,
+    };
+    expect(createQuoteRequestSchema.safeParse(tampered).success).toBe(false);
+  });
+
+  it("treats an active but expired quote as unpayable", () => {
+    const now = new Date("2026-11-15T12:00:00Z");
+    expect(
+      checkQuotePayability(
+        { status: "active", expiresAt: new Date("2026-11-15T12:15:00Z") },
+        now,
+      ),
+    ).toEqual({ payable: true });
+    expect(
+      checkQuotePayability(
+        { status: "active", expiresAt: new Date("2026-11-15T11:59:59Z") },
+        now,
+      ),
+    ).toEqual({ payable: false, reason: "expired" });
+    expect(
+      checkQuotePayability(
+        { status: "consumed", expiresAt: new Date("2026-11-15T12:15:00Z") },
+        now,
+      ),
+    ).toEqual({ payable: false, reason: "not_active" });
   });
 });
 

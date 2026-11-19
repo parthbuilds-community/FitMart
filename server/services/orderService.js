@@ -24,9 +24,11 @@ async function createOrder(userId, items = null) {
     orderItems = cart.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
   }
 
-  // Build order items with price snapshot
+  // Build order items with price snapshot. Integer paise is authoritative;
+  // the rupee fields remain for the not-yet-ported client.
   const populated = [];
   let total = 0;
+  let totalMinor = 0;
 
   for (const it of orderItems) {
     const p = await Product.findOne({ productId: Number(it.productId) });
@@ -42,12 +44,32 @@ async function createOrder(userId, items = null) {
       }
     }
 
-    populated.push({ productId: p.productId, quantity: it.quantity, price: p.price });
+    const priceMinor = Number.isInteger(p.priceMinor) && p.priceMinor >= 0
+      ? p.priceMinor
+      : Math.round(Number(p.price) * 100);
+    const lineTotalMinor = priceMinor * it.quantity;
+
+    populated.push({
+      productId: p.productId,
+      quantity: it.quantity,
+      price: p.price,
+      priceMinor,
+      lineTotalMinor,
+    });
     total += p.price * it.quantity;
+    totalMinor += lineTotalMinor;
   }
 
   // Create the order document
-  const order = await Order.create({ userId, items: populated, total });
+  const order = await Order.create({
+    userId,
+    items: populated,
+    total,
+    subtotalMinor: totalMinor,
+    shippingMinor: 0,
+    totalMinor,
+    currency: 'INR',
+  });
 
   // Deduct stock and reserved amounts for each item
   for (const it of orderItems) {

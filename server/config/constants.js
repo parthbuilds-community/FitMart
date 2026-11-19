@@ -11,6 +11,9 @@ const CONSTANTS = {
   RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
   API_LIMIT_MAX: 100,                   // Limit each IP to 100 requests per window
   PAYMENT_LIMIT_MAX: 20,                // Stricter limit for payments
+
+  // Checkout quotes
+  QUOTE_TTL_MS: 15 * 60 * 1000,         // A quote can be paid for 15 minutes
 };
 
 module.exports = CONSTANTS;

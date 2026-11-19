@@ -97,6 +97,7 @@ export function createApp(): Express {
   app.use("/api/payment", require("./routes/payment"));
   app.use("/api/rewards", require("./routes/rewards"));
   app.use("/api/fitness-centers", require("./routes/fitnessCenters"));
+  app.use("/api/quotes", require("./routes/quotes").quotesRouter);
 
   app.use("/api/github", require("./routes/github"));
   /* eslint-enable @typescript-eslint/no-var-requires */

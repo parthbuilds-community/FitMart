@@ -183,7 +183,12 @@ router.put('/:id', requireAuth, requireAdmin, validateRequest(updateProductSchem
   }
 
   try {
-    const updated = await Product.findOneAndUpdate({ productId }, req.body, { returnDocument: 'after' });
+    const update = { ...req.body };
+    // findOneAndUpdate bypasses the model hook, so sync integer paise here.
+    if (Object.prototype.hasOwnProperty.call(update, 'price')) {
+      update.priceMinor = Math.round(Number(update.price) * 100);
+    }
+    const updated = await Product.findOneAndUpdate({ productId }, update, { returnDocument: 'after' });
     if (!updated) return res.status(404).json({ error: 'Product not found' });
     try { await cache.delPattern('products:'); } catch (e) { }
     res.json(updated);
