@@ -53,8 +53,6 @@
 - [Contributors](#-contributors)
 - [License](#-license)
 
-
-
 ---
 
 ## ⭐ Star History
@@ -66,8 +64,6 @@
         </picture>
     </a>
 </div>
-
----
 
 ---
 
