@@ -8,7 +8,12 @@ if (!admin.apps.length) {
     ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
     : undefined;
 
-  if (projectId && clientEmail && privateKey) {
+  if (process.env.NODE_ENV === 'test') {
+    admin.initializeApp({
+      projectId: projectId || 'fitmart-test',
+    });
+    console.log('Firebase Admin initialized without credentials for tests');
+  } else if (projectId && clientEmail && privateKey) {
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId,
