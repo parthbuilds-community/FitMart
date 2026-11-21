@@ -23,7 +23,18 @@ const ProductSchema = new mongoose.Schema(
     badge: { type: String, default: null },
     image: { type: String, default: '' },
     // total stock available (optional). If null, stock is not enforced.
-    stock: { type: Number, default: null },
+      stock: {
+    type: Number,
+    default: null,
+    validate: {
+      validator: function(v) {
+        // If it's null (unlimited), it's valid.
+        // If it's a number, it must be 0 or greater.
+        return v === null || v >= 0;
+      },
+      message: 'Stock cannot be negative'
+    }
+  },
     // quantity reserved by carts (sum of quantities currently in carts)
     reserved: {
       type: Number,
