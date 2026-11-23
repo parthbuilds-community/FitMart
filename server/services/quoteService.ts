@@ -72,6 +72,13 @@ interface CartLike {
   items?: Array<{ productId: number; quantity: number }>;
 }
 
+function requireQueryString(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new QuoteError("VALIDATION_ERROR", 400, `${label} must be a string`);
+  }
+  return value;
+}
+
 function required(value: string | undefined, label: string): string {
   if (typeof value !== "string" || value.trim() === "") {
     throw new QuoteError("VALIDATION_ERROR", 400, `Address is missing ${label}`);
@@ -140,27 +147,31 @@ export async function createQuote(
   userId: string,
   input: CreateQuoteRequest,
 ): Promise<QuoteResult> {
+  const safeUserId = requireQueryString(userId, "userId");
+  const safeAddressId = requireQueryString(input.addressId, "addressId");
+  const safeIdempotencyKey = requireQueryString(input.idempotencyKey, "idempotencyKey");
+
   const existing = await CheckoutQuote.findOne({
-    userId,
-    idempotencyKey: input.idempotencyKey,
+    userId: safeUserId,
+    idempotencyKey: safeIdempotencyKey,
   }).lean();
 
   if (existing) {
     return existing as unknown as QuoteResult;
   }
 
-  const profile: ProfileLike | null = await UserProfile.findOne({ userId }).lean();
+  const profile: ProfileLike | null = await UserProfile.findOne({ userId: safeUserId }).lean();
   if (!profile) {
     throw new QuoteError("NOT_FOUND", 404, "Profile not found");
   }
 
-  const address = (profile.addresses ?? []).find((entry) => entry.id === input.addressId);
+  const address = (profile.addresses ?? []).find((entry) => entry.id === safeAddressId);
   if (!address) {
     // A quote can only use an address stored on the caller's own profile.
     throw new QuoteError("NOT_FOUND", 404, "Address not found");
   }
 
-  const cart: CartLike | null = await Cart.findOne({ userId }).lean();
+  const cart: CartLike | null = await Cart.findOne({ userId: safeUserId }).lean();
   const quantities = quantityByProduct(cart ?? {});
   if (quantities.size === 0) {
     throw new QuoteError("CONFLICT", 409, "Cart is empty");
@@ -212,10 +223,10 @@ export async function createQuote(
 
   try {
     const created = await CheckoutQuote.findOneAndUpdate(
-      { userId, idempotencyKey: input.idempotencyKey },
+      { userId: safeUserId, idempotencyKey: safeIdempotencyKey },
       {
         $setOnInsert: {
-          userId,
+          userId: safeUserId,
           status: "active",
           currency: "INR",
           lines,
@@ -223,7 +234,7 @@ export async function createQuote(
           shippingMinor,
           totalMinor,
           address: addressSnapshot,
-          idempotencyKey: input.idempotencyKey,
+          idempotencyKey: safeIdempotencyKey,
           expiresAt: new Date(now + Number(QUOTE_TTL_MS)),
         },
       },
@@ -241,8 +252,8 @@ export async function createQuote(
       (error as { code?: number }).code === 11000
     ) {
       const winner = await CheckoutQuote.findOne({
-        userId,
-        idempotencyKey: input.idempotencyKey,
+        userId: safeUserId,
+        idempotencyKey: safeIdempotencyKey,
       }).lean();
       if (winner) return winner as unknown as QuoteResult;
     }
@@ -255,11 +266,13 @@ export async function getQuoteForUser(
   quoteId: string,
   userId: string,
 ): Promise<QuoteResult> {
-  if (!mongoose.isValidObjectId(quoteId)) {
+  const safeQuoteId = requireQueryString(quoteId, "quoteId");
+  const safeUserId = requireQueryString(userId, "userId");
+  if (!mongoose.isValidObjectId(safeQuoteId)) {
     throw new QuoteError("NOT_FOUND", 404, "Quote not found");
   }
 
-  const quote = await CheckoutQuote.findOne({ _id: quoteId, userId }).lean();
+  const quote = await CheckoutQuote.findOne({ _id: safeQuoteId, userId: safeUserId }).lean();
   if (!quote) {
     throw new QuoteError("NOT_FOUND", 404, "Quote not found");
   }

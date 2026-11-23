@@ -6,7 +6,7 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 
 import quotesRouter from "../routes/quotes";
 import { CheckoutQuote } from "../models/CheckoutQuote";
-import { getPayableQuote, QuoteError } from "../services/quoteService";
+import { createQuote, getPayableQuote, QuoteError } from "../services/quoteService";
 
 const Product = require("../models/Product");
 const Cart = require("../models/Cart");
@@ -151,6 +151,38 @@ describe("POST /api/quotes", () => {
     expect(response.status).toBe(400);
     expect(response.body.error.code).toBe("VALIDATION_ERROR");
     expect(await CheckoutQuote.countDocuments()).toBe(0);
+  });
+
+  it("rejects MongoDB operator objects in idempotency keys", async () => {
+    const response = await postQuote("user_a", {
+      addressId: "addr_a",
+      idempotencyKey: { $ne: null },
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects operator objects passed directly to the quote service", async () => {
+    await expect(
+      createQuote({ $ne: null } as unknown as string, {
+        addressId: "addr_a",
+        idempotencyKey: "idem-key-0001",
+      }),
+    ).rejects.toMatchObject({
+      code: "VALIDATION_ERROR",
+      status: 400,
+    });
+
+    await expect(
+      createQuote("user_a", {
+        addressId: "addr_a",
+        idempotencyKey: { $ne: null } as unknown as string,
+      }),
+    ).rejects.toMatchObject({
+      code: "VALIDATION_ERROR",
+      status: 400,
+    });
   });
 
   it("is idempotent for the same idempotency key", async () => {
