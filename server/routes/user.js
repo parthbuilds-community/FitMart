@@ -9,6 +9,13 @@ const { requireAuth } = require("../middleware/requireAuth");
 const { fail } = require("../utils/apiResponse");
 const router = express.Router();
 
+function requireQueryString(value, label = "userId") {
+  if (typeof value !== "string" || value.trim() === "") {
+    return null;
+  }
+  return value.trim();
+}
+
 // Use memory storage for serverless environments
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -32,6 +39,10 @@ function isAdminUser(req) {
 
 // Reject unless the authenticated uid matches the userId in the request body.
 function checkBodyOwnership(req, res) {
+  if (typeof req.body?.userId !== "string" || req.body.userId.trim() === "") {
+    fail(res, 'userId required', 400);
+    return false;
+  }
   if (req.user.uid === req.body.userId || isAdminUser(req)) return true;
   fail(res, 'Forbidden — you can only access your own profile', 403);
   return false;
@@ -39,6 +50,10 @@ function checkBodyOwnership(req, res) {
 
 // Reject unless the authenticated uid matches the userId in the route params.
 function checkParamOwnership(req, res) {
+  if (typeof req.params?.userId !== "string" || req.params.userId.trim() === "") {
+    fail(res, 'userId required', 400);
+    return false;
+  }
   if (req.user.uid === req.params.userId || isAdminUser(req)) return true;
   fail(res, 'Forbidden — you can only access your own profile', 403);
   return false;
@@ -55,8 +70,8 @@ function checkParamOwnership(req, res) {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/login", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (!userId) return fail(res, "userId required");
+    const userId = requireQueryString(req.body?.userId);
+    if (!userId) return fail(res, "userId required", 400);
     if (!checkBodyOwnership(req, res)) return;
 
     // Fetch Firebase user to get email and display name
@@ -126,8 +141,8 @@ router.post("/login", requireAuth, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/dismiss-banner", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (!userId) return fail(res, "userId required");
+    const userId = requireQueryString(req.body?.userId);
+    if (!userId) return fail(res, "userId required", 400);
     if (!checkBodyOwnership(req, res)) return;
 
     await UserProfile.findOneAndUpdate(
@@ -151,8 +166,8 @@ router.post("/dismiss-banner", requireAuth, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/use-discount", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (!userId) return fail(res, "userId required");
+    const userId = requireQueryString(req.body?.userId);
+    if (!userId) return fail(res, "userId required", 400);
     if (!checkBodyOwnership(req, res)) return;
 
     const profile = await UserProfile.findOneAndUpdate(
@@ -181,7 +196,8 @@ router.post("/use-discount", requireAuth, async (req, res) => {
 router.get("/discount-status/:userId", requireAuth, async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
-    const { userId } = req.params;
+    const userId = requireQueryString(req.params.userId);
+    if (!userId) return fail(res, "userId required", 400);
     const profile = await UserProfile.findOne({ userId });
 
     if (!profile) {
@@ -207,8 +223,8 @@ router.get("/discount-status/:userId", requireAuth, async (req, res) => {
 router.get("/profile/:userId", requireAuth, async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
-    const { userId } = req.params;
-    if (!userId) return fail(res, "userId required");
+    const userId = requireQueryString(req.params.userId);
+    if (!userId) return fail(res, "userId required", 400);
 
     const profile = await UserProfile.findOne({ userId });
     if (!profile) return res.json({});
@@ -228,8 +244,8 @@ router.get("/profile/:userId", requireAuth, async (req, res) => {
 router.put("/profile/:userId", requireAuth, async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
-    const { userId } = req.params;
-    if (!userId) return fail(res, "userId required");
+    const userId = requireQueryString(req.params.userId);
+    if (!userId) return fail(res, "userId required", 400);
 
     const phoneRegex = /^\+?[\d\s\-]{7,15}$/;
     if (req.body.phone && !phoneRegex.test(req.body.phone)) {
@@ -263,8 +279,8 @@ router.put("/profile/:userId", requireAuth, async (req, res) => {
 router.post("/upload-photo/:userId", requireAuth, upload.single("photo"), async (req, res) => {
   try {
     if (!checkParamOwnership(req, res)) return;
-    const { userId } = req.params;
-    if (!userId) return fail(res, "userId required");
+    const userId = requireQueryString(req.params.userId);
+    if (!userId) return fail(res, "userId required", 400);
 
     if (!req.file || !req.file.buffer) {
       return fail(res, "Photo file is required");

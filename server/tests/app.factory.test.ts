@@ -9,7 +9,10 @@ jest.mock("../lib/cache", () => ({
   client: null,
 }));
 jest.mock("../middleware/requireAuth", () => ({
-  requireAuth: (req: unknown, res: unknown, next: () => void) => next(),
+  requireAuth: (req: { user?: unknown }, _res: unknown, next: () => void) => {
+    req.user = { uid: "user_1", email_verified: true, admin: false };
+    next();
+  },
 }));
 jest.mock("../middleware/requireAdmin", () => ({
   requireAdmin: (req: unknown, res: unknown, next: () => void) => next(),
@@ -84,5 +87,15 @@ describe("createApp", () => {
       .send({ email: "admin@example.com" });
 
     expect(response.status).toBe(404);
+  });
+
+  it("rejects MongoDB operator objects in userId body fields", async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .post("/api/user/login")
+      .send({ userId: { $ne: null } });
+
+    expect(response.status).toBe(400);
   });
 });
