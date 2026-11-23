@@ -126,4 +126,24 @@ describe("createApp", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("rejects operator-style fitness center type queries", async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .get("/api/fitness-centers/nearby")
+      .query({ "type[$ne]": "gym" });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects invalid workout dates", async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .post("/api/workouts")
+      .send({ date: "2026-02-30", title: "Leg day" });
+
+    expect(response.status).toBe(400);
+  });
 });

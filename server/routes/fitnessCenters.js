@@ -47,6 +47,9 @@ function computeDistanceScore(userAddr, center) {
 // GET /api/fitness-centers/nearby?type=gym
 router.get("/nearby", requireAuth, async (req, res) => {
   try {
+    if (Object.keys(req.query).some((key) => key.includes('$') || key.includes('.') || key.includes('['))) {
+      return res.status(400).json({ error: "Invalid query parameters" });
+    }
     if (Object.keys(req.query).some((key) => /^type(?:\.|\[)/.test(key))) {
       return res.status(400).json({ error: "Invalid fitness center type" });
     }
@@ -65,7 +68,10 @@ router.get("/nearby", requireAuth, async (req, res) => {
     }
     const typeFilter = req.query.type;
     const query = {};
-    if (typeFilter && ["gym", "yoga", "pilates", "fitness_studio"].includes(typeFilter)) {
+    if (typeFilter !== undefined) {
+      if (!["gym", "yoga", "pilates", "fitness_studio"].includes(typeFilter)) {
+        return res.status(400).json({ error: "Invalid fitness center type" });
+      }
       query.type = typeFilter;
     }
 

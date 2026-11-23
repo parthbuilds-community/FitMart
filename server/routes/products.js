@@ -41,8 +41,22 @@ function positiveInteger(value, fallback, maximum) {
  */
 router.get('/', async (req, res) => {
   try {
+    const allowedQueryKeys = new Set([
+      'all', 'page', 'limit', 'category', 'search', 'sort', 'fields', 'id', 'ids', 'exclude',
+    ]);
+    if (Object.keys(req.query).some((key) =>
+      key.includes('$') || key.includes('.') || key.includes('[') || !allowedQueryKeys.has(key)
+    )) {
+      return res.status(400).json({ error: 'Invalid query parameters' });
+    }
+
     // Query parameters
     const all = req.query.all === 'true';
+    for (const key of ['all', 'page', 'limit', 'category', 'search', 'sort', 'fields', 'id', 'ids', 'exclude']) {
+      if (req.query[key] !== undefined && typeof req.query[key] !== 'string') {
+        return res.status(400).json({ error: 'Invalid query parameters' });
+      }
+    }
     const page = positiveInteger(req.query.page, 1);
     const limit = positiveInteger(req.query.limit, 24, 100);
     const category = scalarQuery(req.query.category);
@@ -205,7 +219,7 @@ router.get('/low-stock', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const productId = Number(req.params.id);
 
-  if (isNaN(productId)) {
+  if (!Number.isInteger(productId) || productId <= 0) {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
 
@@ -246,7 +260,7 @@ router.post('/', requireAuth, requireAdmin, validateRequest(createProductSchema)
 router.put('/:id', requireAuth, requireAdmin, validateRequest(updateProductSchema), async (req, res) => {
   const productId = Number(req.params.id);
 
-  if (isNaN(productId)) {
+  if (!Number.isInteger(productId) || productId <= 0) {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
 
@@ -279,7 +293,7 @@ router.put('/:id', requireAuth, requireAdmin, validateRequest(updateProductSchem
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   const productId = Number(req.params.id);
 
-  if (isNaN(productId)) {
+  if (!Number.isInteger(productId) || productId <= 0) {
     return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
   }
   try {

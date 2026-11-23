@@ -140,6 +140,9 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 // ── GET /api/bugs — admin only ────────────────────────────────────────────
 router.get('/', requireAuth, requireAdmin, async (req, res) => {
   try {
+    if (Object.keys(req.query).some((key) => key.includes('$') || key.includes('.') || key.includes('['))) {
+      return res.status(400).json({ error: 'Invalid query parameters' });
+    }
     if (Object.keys(req.query).some((key) =>
       /^(status|search|page|limit)(?:\.|\[)/.test(key)
     )) {

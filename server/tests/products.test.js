@@ -51,4 +51,14 @@ describe('GET /api/products pagination', () => {
     expect(res.body).toHaveProperty('data');
     expect(res.body.meta).toMatchObject({ page: 1, limit: 3, total: 10 });
   });
+
+  test('rejects operator-style nested product query keys', async () => {
+    const res = await request(app).get('/api/products?category[$ne]=all');
+    expect(res.status).toBe(400);
+  });
+
+  test('rejects nested product ID values', async () => {
+    const res = await request(app).get('/api/products?id[$ne]=1');
+    expect(res.status).toBe(400);
+  });
 });
