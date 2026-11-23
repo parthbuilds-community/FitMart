@@ -1,8 +1,7 @@
-const { getAuth } = require('firebase-admin/auth');
-
 module.exports = async (uid) => {
   try {
-    const user = await getAuth().getUser(uid);
+    const admin = require('../firebaseAdmin');
+    const user = await admin.auth().getUser(uid);
     return {
       displayName: user.displayName || "—",
       photoURL: user.photoURL || null,
