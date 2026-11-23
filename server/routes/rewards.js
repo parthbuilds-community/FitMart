@@ -5,6 +5,12 @@ const Rewards = require("../models/Rewards");
 const rewardsConfig = require("../config/rewardsConfig");
 const { requireAuth } = require("../middleware/requireAuth");
 
+function requireUserId(req) {
+  return typeof req.user?.uid === "string" && req.user.uid.trim()
+    ? req.user.uid.trim()
+    : null;
+}
+
 function getTier(points) {
   let currentTier = rewardsConfig.TIERS[0];
 
@@ -35,13 +41,20 @@ function calculatePoints(source, amount = 0) {
 
 router.get("/:userId", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const authenticatedUserId = requireUserId(req);
+    const userId = typeof req.params.userId === "string" ? req.params.userId.trim() : "";
+    if (!authenticatedUserId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId) return res.status(400).json({ message: "userId is required" });
+    if (authenticatedUserId !== userId) {
+      return res.status(403).json({ message: "Forbidden — you can only access your own rewards" });
+    }
+    const safeUserId = userId;
 
-    let rewards = await Rewards.findOne({ userId });
+    let rewards = await Rewards.findOne({ userId: safeUserId });
 
     if (!rewards) {
       rewards = await Rewards.create({
-        userId,
+        userId: safeUserId,
         pointsBalance: 0,
         transactions: [],
       });
@@ -67,10 +80,23 @@ router.post("/earn", requireAuth, async (req, res) => {
   try {
     const { userId, source, orderId, amount, description } = req.body;
 
-    if (!userId || !source) {
+    if (typeof userId !== "string" || !userId.trim() || typeof source !== "string") {
       return res.status(400).json({
         message: "userId and source are required",
       });
+    }
+    const authenticatedUserId = requireUserId(req);
+    if (!authenticatedUserId) return res.status(401).json({ message: "Unauthorized" });
+    const safeUserId = userId.trim();
+    if (authenticatedUserId !== safeUserId) {
+      return res.status(403).json({ message: "Forbidden — you can only earn rewards for yourself" });
+    }
+    if (orderId !== undefined && typeof orderId !== "string") {
+      return res.status(400).json({ message: "orderId must be a string" });
+    }
+    const safeAmount = Number(amount);
+    if (amount !== undefined && (!Number.isFinite(safeAmount) || safeAmount < 0)) {
+      return res.status(400).json({ message: "amount must be a non-negative number" });
     }
 
     if (!["purchase", "workout", "milestone"].includes(source)) {
@@ -79,11 +105,11 @@ router.post("/earn", requireAuth, async (req, res) => {
       });
     }
 
-    let rewards = await Rewards.findOne({ userId });
+    let rewards = await Rewards.findOne({ userId: safeUserId });
 
     if (!rewards) {
       rewards = await Rewards.create({
-        userId,
+        userId: safeUserId,
         pointsBalance: 0,
         transactions: [],
       });

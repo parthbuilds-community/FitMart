@@ -47,7 +47,12 @@ function computeDistanceScore(userAddr, center) {
 // GET /api/fitness-centers/nearby?type=gym
 router.get("/nearby", requireAuth, async (req, res) => {
   try {
-    const uid = req.user?.uid;
+    if (Object.keys(req.query).some((key) => /^type(?:\.|\[)/.test(key))) {
+      return res.status(400).json({ error: "Invalid fitness center type" });
+    }
+    const uid = typeof req.user?.uid === "string" && req.user.uid.trim()
+      ? req.user.uid.trim()
+      : null;
     if (!uid) return res.status(401).json({ error: "Unauthorized" });
 
     const user = await UserProfile.findOne({ userId: uid }).lean();
@@ -55,6 +60,9 @@ router.get("/nearby", requireAuth, async (req, res) => {
 
     const userAddress = (user.addresses || []).find(a => a.id === user.defaultAddressId) || (user.addresses || [])[0] || null;
 
+    if (req.query.type !== undefined && typeof req.query.type !== "string") {
+      return res.status(400).json({ error: "Invalid fitness center type" });
+    }
     const typeFilter = req.query.type;
     const query = {};
     if (typeFilter && ["gym", "yoga", "pilates", "fitness_studio"].includes(typeFilter)) {

@@ -7,8 +7,11 @@ const Bug = require('../models/Bug');
 const { requireAuth } = require('../middleware/requireAuth');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const admin = require('../firebaseAdmin');
+const mongoose = require('mongoose');
 
-
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // Use memory storage so serverless environments (Vercel) work correctly
 const storage = multer.memoryStorage();
@@ -99,22 +102,43 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
 // ── GET /api/bugs — admin only ────────────────────────────────────────────
 router.get('/', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+    if (Object.keys(req.query).some((key) =>
+      /^(status|search|page|limit)(?:\.|\[)/.test(key)
+    )) {
+      return res.status(400).json({ error: 'Invalid query parameters' });
+    }
+    if ((req.query.page !== undefined && typeof req.query.page !== 'string') ||
+        (req.query.limit !== undefined && typeof req.query.limit !== 'string')) {
+      return res.status(400).json({ error: 'Invalid pagination parameters' });
+    }
+    const pageValue = typeof req.query.page === 'string' ? Number(req.query.page) : 1;
+    const limitValue = typeof req.query.limit === 'string' ? Number(req.query.limit) : 20;
+    if (!Number.isInteger(pageValue) || pageValue < 1 ||
+        !Number.isInteger(limitValue) || limitValue < 1 || limitValue > 50) {
+      return res.status(400).json({ error: 'Invalid pagination parameters' });
+    }
+    const page = pageValue;
+    const limit = limitValue;
     const skip = (page - 1) * limit;
 
     // Status filter
+    if (req.query.status !== undefined && typeof req.query.status !== 'string') {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
     const status = req.query.status;
     if (status && !['open', 'in-progress', 'resolved'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status. Must be one of: open, in-progress, resolved' });
     }
 
     // Search filter (case-insensitive on title and description)
-    const search = req.query.search;
+    if (req.query.search !== undefined && typeof req.query.search !== 'string') {
+      return res.status(400).json({ error: 'Invalid search value' });
+    }
+    const search = req.query.search || '';
     const filter = {};
     if (status) filter.status = status;
     if (search && search.trim()) {
-      const regex = { $regex: search.trim(), $options: 'i' };
+      const regex = { $regex: escapeRegex(search.trim()), $options: 'i' };
       filter.$or = [
         { title: regex },
         { description: regex },
@@ -144,12 +168,18 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
 // ── PATCH /api/bugs/:id — admin only ─────────────────────────────────────
 router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
-
     const { status } = req.body;
     if (!['open', 'in-progress', 'resolved'].includes(status))
       return res.status(400).json({ error: 'Invalid status' });
 
-    const bug = await Bug.findByIdAndUpdate(req.params.id, { status }, { returnDocument: 'after' });
+    if (!mongoose.isValidObjectId(req.params.id))
+      return res.status(400).json({ error: 'Invalid bug ID' });
+
+    const bug = await Bug.findByIdAndUpdate(
+      new mongoose.Types.ObjectId(req.params.id),
+      { $set: { status } },
+      { returnDocument: 'after' }
+    );
     if (!bug) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, bug });
   } catch (err) {

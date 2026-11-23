@@ -4,6 +4,7 @@ const rewardsConfig = require("../config/rewardsConfig");
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 const router = express.Router();
 
 const Cart = require("../models/Cart");
@@ -45,11 +46,18 @@ async function releaseAndClearCart(userId) {
 router.post("/create-order", requireAuth, async (req, res) => {
   try {
     const { amount, currency = "INR", userId } = req.body;
-    if (!amount || !userId)
+    if (!amount || typeof userId !== "string" || !userId.trim())
       return res.status(400).json({ error: "amount and userId are required" });
+    const safeUserId = userId.trim();
+    if (req.user.uid !== safeUserId) {
+      return res.status(403).json({ error: "Forbidden — userId must match the authenticated user" });
+    }
+    if (currency !== "INR" || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({ error: "Invalid amount or currency" });
+    }
 
     // receipt must be ≤ 40 chars
-    const shortId = userId.slice(-8);
+    const shortId = safeUserId.slice(-8);
     const shortTs = String(Date.now()).slice(-8);
     const receipt = `r_${shortId}_${shortTs}`;   // always 18 chars
 
@@ -77,12 +85,25 @@ router.post("/verify-payment", requireAuth, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature ||
+        typeof razorpay_order_id !== "string" ||
+        typeof razorpay_payment_id !== "string" ||
+        typeof razorpay_signature !== "string" ||
+        typeof userId !== "string" || !userId.trim())
       return res.status(400).json({ error: "Missing required payment fields" });
+    const safeUserId = userId.trim();
+    const safePaymentId = razorpay_payment_id.trim();
+    const safeOrderId = razorpay_order_id.trim();
+    if (!safePaymentId || !safeOrderId) {
+      return res.status(400).json({ error: "Missing required payment fields" });
+    }
+    if (req.user.uid !== safeUserId) {
+      return res.status(403).json({ error: "Forbidden — userId must match the authenticated user" });
+    }
 
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .update(`${safeOrderId}|${safePaymentId}`)
       .digest("hex");
 
     if (expected !== razorpay_signature)
@@ -90,7 +111,7 @@ router.post("/verify-payment", requireAuth, async (req, res) => {
 
     //  STEP 1: Prevent duplicate orders
     const Order = require("../models/Order");
-    const existingOrder = await Order.findOne({ paymentId: razorpay_payment_id });
+    const existingOrder = await Order.findOne({ paymentId: safePaymentId });
 
     if (existingOrder) {
       return res.json({ success: true, message: "Order already created" });
@@ -99,27 +120,30 @@ router.post("/verify-payment", requireAuth, async (req, res) => {
     // STEP 2: Create order using service logic
     let order;
     try {
-      order = await createOrder(userId);
+      order = await createOrder(safeUserId);
     } catch (createErr) {
       return res.status(400).json({ error: createErr.message });
     }
 
     //  STEP 3: Attach paymentId to order
-    await Order.findByIdAndUpdate(order._id, {
-      paymentId: razorpay_payment_id,
-      status: "paid"
-    });
+    if (!mongoose.isValidObjectId(order._id)) {
+      return res.status(500).json({ error: "Invalid created order ID" });
+    }
+    await Order.findByIdAndUpdate(
+      new mongoose.Types.ObjectId(order._id),
+      { $set: { paymentId: safePaymentId, status: "paid" } }
+    );
 
     // Update local object to reflect changes
-    order.paymentId = razorpay_payment_id;
+    order.paymentId = safePaymentId;
     order.status = "paid";
         // STEP 4: Award FitRewards points after successful payment
     try {
-      let rewards = await Rewards.findOne({ userId });
+      let rewards = await Rewards.findOne({ userId: safeUserId });
 
       if (!rewards) {
         rewards = await Rewards.create({
-          userId,
+          userId: safeUserId,
           pointsBalance: 0,
           transactions: [],
         });
@@ -159,7 +183,7 @@ router.post("/verify-payment", requireAuth, async (req, res) => {
 
     // STEP 4: Send first-purchase email (non-blocking)
     // Email sending should not fail the payment flow
-    sendFirstPurchaseEmail(userId, order).catch((err) => {
+    sendFirstPurchaseEmail(safeUserId, order).catch((err) => {
       console.error("First-purchase email service error:", err.message);
       // Don't throw — email failure should not break payment success
     });
@@ -181,9 +205,15 @@ router.post("/verify-payment", requireAuth, async (req, res) => {
 router.post("/clear-cart", requireAuth, async (req, res) => {
   try {
     const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "userId is required" });
+    if (typeof userId !== "string" || !userId.trim()) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+    const safeUserId = userId.trim();
+    if (req.user.uid !== safeUserId) {
+      return res.status(403).json({ error: "Forbidden — userId must match the authenticated user" });
+    }
 
-    await releaseAndClearCart(userId);
+    await releaseAndClearCart(safeUserId);
     res.json({ success: true });
   } catch (err) {
     console.error("clear-cart error:", err);

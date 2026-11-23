@@ -98,4 +98,18 @@ describe("createApp", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("rejects invalid bug status and pagination values", async () => {
+    const app = createApp();
+
+    const statusResponse = await request(app)
+      .get("/api/bugs")
+      .query({ status: { $ne: null } });
+    expect(statusResponse.status).toBe(400);
+
+    const paginationResponse = await request(app)
+      .get("/api/bugs")
+      .query({ page: "-1" });
+    expect(paginationResponse.status).toBe(400);
+  });
 });
