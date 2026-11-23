@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 import { fmt } from "../utils/formatters";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { escapeHtml, sanitizeInvoiceHtml } from "../utils/htmlSafety";
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
@@ -180,7 +181,10 @@ export default function AdminCustomerDetail() {
   // Generate and open a simple invoice HTML for a given order
   const downloadInvoice = async (order) => {
     try {
-      const customer = { name: customerName || userId, email: customerEmail || "" };
+      const customer = {
+        name: escapeHtml(customerName || userId),
+        email: escapeHtml(customerEmail || ""),
+      };
       // Try to fetch saved profile/address for the user to include in invoice
       let profileAddrHtml = "";
       try {
@@ -191,11 +195,11 @@ export default function AdminCustomerDetail() {
           const p = await res.json();
           const addr = (p?.addresses || []).find(a => a.id === p?.defaultAddressId) || (p?.addresses || [])[0];
           if (addr) {
-            profileAddrHtml = `<div style="margin-top:6px">${addr.label || ''}</div>` +
-              `<div style="margin-top:4px">${addr.line1 || ''}${addr.line2 ? ', ' + addr.line2 : ''}</div>` +
-              `<div style="margin-top:4px">${[addr.city, addr.state, addr.zip].filter(Boolean).join(', ')}</div>` +
-              `${addr.country ? `<div style="margin-top:4px">${addr.country}</div>` : ''}` +
-              `${addr.phone ? `<div style="margin-top:4px">${addr.phone}</div>` : ''}`;
+            profileAddrHtml = `<div style="margin-top:6px">${escapeHtml(addr.label || '')}</div>` +
+              `<div style="margin-top:4px">${escapeHtml(addr.line1 || '')}${addr.line2 ? ', ' + escapeHtml(addr.line2) : ''}</div>` +
+              `<div style="margin-top:4px">${escapeHtml([addr.city, addr.state, addr.zip].filter(Boolean).join(', '))}</div>` +
+              `${addr.country ? `<div style="margin-top:4px">${escapeHtml(addr.country)}</div>` : ''}` +
+              `${addr.phone ? `<div style="margin-top:4px">${escapeHtml(addr.phone)}</div>` : ''}`;
           }
         }
       } catch {
@@ -203,21 +207,21 @@ export default function AdminCustomerDetail() {
       }
       const itemsHtml = order.items.map(({ productId, quantity, price }) => {
         const prod = productMap[productId] || {};
-        const name = prod.name || `Product #${productId}`;
-        const brand = prod.brand || "";
+        const name = escapeHtml(prod.name || `Product #${productId}`);
+        const brand = escapeHtml(prod.brand || "");
         return `
           <tr>
             <td>
               <div class="product-brand">${brand}</div>
               <div class="product-name">${name}</div>
-              <div class="unit-price">${fmt(price)} / unit</div>
+              <div class="unit-price">${escapeHtml(fmt(price))} / unit</div>
             </td>
-            <td style="text-align:center">${quantity}</td>
-            <td style="text-align:right">${fmt(price * quantity)}</td>
+            <td style="text-align:center">${escapeHtml(quantity)}</td>
+            <td style="text-align:right">${escapeHtml(fmt(price * quantity))}</td>
           </tr>`;
       }).join("");
 
-      const invoiceHTML = `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${order._id}</title>
+      const invoiceHTML = `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${escapeHtml(order._id)}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Segoe UI,Arial,sans-serif;padding:32px;color:#1c1917}
       .brand{font-weight:700;font-size:24px}.product-brand{font-size:10px;color:#78716c;text-transform:uppercase}
       .product-name{font-size:14px}.unit-price{font-size:11px;color:#a8a29e}
@@ -227,17 +231,21 @@ export default function AdminCustomerDetail() {
       .total-row{display:flex;justify-content:space-between;padding:6px 0}
       </style></head><body>
       <div class="brand">FitMart</div>
-      <div style="margin-top:8px;color:#78716c;font-size:12px">Tax Invoice · ${new Date(order.createdAt).toLocaleString()}</div>
+      <div style="margin-top:8px;color:#78716c;font-size:12px">Tax Invoice · ${escapeHtml(new Date(order.createdAt).toLocaleString())}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
         <div><h4 style="font-size:10px;color:#78716c;text-transform:uppercase">Billed To</h4><div style="margin-top:6px">${customer.name}</div>${customer.email ? `<div style="margin-top:4px">${customer.email}</div>` : ''}${profileAddrHtml ? `<div style="margin-top:8px">${profileAddrHtml}</div>` : ''}</div>
         <div><h4 style="font-size:10px;color:#78716c;text-transform:uppercase">Sold By</h4><div style="margin-top:6px">FitMart India Pvt. Ltd.</div><div>Mumbai</div></div>
       </div>
       <table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table>
-      <div class="totals"><div class="total-row"><span>Subtotal</span><span>${fmt(order.total)}</span></div><div class="total-row grand" style="font-weight:700;margin-top:8px;border-top:1px solid #e7e5e3;padding-top:8px"><span>Total Paid</span><span>${fmt(order.total)}</span></div></div>
+      <div class="totals"><div class="total-row"><span>Subtotal</span><span>${escapeHtml(fmt(order.total))}</span></div><div class="total-row grand" style="font-weight:700;margin-top:8px;border-top:1px solid #e7e5e3;padding-top:8px"><span>Total Paid</span><span>${escapeHtml(fmt(order.total))}</span></div></div>
       </body></html>`;
 
       const win = window.open("", "_blank");
-      win.document.write(invoiceHTML);
+      if (!win) {
+        throw new Error("Popup blocked");
+      }
+      win.opener = null;
+      win.document.write(sanitizeInvoiceHtml(invoiceHTML));
       win.document.close();
       win.focus();
     } catch (e) {

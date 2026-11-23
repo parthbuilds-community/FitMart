@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth } from "../auth/firebase";
 import { fmt } from "../utils/formatters";
+import { sanitizeInvoiceHtml } from "../utils/htmlSafety";
 
 export default function ProductConfirmation() {
   const navigate = useNavigate();
@@ -584,7 +585,12 @@ const currentOrderTime = now.toLocaleTimeString("en-IN", {
 `;
 
     const win = window.open("", "_blank");
-    win.document.write(invoiceHTML);
+    if (!win) {
+      setDownloading(false);
+      throw new Error("Popup blocked");
+    }
+    win.opener = null;
+    win.document.write(sanitizeInvoiceHtml(invoiceHTML));
     win.document.close();
     win.focus();
     setTimeout(() => {
