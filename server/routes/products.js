@@ -85,7 +85,7 @@ router.get('/', async (req, res) => {
 
     // Cache key based on query
     const cacheKeyObj = { page, limit, category, search, sort, fields };
-    const cacheKey = `products:${crypto.createHash('md5').update(JSON.stringify(cacheKeyObj)).digest('hex')}`;
+    const cacheKey = `products:${crypto.createHash('sha256').update(JSON.stringify(cacheKeyObj)).digest('hex')}`;
 
     // Try cache
     const cached = await cache.get(cacheKey);
@@ -116,7 +116,7 @@ router.get('/', async (req, res) => {
       },
     };
 
-    const etag = crypto.createHash('md5').update(JSON.stringify(payload)).digest('hex');
+    const etag = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
     // store in cache
     await cache.set(cacheKey, { payload, etag }, Number(process.env.PRODUCTS_CACHE_TTL || 60));
 
