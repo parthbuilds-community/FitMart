@@ -144,7 +144,7 @@ export default function ReportBugButton() {
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
   const [steps, setSteps]             = useState('');
-  const [screenshot, setScreenshot]   = useState(null); // { file, preview }
+  const [screenshot, setScreenshot]   = useState(null); // { file, name }
   const [loading, setLoading]         = useState(false);
   const [success, setSuccess]         = useState(false);
   const [toast, setToast]             = useState(null);
@@ -186,8 +186,8 @@ export default function ReportBugButton() {
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setImgError('Only image files are supported.');
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      setImgError('Only JPG, PNG, WebP, or GIF images are supported.');
       return;
     }
     if (file.size > IMG_MAX_MB * 1024 * 1024) {
@@ -195,12 +195,10 @@ export default function ReportBugButton() {
       return;
     }
     setImgError('');
-    const preview = URL.createObjectURL(file);
-    setScreenshot({ file, preview });
+    setScreenshot({ file, name: file.name });
   };
 
   const removeScreenshot = () => {
-    if (screenshot?.preview) URL.revokeObjectURL(screenshot.preview);
     setScreenshot(null);
     setImgError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -472,12 +470,11 @@ export default function ReportBugButton() {
                   </p>
 
                   {screenshot ? (
-                    <div className="relative rounded-lg overflow-hidden border border-stone-200 group">
-                      <img
-                        src={screenshot.preview}
-                        alt="Screenshot preview"
-                        className="w-full max-h-40 object-cover"
-                      />
+                    <div className="relative rounded-lg overflow-hidden border border-stone-200 group min-h-14
+                                    flex items-center px-3 pr-10">
+                      <span className="text-xs text-stone-600 truncate" title={screenshot.name}>
+                        {screenshot.name}
+                      </span>
                       <button
                         type="button"
                         onClick={removeScreenshot}
@@ -508,7 +505,7 @@ export default function ReportBugButton() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     onChange={onFileChange}
                     className="hidden"
                     aria-label="Upload screenshot"
