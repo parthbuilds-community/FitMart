@@ -134,14 +134,20 @@ router.get("/:category", async (req, res) => {
         allExercises.push(...exercises);
       } catch (error) {
         console.warn(
-          `⚠️ Failed to fetch exercises for bodyPart "${bodyPart}": ${error.message}`
+          '⚠️ Failed to fetch exercises for bodyPart "%s": %s',
+          bodyPart,
+          error.message
         );
         // Continue with other body parts even if one fails
       }
     }
 
     if (allExercises.length === 0) {
-      console.warn(`No exercises found for category "${category}" (bodyParts: ${bodyParts.join(", ")})`);
+      console.warn(
+        'No exercises found for category "%s" (bodyParts: %s)',
+        category,
+        bodyParts.join(", ")
+      );
       return res.json([]);
     }
 
@@ -174,11 +180,13 @@ router.get("/:category", async (req, res) => {
     }
 
     console.log(
-      `✅ Fetched ${deduplicatedExercises.length} unique exercises for category "${category}"`
+      '✅ Fetched %d unique exercises for category "%s"',
+      deduplicatedExercises.length,
+      category
     );
     res.json(deduplicatedExercises);
   } catch (error) {
-    console.error(`❌ Error fetching exercises for category "${category}":`, error);
+    console.error('❌ Error fetching exercises for category "%s":', category, error);
     res.status(500).json({
       error: "Failed to fetch exercises. Please try again later.",
     });

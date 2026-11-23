@@ -67,7 +67,7 @@ router.post("/login", requireAuth, async (req, res) => {
       firebaseEmail = firebaseUser.email || null;
       displayName = firebaseUser.displayName || null;
     } catch (err) {
-      console.warn(`Could not fetch Firebase user for ${userId}:`, err.message);
+      console.warn("Could not fetch Firebase user for %s:", userId, err.message);
     }
 
     let profile = await UserProfile.findOne({ userId });

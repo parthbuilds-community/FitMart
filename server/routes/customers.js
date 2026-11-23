@@ -83,7 +83,7 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
     const customers = aggResult[0]?.data || [];
     const totalPages = Math.ceil(total / limit);
 
-    console.log(`[API] Found ${total} total customers, returning page ${page}/${totalPages} (${customers.length} records)`);
+    console.log("[API] Found %d total customers, returning page %d/%d (%d records)", total, page, totalPages, customers.length);
 
     if (!customers || customers.length === 0) {
       console.log('[API] No customers found, returning empty list');
@@ -96,7 +96,7 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
 
     // Deduplicate UIDs and resolve Firebase user info + UserProfile in parallel
     const uniqueUids = [...new Set(customers.map(c => c.userId).filter(Boolean))];
-    console.log(`[API] Resolving ${uniqueUids.length} unique Firebase users...`);
+    console.log("[API] Resolving %d unique Firebase users...", uniqueUids.length);
 
     const userMap = {};
     const profileMap = {};
@@ -107,7 +107,7 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
           userMap[uid] = await resolveFirebaseUser(uid);
           profileMap[uid] = await UserProfile.findOne({ userId: uid });
         } catch (err) {
-          console.error(`Error resolving user ${uid}:`, err.message);
+          console.error("Error resolving user %s:", uid, err.message);
           userMap[uid] = { displayName: '—', email: '—', photoURL: null };
           profileMap[uid] = null;
         }
@@ -130,7 +130,7 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
       };
     });
 
-    console.log(`[API] Returning ${result.length} enriched customers`);
+    console.log("[API] Returning %d enriched customers", result.length);
     res.json({
       success: true,
       data: result,
@@ -172,7 +172,7 @@ router.get('/:userId', requireAuth, requireAdmin, async (req, res) => {
     try {
       profile = await UserProfile.findOne({ userId });
     } catch (err) {
-      console.error(`Error fetching profile for user ${userId}:`, err.message);
+      console.error("Error fetching profile for user %s:", userId, err.message);
     }
 
     // Resolve Firebase user info for this single UID with error handling
