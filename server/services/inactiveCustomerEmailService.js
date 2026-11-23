@@ -34,7 +34,7 @@ async function checkInactivity(userId) {
       daysSinceLastOrder: daysSince,
     };
   } catch (err) {
-    console.error(`Error checking inactivity for user ${userId}:`, err.message);
+    console.error("Error checking inactivity for user %s:", userId, err.message);
     return {
       isInactive: false,
       lastOrderDate: null,
@@ -63,10 +63,10 @@ async function resolveCustomerEmail(userId, existingProfile = null) {
       };
     }
 
-    console.warn(`⚠️  Could not resolve email for user ${userId}`);
+    console.warn("⚠️  Could not resolve email for user %s", userId);
     return { email: null, displayName: null };
   } catch (err) {
-    console.error(`Error resolving email for user ${userId}:`, err.message);
+    console.error("Error resolving email for user %s:", userId, err.message);
     return { email: null, displayName: null };
   }
 }
@@ -99,7 +99,7 @@ async function sendInactivityReminderEmail(userId) {
     // Resolve customer email
     const { email, displayName } = await resolveCustomerEmail(userId, profile);
     if (!email) {
-      console.warn(`⚠️  No email address found for user ${userId}`);
+      console.warn("⚠️  No email address found for user %s", userId);
       return {
         success: false,
         error: "No email address available for this customer",
@@ -120,7 +120,7 @@ async function sendInactivityReminderEmail(userId) {
     });
 
     if (!result.success) {
-      console.error(`❌ Failed to send reminder email to ${email}:`, result.error);
+      console.error("❌ Failed to send reminder email to %s:", email, result.error);
       return {
         success: false,
         error: result.error,
@@ -134,14 +134,19 @@ async function sendInactivityReminderEmail(userId) {
       { upsert: true, returnDocument: 'after' }
     );
 
-    console.log(`✅ Inactivity reminder email sent to ${email} for user ${userId} (${daysSinceLastOrder} days inactive)`);
+    console.log(
+      "✅ Inactivity reminder email sent to %s for user %s (%d days inactive)",
+      email,
+      userId,
+      daysSinceLastOrder
+    );
     return {
       success: true,
       message: "Reminder email sent successfully",
       messageId: result.messageId,
     };
   } catch (err) {
-    console.error(`❌ Error in sendInactivityReminderEmail for ${userId}:`, err.message);
+    console.error("❌ Error in sendInactivityReminderEmail for %s:", userId, err.message);
     return {
       success: false,
       error: err.message,
