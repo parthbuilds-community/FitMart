@@ -112,4 +112,18 @@ describe("createApp", () => {
       .query({ page: "-1" });
     expect(paginationResponse.status).toBe(400);
   });
+
+  it("rejects invalid reporter email formats", async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .post("/api/bugs")
+      .send({
+        title: "Test",
+        description: "Test",
+        reporterEmail: "attacker<>@example.com",
+      });
+
+    expect(response.status).toBe(400);
+  });
 });

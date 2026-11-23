@@ -1,18 +1,25 @@
 import express, { type Request } from "express";
 import request from "supertest";
+import rateLimit from "express-rate-limit";
 import { createRequireAuth, type AuthenticatedUser } from "../middleware/requireAuth";
 import { requireAdmin } from "../middleware/requireAdmin";
 
 function buildApp(verifyToken: (token: string) => Promise<AuthenticatedUser>) {
   const app = express();
   const requireAuth = createRequireAuth(verifyToken);
+  const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
-  app.get("/private", requireAuth, (req: Request, res) => {
+  app.get("/private", authLimiter, requireAuth, (req: Request, res) => {
     const user = (req as Request & { user?: AuthenticatedUser }).user;
     res.json({ uid: user?.uid, admin: user?.admin === true });
   });
 
-  app.get("/admin", requireAuth, requireAdmin, (_req, res) => {
+  app.get("/admin", authLimiter, requireAuth, requireAdmin, (_req, res) => {
     res.json({ ok: true });
   });
 

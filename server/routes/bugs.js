@@ -9,6 +9,45 @@ const { requireAdmin } = require('../middleware/requireAdmin');
 const admin = require('../firebaseAdmin');
 const mongoose = require('mongoose');
 
+function isValidEmailAddress(value) {
+  if (typeof value !== 'string' || value.length > 254) return false;
+  if (!value || value.includes(' ') || value.includes('\t') || value.includes('\r') ||
+      value.includes('\n')) return false;
+
+  const atIndex = value.indexOf('@');
+  if (atIndex <= 0 || atIndex !== value.lastIndexOf('@') || atIndex === value.length - 1) {
+    return false;
+  }
+
+  const local = value.slice(0, atIndex);
+  const domain = value.slice(atIndex + 1);
+  if (local.length > 64 || local.startsWith('.') || local.endsWith('.') || local.includes('..')) {
+    return false;
+  }
+  for (const char of local) {
+    if (!"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!#$%&'*+/=?^_`{|}~-".includes(char)) {
+      return false;
+    }
+  }
+  if (domain.length > 253 || domain.startsWith('.') || domain.endsWith('.') ||
+      domain.includes('..')) {
+    return false;
+  }
+
+  const domainLabels = domain.split('.');
+  if (domainLabels.length < 2) return false;
+  for (const label of domainLabels) {
+    if (!label || label.startsWith('-') || label.endsWith('-')) return false;
+    for (const char of label) {
+      if (!"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-".includes(char)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -34,8 +73,7 @@ router.post('/', upload.single('screenshot'), async (req, res) => {
     if (!title || !description)
       return res.status(400).json({ error: 'Title and description are required' });
     
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (req.body.reporterEmail && !emailRegex.test(req.body.reporterEmail)) {
+    if (reporterEmail && !isValidEmailAddress(reporterEmail)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
     // Prefer authenticated name/email from token if present
