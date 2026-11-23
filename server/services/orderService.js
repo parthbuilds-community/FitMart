@@ -3,6 +3,13 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 
+function requireQueryString(value, label) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`${label} must be a string`);
+  }
+  return value;
+}
+
 /**
  * Creates an order from explicit items or the user's cart.
  * Snapshots product prices, checks stock, creates the order,
@@ -13,12 +20,29 @@ const Product = require('../models/Product');
  * @returns {Promise<Object>} The created order document
  */
 async function createOrder(userId, items = null) {
+  const safeUserId = requireQueryString(userId, 'userId');
   let orderItems = items;
   let fromCart = false;
 
+  if (orderItems != null) {
+    if (!Array.isArray(orderItems)) {
+      throw new Error('Items must be an array');
+    }
+
+    orderItems = orderItems.map((item) => {
+      const productId = Number(item?.productId);
+      const quantity = Number(item?.quantity);
+      if (!Number.isInteger(productId) || productId <= 0 ||
+          !Number.isInteger(quantity) || quantity <= 0) {
+        throw new Error('Invalid order item');
+      }
+      return { productId, quantity };
+    });
+  }
+
   // If no items are explicitly provided, fetch them from the user's cart
   if (!orderItems || !orderItems.length) {
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId: safeUserId });
     if (!cart || !cart.items.length) {
       throw new Error('Cart is empty');
     }
@@ -67,7 +91,7 @@ async function createOrder(userId, items = null) {
 
   // Create the order document
   const order = await Order.create({
-    userId,
+    userId: safeUserId,
     items: populated,
     total,
     subtotalMinor: totalMinor,
@@ -98,7 +122,7 @@ async function createOrder(userId, items = null) {
   }
 
   // Clear the user's cart (purchasing finalizes reservation)
-  await Cart.findOneAndUpdate({ userId }, { items: [] });
+  await Cart.findOneAndUpdate({ userId: safeUserId }, { items: [] });
 
   return order;
 }

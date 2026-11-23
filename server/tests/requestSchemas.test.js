@@ -151,6 +151,20 @@ describe('requestSchemas - createOrderSchema', () => {
       expect(result.success).toBe(false);
     });
 
+    test('should fail with MongoDB operator objects in order fields', () => {
+      const userIdResult = createOrderSchema.body.safeParse({
+        userId: { $ne: null },
+        items: [{ productId: 1, quantity: 1 }],
+      });
+      expect(userIdResult.success).toBe(false);
+
+      const itemResult = createOrderSchema.body.safeParse({
+        userId: 'user123',
+        items: [{ productId: { $ne: null }, quantity: 1 }],
+      });
+      expect(itemResult.success).toBe(false);
+    });
+
     test('should fail with extra fields due to strict mode', () => {
       const result = createOrderSchema.body.safeParse({
         userId: 'user123',

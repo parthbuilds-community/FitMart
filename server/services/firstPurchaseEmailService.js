@@ -5,11 +5,19 @@ const admin = require("../firebaseAdmin");
 const { sendEmail } = require("./emailService");
 const { generateFirstPurchaseEmail } = require("./emailTemplates");
 
+function requireQueryString(value, label) {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(`${label} must be a string`);
+  }
+  return value;
+}
+
 /**
  * Resolve the user's email from UserProfile or Firebase.
  * Returns { email, displayName } or { email: null, displayName: null } on failure.
  */
 async function resolveUserEmail(userId, existingProfile = null) {
+  const safeUserId = requireQueryString(userId, "userId");
   try {
     // Try to use profile email if available
     if (existingProfile?.email) {
@@ -20,7 +28,7 @@ async function resolveUserEmail(userId, existingProfile = null) {
     }
 
     // Try to fetch from Firebase
-    const firebaseUser = await admin.auth().getUser(userId);
+    const firebaseUser = await admin.auth().getUser(safeUserId);
     if (firebaseUser?.email) {
       return {
         email: firebaseUser.email,
@@ -41,9 +49,10 @@ async function resolveUserEmail(userId, existingProfile = null) {
  * Returns true if the number of paid orders is exactly 1.
  */
 async function isFirstPaidOrder(userId) {
+  const safeUserId = requireQueryString(userId, "userId");
   try {
     const paidOrderCount = await Order.countDocuments({
-      userId,
+      userId: safeUserId,
       status: "paid",
     });
     return paidOrderCount === 1;
@@ -65,9 +74,10 @@ async function isFirstPaidOrder(userId) {
  * @returns {Promise<Object>} - { sent: boolean, message: string, error?: string }
  */
 async function sendFirstPurchaseEmail(userId, orderData = {}) {
+  const safeUserId = requireQueryString(userId, "userId");
   try {
     // Fetch user profile
-    let profile = await UserProfile.findOne({ userId });
+    let profile = await UserProfile.findOne({ userId: safeUserId });
 
     // Check if email was already sent
     if (profile?.firstPurchaseEmailSentAt) {
@@ -79,7 +89,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     }
 
     // Check if this is really the first paid order
-    const isFirst = await isFirstPaidOrder(userId);
+    const isFirst = await isFirstPaidOrder(safeUserId);
     if (!isFirst) {
       console.log("ℹ️  Not the first paid order for user %s; skipping email", userId);
       return {
@@ -89,7 +99,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
     }
 
     // Resolve user email
-    const { email, displayName } = await resolveUserEmail(userId, profile);
+    const { email, displayName } = await resolveUserEmail(safeUserId, profile);
     if (!email) {
       console.warn("⚠️  No email address found for user %s; cannot send welcome email", userId);
       return {
@@ -125,7 +135,7 @@ async function sendFirstPurchaseEmail(userId, orderData = {}) {
 
     // Update profile with timestamp
     await UserProfile.findOneAndUpdate(
-      { userId },
+      { userId: safeUserId },
       { $set: { firstPurchaseEmailSentAt: new Date() } },
       { upsert: true, returnDocument: 'after' }
     );
