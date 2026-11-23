@@ -5,10 +5,11 @@
 
 ### *Your All-in-One Fitness & Nutrition E-Commerce Platform*
 
-> A full-stack MERN e-commerce application combining premium fitness gear, nutrition products, workout tracking, and seamless payments — built for learning, collaboration, and real-world use.
+> A full-stack MERN e-commerce application combining premium fitness gear, nutrition products, workout tracking, and seamless payments - built for learning, collaboration, and real-world use.
 
 <br/>
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16938/badge)](https://www.bestpractices.dev/projects/16938)
 [![React](https://img.shields.io/badge/React-v19-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-v16+-339933?style=flat-square&logo=node.js)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb)](https://www.mongodb.com/)
