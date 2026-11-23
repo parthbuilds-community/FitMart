@@ -11,8 +11,8 @@
     "backfill:money": "tsx scripts/backfillMoney.ts",
     "seed": "node seed.js",
     "seed:fitness": "node seedFitnessCenters.js",
-    "test:cart": "jest tests/cart.reserved.test.js --forceExit",
-    "test": "jest --runInBand --forceExit"
+    "test:cart": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/cart.reserved.test.js --forceExit",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
