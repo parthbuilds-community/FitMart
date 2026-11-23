@@ -1,7 +1,8 @@
 // server/firebaseAdmin.js
-const admin = require('firebase-admin');
+const { initializeApp, getApps, cert, applicationDefault } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY
@@ -9,13 +10,13 @@ if (!admin.apps.length) {
     : undefined;
 
   if (process.env.NODE_ENV === 'test') {
-    admin.initializeApp({
+    initializeApp({
       projectId: projectId || 'fitmart-test',
     });
     console.log('Firebase Admin initialized without credentials for tests');
   } else if (projectId && clientEmail && privateKey) {
-    admin.initializeApp({
-      credential: admin.credential.cert({
+    initializeApp({
+      credential: cert({
         projectId,
         clientEmail,
         privateKey,
@@ -24,8 +25,8 @@ if (!admin.apps.length) {
     console.log('Firebase Admin initialized from environment variables');
   } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     // fall back to Application Default Credentials (file referenced by env var)
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
+    initializeApp({
+      credential: applicationDefault(),
     });
     console.log('Firebase Admin initialized using application default credentials');
   } else {
@@ -35,4 +36,4 @@ if (!admin.apps.length) {
   }
 }
 
-module.exports = admin;
+module.exports = { auth: getAuth };
