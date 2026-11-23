@@ -4,6 +4,7 @@ const {
   createOrderSchema,
   createProductSchema,
   updateProductSchema,
+  updateWorkoutLogSchema,
 } = require('../validation/requestSchemas');
 
 describe('requestSchemas - cartAddSchema', () => {
@@ -173,6 +174,33 @@ describe('requestSchemas - createOrderSchema', () => {
       });
       expect(result.success).toBe(false);
     });
+  });
+});
+
+describe('requestSchemas - updateWorkoutLogSchema', () => {
+  test('accepts a valid YYYY-MM-DD workout date', () => {
+    const result = updateWorkoutLogSchema.body.safeParse({
+      date: '2026-11-23',
+      title: 'Leg day',
+      notes: 'Felt strong',
+      exercises: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test('rejects an invalid calendar date', () => {
+    const result = updateWorkoutLogSchema.body.safeParse({
+      date: '2026-02-30',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test('rejects nested object values in workout fields', () => {
+    const result = updateWorkoutLogSchema.body.safeParse({
+      date: '2026-11-23',
+      title: { $ne: null },
+    });
+    expect(result.success).toBe(false);
   });
 });
 

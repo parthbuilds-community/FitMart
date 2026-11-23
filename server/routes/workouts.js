@@ -5,6 +5,20 @@ const { requireAuth } = require('../middleware/requireAuth');
 const validateRequest = require('../middleware/validateRequest');
 const { updateWorkoutLogSchema } = require('../validation/requestSchemas');
 
+function requireAuthUserId(req) {
+  if (typeof req.user?.uid !== 'string' || req.user.uid.trim() === '') return null;
+  return req.user.uid.trim();
+}
+
+function isValidDateKey(date) {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const [year, month, day] = date.split('-').map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day;
+}
+
 /**
  * @route   GET /api/workouts
  * @desc    Get all workout logs for the authenticated user, keyed by date
@@ -12,7 +26,9 @@ const { updateWorkoutLogSchema } = require('../validation/requestSchemas');
  */
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const logs = await WorkoutLog.find({ userId: req.user.uid });
+    const userId = requireAuthUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const logs = await WorkoutLog.find({ userId });
     
     // Format response to match the legacy localStorage format: { 'YYYY-MM-DD': { title, notes, exercises } }
     const formattedLogs = {};
@@ -38,7 +54,12 @@ router.get('/', requireAuth, async (req, res) => {
  */
 router.post('/', requireAuth, validateRequest(updateWorkoutLogSchema), async (req, res) => {
   try {
+    const userId = requireAuthUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { date, title, notes, exercises } = req.body;
+    if (!isValidDateKey(date)) {
+      return res.status(400).json({ error: 'Invalid workout date' });
+    }
 
     const logData = {
       title: title || '',
@@ -47,7 +68,7 @@ router.post('/', requireAuth, validateRequest(updateWorkoutLogSchema), async (re
     };
 
     const updatedLog = await WorkoutLog.findOneAndUpdate(
-      { userId: req.user.uid, date },
+      { userId, date },
       { $set: logData },
       { returnDocument: 'after', upsert: true }
     );
@@ -66,8 +87,13 @@ router.post('/', requireAuth, validateRequest(updateWorkoutLogSchema), async (re
  */
 router.delete('/:date', requireAuth, async (req, res) => {
   try {
+    const userId = requireAuthUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { date } = req.params;
-    await WorkoutLog.findOneAndDelete({ userId: req.user.uid, date });
+    if (!isValidDateKey(date)) {
+      return res.status(400).json({ error: 'Invalid workout date' });
+    }
+    await WorkoutLog.findOneAndDelete({ userId, date });
     res.json({ success: true });
   } catch (err) {
     console.error('Error deleting workout log:', err);

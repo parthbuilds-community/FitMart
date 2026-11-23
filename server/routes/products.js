@@ -13,6 +13,27 @@ const { requireAdmin } = require('../middleware/requireAdmin');
 const validateRequest = require('../middleware/validateRequest');
 const { createProductSchema, updateProductSchema } = require('../validation/requestSchemas');
 
+const PRODUCT_SORT_FIELDS = new Set(['productId', 'name', 'brand', 'category', 'price', 'rating', 'createdAt']);
+const PRODUCT_FIELDS = new Set([
+  'productId', 'name', 'brand', 'category', 'price', 'priceMinor', 'originalPrice',
+  'rating', 'reviews', 'badge', 'image', 'stock', 'reserved', 'isActive', 'archivedAt',
+  'createdAt', 'updatedAt',
+]);
+const PRODUCT_UPDATE_FIELDS = new Set([
+  'productId', 'name', 'brand', 'category', 'price', 'originalPrice', 'rating',
+  'reviews', 'badge', 'image', 'stock', 'reserved', 'isActive', 'archivedAt',
+]);
+
+function scalarQuery(value) {
+  return typeof value === 'string' ? value : null;
+}
+
+function positiveInteger(value, fallback, maximum) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) return fallback;
+  return maximum ? Math.min(parsed, maximum) : parsed;
+}
+
 /**
  * @route   GET /api/products
  * @desc    Returns all products sorted by productId in ascending order
@@ -22,40 +43,54 @@ router.get('/', async (req, res) => {
   try {
     // Query parameters
     const all = req.query.all === 'true';
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 24;
-    const category = req.query.category;
-    const search = req.query.search;
-    const sort = req.query.sort || 'productId_asc';
-    const fields = req.query.fields; // comma separated
-    const id = req.query.id; // single product by productId
-    const ids = req.query.ids; // comma separated productIds
-    const exclude = req.query.exclude; // omit one productId (e.g. for related products)
+    const page = positiveInteger(req.query.page, 1);
+    const limit = positiveInteger(req.query.limit, 24, 100);
+    const category = scalarQuery(req.query.category);
+    const search = scalarQuery(req.query.search);
+    const sort = scalarQuery(req.query.sort) || 'productId_asc';
+    const fields = scalarQuery(req.query.fields);
+    const id = scalarQuery(req.query.id);
+    const ids = scalarQuery(req.query.ids);
+    const exclude = scalarQuery(req.query.exclude);
 
     // Build mongoose filter
     const filter = {};
     if (category && category !== 'all') filter.category = category;
     if (search) filter.$text = { $search: search };
-    if (exclude !== undefined) {
+    if (req.query.exclude !== undefined) {
+      if (exclude === null) {
+        return res.status(400).json({ error: 'Invalid excluded product ID. It must be a number.' });
+      }
       const excludeId = Number(exclude);
       if (Number.isInteger(excludeId)) filter.productId = { $ne: excludeId };
+      else return res.status(400).json({ error: 'Invalid excluded product ID. It must be a number.' });
     }
 
     // Projection
     let projection = null;
     if (fields) {
       projection = {};
-      fields.split(',').forEach(f => { projection[f.trim()] = 1; });
+      fields.split(',').forEach(f => {
+        const field = f.trim();
+        if (PRODUCT_FIELDS.has(field)) projection[field] = 1;
+      });
+      if (Object.keys(projection).length === 0) projection = null;
     }
 
     // Sort mapping
-    const [sortField, sortDir] = sort.split('_');
+    const separator = sort.lastIndexOf('_');
+    const sortField = separator > -1 ? sort.slice(0, separator) : 'productId';
+    const sortDir = separator > -1 ? sort.slice(separator + 1) : 'asc';
     const sortMap = { asc: 1, desc: -1 };
     const sortObj = {};
-    sortObj[sortField || 'productId'] = sortMap[sortDir] || 1;
+    sortObj[PRODUCT_SORT_FIELDS.has(sortField) ? sortField : 'productId'] =
+      sortMap[sortDir] || 1;
 
     // Single product by productId: GET /api/products?id=2
-    if (id !== undefined) {
+    if (req.query.id !== undefined) {
+      if (id === null) {
+        return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
+      }
       const productId = Number(id);
       if (!Number.isInteger(productId)) {
         return res.status(400).json({ error: 'Invalid product ID. It must be a number.' });
@@ -66,8 +101,11 @@ router.get('/', async (req, res) => {
     }
 
     // Multiple products by productId: GET /api/products?ids=1,2,3
-    if (ids !== undefined) {
-      const productIds = String(ids).split(',').map(Number);
+    if (req.query.ids !== undefined) {
+      if (ids === null) {
+        return res.status(400).json({ error: 'Invalid product IDs. They must be numbers.' });
+      }
+      const productIds = ids.split(',').map(Number);
       if (productIds.some(n => !Number.isInteger(n))) {
         return res.status(400).json({ error: 'Invalid product IDs. They must be numbers.' });
       }
@@ -213,7 +251,12 @@ router.put('/:id', requireAuth, requireAdmin, validateRequest(updateProductSchem
   }
 
   try {
-    const update = { ...req.body };
+    const update = {};
+    for (const field of PRODUCT_UPDATE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        update[field] = req.body[field];
+      }
+    }
     // findOneAndUpdate bypasses the model hook, so sync integer paise here.
     if (Object.prototype.hasOwnProperty.call(update, 'price')) {
       update.priceMinor = Math.round(Number(update.price) * 100);

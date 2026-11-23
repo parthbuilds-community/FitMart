@@ -68,7 +68,14 @@ const workoutExerciseSchema = z.object({
 }).strict();
 
 const workoutLogBodySchema = z.object({
-  date: z.string().min(1, 'date is required'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be YYYY-MM-DD')
+    .refine((date) => {
+      const [year, month, day] = date.split('-').map(Number);
+      const parsed = new Date(Date.UTC(year, month - 1, day));
+      return parsed.getUTCFullYear() === year &&
+        parsed.getUTCMonth() === month - 1 &&
+        parsed.getUTCDate() === day;
+    }, 'date must be a valid calendar date'),
   title: z.string().optional(),
   notes: z.string().optional(),
   exercises: z.array(workoutExerciseSchema).optional()
